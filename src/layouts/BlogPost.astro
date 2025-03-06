@@ -8,7 +8,7 @@ type Props = CollectionEntry<"blog">["data"];
 
 const lang = getLangFromUrl(Astro.url);
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, image } = Astro.props;
 ---
 
 <style>
@@ -55,12 +55,12 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	<article>
 		<div class="hero-image">
 			{
-				heroImage && (
+				image && (
 					<img
 						transition:name={title}
 						width={1020}
 						height={510}
-						src={heroImage}
+						src={image}
 						alt=""
 					/>
 				)

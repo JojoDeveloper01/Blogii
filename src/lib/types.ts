@@ -1,6 +1,6 @@
 export interface BlogData {
 	id: string;
-	body?: string; // 🔥 Agora pode ser undefined sem erro
+	body?: string;
 	collection: string;
 	data: {
 		title: string;
