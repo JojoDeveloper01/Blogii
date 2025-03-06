@@ -1,5 +1,13 @@
 ---
+import { sanitizeString } from "@lib/utils";
 import { TitleInput } from "./TitleInput.tsx";
+import { getCollection } from "astro:content";
+
+const blogs = await getCollection("blog");
+
+console.log("blogs: ", blogs);
+
+const { lang } = Astro.props;
 ---
 
 <style>
@@ -40,38 +48,37 @@ import { TitleInput } from "./TitleInput.tsx";
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <TitleInput />
-        <div
-            id="blogsCreated"
-            class={`hidden w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
-        >
-            <h3 class="mb-4 text-lg font-bold text-orange-500">
-                Blogs Criados:
-            </h3>
-            <ul class="space-y-2">
-                <!--   {
-                    blogs.map((blog) => (
-                        <li class="flex items-center justify-center space-x-2">
-                            <span class="text-orange-400">&rarr;</span>
-                            <a
-                                href={`/blog/${sanitizeString(blog.title, false)}`}
-                                class="text-gray-900 dark:text-white hover:text-orange-300 transition-colors duration-200"
-                            >
-                                {sanitizeString(blog.title)}
-                            </a>
-                        </li>
-                    ))
-                } -->
-            </ul>
-        </div>
+        <TitleInput {lang} />
+
+        {
+            blogs && (
+                <div
+                    id="blogsCreated"
+                    class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
+                >
+                    <h3 class="mb-4 text-lg font-bold text-orange-500">
+                        Blogs Criados:
+                    </h3>
+                    <ul class="space-y-2">
+                        {blogs.map((blog) => (
+                            <li class="flex items-center justify-center space-x-2">
+                                <span class="text-orange-400">&rarr;</span>
+                                <a
+                                    href={`/${lang}/blog/${sanitizeString(blog.data.title, 1)}`}
+                                    class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
+                                >
+                                    {sanitizeString(blog.data.title)}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )
+        }
     </div>
 </section>
 
 <script>
-    import { generateNumericId, sanitizeString } from "@lib/utils";
-    import type { BlogData } from "@lib/types";
-    const lang = window.location.pathname.split("/")[1] || "pt";
-
     document.addEventListener("astro:page-load", async () => {
         const ui = {
             blogsCreated: document.getElementById(
@@ -108,6 +115,7 @@ import { TitleInput } from "./TitleInput.tsx";
             handleInput();
         }
 
+        //💚
         function showBlogs(blogs: BlogData[]) {
             blogs.forEach((blog) => {
                 const li = document.createElement("li");

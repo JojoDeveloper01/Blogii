@@ -8,7 +8,7 @@ const lang = getLangFromUrl(Astro.url);
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-	<Hero />
+	<Hero {lang} />
 
 	<p>
 		Welcome to the official <a href="https://astro.build/">Astro</a>
