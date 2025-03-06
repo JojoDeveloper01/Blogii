@@ -1,0 +1,296 @@
+---
+import { TitleInput } from "./TitleInput.tsx";
+---
+
+<style>
+    .hero {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .panel-before {
+        left: -25%;
+        transform: rotate(8deg);
+    }
+
+    .panel-after {
+        right: -25%;
+        transform: rotate(-8deg);
+    }
+
+    #conj-title {
+        opacity: 1;
+        transition: opacity 0.3s cubic-bezier(0.97, 0.77, 0, 0.26);
+    }
+</style>
+
+<section
+    class="hero h-screen flex justify-center items-center relative overflow-hidden"
+>
+    <div transition:name="panel-before" class="panel panel-before"></div>
+    <div transition:name="panel-after" class="panel panel-after"></div>
+    <div class="panel-top w-screen absolute top-[-30%] h-36"></div>
+    <div
+        id="your-title"
+        class="flex flex-col gap-8 items-center mx-4 text-center z-10"
+    >
+        <h1 class="max-[1000px]:text-[15vw]">
+            Blog<span class="text-[--orange]">ii</span>
+        </h1>
+        <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
+            Qual será o título da sua próxima ideia?
+        </h2>
+        <TitleInput />
+        <div
+            id="blogsCreated"
+            class={`hidden w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
+        >
+            <h3 class="mb-4 text-lg font-bold text-orange-500">
+                Blogs Criados:
+            </h3>
+            <ul class="space-y-2">
+                <!--   {
+                    blogs.map((blog) => (
+                        <li class="flex items-center justify-center space-x-2">
+                            <span class="text-orange-400">&rarr;</span>
+                            <a
+                                href={`/blog/${sanitizeString(blog.title, false)}`}
+                                class="text-gray-900 dark:text-white hover:text-orange-300 transition-colors duration-200"
+                            >
+                                {sanitizeString(blog.title)}
+                            </a>
+                        </li>
+                    ))
+                } -->
+            </ul>
+        </div>
+    </div>
+</section>
+
+<script>
+    import { generateNumericId, sanitizeString } from "@lib/utils";
+    import type { BlogData } from "@lib/types";
+    const lang = window.location.pathname.split("/")[1] || "pt";
+
+    document.addEventListener("astro:page-load", async () => {
+        const ui = {
+            blogsCreated: document.getElementById(
+                "blogsCreated",
+            ) as HTMLElement,
+            navbar: document.getElementById("navbar") as HTMLElement,
+            toggleDarkMode: document.getElementById("toggle-darkmode") as any,
+            title: document.getElementById("blog-title") as HTMLInputElement,
+            errorTitle: document.getElementById("errorInput") as HTMLElement,
+            button: document.getElementById(
+                "confirm-title",
+            ) as HTMLButtonElement,
+            panelAfter: document.querySelector(".panel-after") as HTMLElement,
+            blogLink: document.getElementById("id_blogs") as HTMLAnchorElement,
+        };
+
+        let blogData = JSON.parse(sessionStorage.getItem("blogData") || "{}");
+        //const ipUser = await getIP();
+
+        //const dataBlog = await getBlogData(ipUser);
+
+        // Initialize the application
+        initialize();
+
+        // Inicializa o link do blog e o evento do input
+        async function initialize() {
+            //verify if has blogs in "content"
+            const hasBlogs = await getBlogs(blogData);
+
+            //show blogs in the blogsCreated
+            if (hasBlogs.length > 0) showBlogs(hasBlogs);
+
+            //updateBlogLink();
+            handleInput();
+        }
+
+        function showBlogs(blogs: BlogData[]) {
+            blogs.forEach((blog) => {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-center space-x-2";
+                li.innerHTML = `
+                        <li class="flex items-center justify-center space-x-2">
+                            <span class="text-orange-400">&rarr;</span>
+                            <a
+                                href='/${lang}/blog/temp?id=${blog.id}&title=${sanitizeString(blog.title, 1)}'
+                                class="text-gray-900 dark:text-white hover:text-orange-300 transition-colors duration-200"
+                            >
+                                ${blog.title}
+                            </a>
+                        </li>
+                `;
+                ui.blogsCreated.appendChild(li);
+            });
+        }
+
+        // Função para lidar com a entrada do título do blog
+        function handleInput() {
+            // Adiciona o listener de evento apenas uma vez
+            ui.title?.addEventListener("input", () => {
+                // Verifica se já existe um blog ativo
+                if (blogData.title) {
+                    ui.button.disabled = true;
+                    if (ui.title.value.trim()) {
+                        // Exibe a mensagem de aviso
+                        ui.errorTitle.innerHTML = `
+                            Já tem um blog ativo. 
+                            <button id="modalLogin" class="link" data-modal-target="login" data-modal-toggle="login">
+                                Inicie sessão
+                            </button>
+                            ou 
+                            <button id="modalRegister" class="link" data-modal-target="register" data-modal-toggle="register">
+                                Crie uma conta
+                            </button>
+                        `;
+                        // Inicializa os botões do modal
+                        initializeModalButton("modalLogin", "login");
+                        initializeModalButton("modalRegister", "register");
+                    } else {
+                        // Limpa a mensagem de erro se o input estiver vazio
+                        ui.errorTitle.innerHTML = "";
+                    }
+                } else {
+                    // Ativa o botão caso o input tenha mais de 3 caracteres
+                    ui.button.disabled = ui.title.value.trim().length < 3;
+                    ui.title.addEventListener("keydown", (event) => {
+                        if (
+                            event.key === "Enter" &&
+                            ui.title.value.trim().length >= 3
+                        ) {
+                            startBlog();
+                            ui.title.value = "";
+                        }
+                    });
+                }
+            });
+        }
+
+        // Função para inicializar os botões do modal
+        function initializeModalButton(buttonId: string, modalId: string) {
+            const button = document.getElementById(buttonId) as HTMLElement;
+            const modalElement = document.getElementById(modalId);
+            if (button && modalElement) {
+                const modal = new Modal(modalElement);
+                button.addEventListener("click", () => modal.show());
+            }
+        }
+
+        // Função para iniciar o blog e redirecionar quando estiver pronto
+        async function startBlog() {
+            //const inputValue = ui.input.value.trim().replace(/\s+/g, "-");
+            const inputValue = sanitizeString(ui.title.value);
+
+            const BlogData = {
+                id: generateNumericId(),
+                title: inputValue,
+                content: "",
+                author: "",
+            };
+
+            sessionStorage.setItem("blogData", JSON.stringify(BlogData));
+
+            const blogURL = `/${lang}/blog/temp?id=${BlogData.id}&title=${sanitizeString(BlogData.title, 1)}`;
+            window.location.href = blogURL;
+
+            /* if (await sendBlogData(BlogData)) {
+
+            try {
+                const blogURL = `/blog/temp?id=${BlogData.id}&title=${sanitizeString(BlogData.title, 1)}`;
+                let attempts = 0;
+                const maxAttempts = 10;
+                const delay = 500; // Em milissegundos
+
+                while (attempts < maxAttempts) {
+                    attempts++;
+                    const response = await fetch(blogURL);
+
+                    if (response.status === 200) {
+                        console.log("Blog disponível. Redirecionando...");
+                        window.location.href = blogURL;
+                        return; // Sai do loop após redirecionar
+                    }
+
+                    // Aguarda antes da próxima tentativa
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                }
+
+                console.warn(
+                    `Máximo de tentativas (${maxAttempts}) atingido. Recarregando a página...`,
+                );
+                location.reload(); // Recarrega a página após exceder as tentativas
+            } catch (error) {
+                console.error("Erro ao tentar acessar o blog:", error);
+            }
+
+            } */
+        }
+
+        let isSubmitting = false;
+
+        // Função para enviar dados ao servidor
+        async function sendBlogData(data: BlogData): Promise<boolean> {
+            if (isSubmitting) return false;
+
+            if (!data.title) {
+                console.error("Título do blog não fornecido.");
+                return false;
+            }
+
+            isSubmitting = true;
+
+            try {
+                const response = await fetch("/api/save-blog-data", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    console.error(
+                        `Erro ao enviar dados do blog: ${response.statusText} (status: ${response.status})`,
+                    );
+                    return false;
+                }
+
+                return true;
+            } catch (error) {
+                console.error("Erro ao enviar dados do blog:", error);
+                return false;
+            } finally {
+                isSubmitting = false; // Libera para novas requisições
+            }
+        }
+
+        //if session não tem o blogData, procura um que tenha dados com o mesmo ip atual
+        async function getBlogs(ip: string) {
+            try {
+                const response = await fetch("/api/get-data-temp", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ ip }), // Enviar o IP na requisição
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na API: ${response.status}`);
+                }
+
+                const data = await response.json(); // Garante que obténs os dados
+                return data || {}; // Retorna um objeto vazio se não houver dados
+            } catch (error: any) {
+                console.error("Erro ao obter dados:", error.message);
+                return {}; // Retorna um objeto vazio em caso de erro
+            }
+        }
+
+        // Torna a função acessível globalmente
+        (window as any).startBlog = startBlog;
+    });
+</script>
