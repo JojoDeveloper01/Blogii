@@ -1,23 +1,26 @@
 import { component$, $, useSignal } from "@builder.io/qwik";
+import type { BlogData } from "@lib/types";
 import { generateNumericId, sanitizeString } from "@lib/utils";
+import { actions } from "astro:actions";
 
 interface TitleInputProps {
-	title: any;
+	title: string;
 	handleInput: any;
-	startBlog: any;
 	disableButton: any;
+	lang: string;
 }
 
-export const TitleInput = component$(({ title, handleInput, disableButton }: TitleInputProps) => {
+export const TitleInput = component$(({ title, handleInput, disableButton, lang }: TitleInputProps) => {
 
 	// ✅ Função para armazenar os dados do blog no sessionStorage
-	const saveBlogToSession = (blogData: { id: string; title: string }) => {
-		sessionStorage.setItem("blogData", JSON.stringify(blogData));
+	const saveBlogToSession = (blogData: BlogData) => {
+		//sessionStorage.setItem("blogData", JSON.stringify(blogData));
+
 	};
 
 	// ✅ Função para construir a URL do blog
 	const buildBlogURL = (id: string, title: string) => {
-		return `/blog/temp?id=${id}&title=${sanitizeString(title, 1)}`;
+		return `${lang}/blog/temp?id=${id}&title=${sanitizeString(title, 1)}`;
 	};
 
 	// ✅ Função para verificar se o blog está disponível
@@ -55,6 +58,12 @@ export const TitleInput = component$(({ title, handleInput, disableButton }: Tit
 		const blogData = {
 			id: generateNumericId(),
 			title: sanitizedTitle,
+			collection: "blog",
+			data: {
+				title: sanitizedTitle,
+				description: "",
+				pubDate: new Date(),
+			},
 		};
 
 		saveBlogToSession(blogData);
@@ -64,18 +73,33 @@ export const TitleInput = component$(({ title, handleInput, disableButton }: Tit
 		window.location.href = blogURL;
 
 		// ✅ Envia os dados do blog e verifica disponibilidade
-		if (await sendBlogData(blogData)) {
+		const isDataSent = await sendBlogData(blogData);
+		if (isDataSent) {
 			const isAvailable = await checkBlogAvailability(blogURL);
 			if (!isAvailable) location.reload();
 		}
 	});
 
-	const sendBlogData = async (blogData: { id: string; title: string }) => {
-		/* const response = await fetch("/api/create-blog", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(blogData),
-		}); */
+	const sendBlogData = async (blogData: BlogData) => {
+		try {
+			// ✅ Envia os dados do blog
+			const { data, error } = await actions.sendBlogData(
+				{
+					id: blogData.id,
+					collection: blogData.collection,
+					data: blogData.data,
+				});
+			if (error) {
+				console.error("Erro ao enviar dados do blog:", error);
+				return false;
+			}
+
+			return true;
+		}
+		catch (error) {
+			console.error("Erro ao enviar dados do blog:", error);
+			return false;
+		}
 	}
 
 	return (

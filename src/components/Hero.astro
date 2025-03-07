@@ -26,7 +26,7 @@ const { lang } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <BlogTitleForm />
+        <BlogTitleForm {lang} />
 
         {
             blogs && (

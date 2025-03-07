@@ -2,14 +2,15 @@ import { component$, useSignal, useResource$, $, Resource } from "@builder.io/qw
 import { getCollection } from "astro:content";
 import { TitleInput } from "./TitleInput";
 import { ErrorMessage } from "./ErrorMessage";
+import type { BlogData } from "@lib/types";
 
-export const BlogTitleForm = component$(() => {
+export const BlogTitleForm = component$((lang: any) => {
     const title = useSignal("");
     const showError = useSignal(false);
     const disableButton = useSignal(false);
 
     // Carregar os blogs usando useResource$
-    const blogData = useResource$<any[]>(async () => {
+    const blogData = useResource$<BlogData[]>(async () => {
         return await getCollection("blog");
     });
 
@@ -30,7 +31,7 @@ export const BlogTitleForm = component$(() => {
 
     return (
         <div class="w-3/4 grid gap-2 text-left">
-            <TitleInput {...{ title, handleInput, disableButton }} />
+            <TitleInput {...{ title: title.value, handleInput, disableButton, lang }} />
             <ErrorMessage {...{ showError }} />
 
             {/* ✅ Usa o Resource apenas para garantir que os dados carreguem, sem exibir nada */}
