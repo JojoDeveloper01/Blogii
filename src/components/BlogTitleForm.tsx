@@ -5,34 +5,15 @@ import { ErrorMessage } from "./ErrorMessage";
 import type { BlogData } from "@lib/types";
 
 export const BlogTitleForm = component$((lang: any) => {
-    const title = useSignal("");
-    const showError = useSignal(false);
-    const disableButton = useSignal(false);
 
     // Carregar os blogs usando useResource$
     const blogData = useResource$<BlogData[]>(async () => {
         return await getCollection("blog");
     });
 
-    const handleInput = $(async (event: Event) => {
-        const inputValue = (event.target as HTMLInputElement).value.trim();
-        title.value = inputValue;
-
-        // Esperar a resolução dos blogs antes de verificar a existência do título
-        const blogs = await blogData.value;
-        if (blogs?.some(blog => blog.data.title === inputValue)) {
-            disableButton.value = true;
-            showError.value = true;
-        } else {
-            disableButton.value = inputValue.length < 3;
-            showError.value = false;
-        }
-    });
-
     return (
         <div class="w-3/4 grid gap-2 text-left">
-            <TitleInput {...{ title: title.value, handleInput, disableButton, lang }} />
-            <ErrorMessage {...{ showError }} />
+            <TitleInput {...{ lang }} />
 
             {/* ✅ Usa o Resource apenas para garantir que os dados carreguem, sem exibir nada */}
             <Resource

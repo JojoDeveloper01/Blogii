@@ -1,24 +1,25 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import type { BlogData } from "@lib/types";
+
+const baseBlogData = z.object({
+    id: z.string().optional(),
+    collection: z.string(),
+    body: z.string().optional(),
+    data: z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        image: z.string().optional(),
+        pubDate: z.date(),
+    }),
+})
 
 export const server = {
     sendBlogData: defineAction({
-        input: z.object({
-            id: z.string(),
-            title: z.string(),
-            collection: z.string(),
-            data: z.object({
-                title: z.string(),
-                description: z.string(),
-                pubDate: z.date(),
-                image: z.string().optional(),
-            }),
-        }),
-        handler: async ({ id, title, collection, data }) => {
+        input: baseBlogData,
+        handler: async ({ id, body, collection, data }) => {
             try {
 
-                console.log("Enviando dados do blog:", { id, title, collection, data });
+                console.log("Enviando dados do blog:", { id, collection, body, data });
                 // ✅ Envia os dados do blog
                 // ✅ Verifica se o título já existe
 
