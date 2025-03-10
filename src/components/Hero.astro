@@ -1,11 +1,13 @@
 ---
 import { sanitizeString } from "@lib/utils";
 import { getCollection } from "astro:content";
-import { BlogTitleForm } from "./BlogTitleForm";
+import { TitleInput } from "./TitleInput";
+import type { BlogData } from "@lib/types";
 
-const blogs = await getCollection("blog");
+const blogsData: BlogData[] = await getCollection("blog");
 
 //console.log("blogs: ", blogs);
+
 
 const { lang } = Astro.props;
 ---
@@ -26,10 +28,9 @@ const { lang } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <BlogTitleForm />
-
+        <TitleInput {blogsData} />
         {
-            blogs && (
+            blogsData && (
                 <div
                     id="blogsCreated"
                     class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
@@ -38,7 +39,7 @@ const { lang } = Astro.props;
                         Blogs Criados:
                     </h3>
                     <ul class="space-y-2">
-                        {blogs.map((blog) => (
+                        {blogsData.map((blog) => (
                             <li class="flex items-center justify-center space-x-2">
                                 <span class="text-orange-400">&rarr;</span>
                                 <a

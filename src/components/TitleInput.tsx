@@ -1,11 +1,12 @@
-import { component$, $, useSignal, useResource$ } from "@builder.io/qwik";
+import { component$, $, useSignal, useResource$, Resource } from "@builder.io/qwik";
 import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
-import { getCollection } from "astro:content";
 import { ErrorMessage } from "./ErrorMessage";
 
-export const TitleInput = component$(() => {
+export const TitleInput = component$((blogsData: BlogData[]) => {
+	console.log("blogs: ", blogsData)
+
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const disableButton = useSignal(false);
@@ -30,7 +31,7 @@ export const TitleInput = component$(() => {
 		}
 	});
 
-	// Função principal para iniciar o blog
+	// Função principal para iniciar o blog 
 	const startBlog = $(async () => {
 		if (!title.value.trim()) {
 			console.warn("Título inválido!");
@@ -82,8 +83,8 @@ export const TitleInput = component$(() => {
 		title.value = inputValue;
 
 		// Espera a resolução dos blogs antes de verificar a existência do título
-		const blogs = await getBlogData();
-		if (blogs?.some((blog) => blog.data.title === inputValue)) {
+
+		if (blogs?.some((b: BlogData) => b.data.title === inputValue)) {
 			disableButton.value = true;
 			showError.value = true;
 		} else {
@@ -93,35 +94,37 @@ export const TitleInput = component$(() => {
 	});
 
 	return (
-		<label
-			for="title-start"
-			class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl"
-		>
-			<input
-				name="title-start"
-				type="text"
-				id="blog-title"
-				class="w-full px-4 py-2 bg-transparent rounded-xl text-[1vw] max-phone:text-[3vw]"
-				placeholder="Start your idea here..."
-				aria-label="Input para título do blog"
-				value={title.value}
-				onInput$={handleInput}
-				onKeyDown$={(event) => {
-					if (event.key === "Enter" && title.value.trim().length >= 3) {
-						startBlog();
-					}
-				}}
-			/>
-			<ErrorMessage {...{ showError }} />
-			<button
-				type="button"
-				id="confirm-title"
-				class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 bg-[--text-color] text-[--bg-color] hover:text-[--orange]"
-				onClick$={() => startBlog()}
-				disabled={disableButton.value}
+		<div class="w-3/4 grid gap-2 text-left">
+			<label
+				for="title-start"
+				class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl"
 			>
-				<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
-			</button>
-		</label>
+				<input
+					name="title-start"
+					type="text"
+					id="blog-title"
+					class="w-full px-4 py-2 bg-transparent rounded-xl text-[1vw] max-phone:text-[3vw]"
+					placeholder="Start your idea here..."
+					aria-label="Input para título do blog"
+					value={title.value}
+					onInput$={handleInput}
+					onKeyDown$={(event) => {
+						if (event.key === "Enter" && title.value.trim().length >= 3) {
+							startBlog();
+						}
+					}}
+				/>
+				<ErrorMessage {...{ showError }} />
+				<button
+					type="button"
+					id="confirm-title"
+					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 bg-[--text-color] text-[--bg-color] hover:text-[--orange]"
+					onClick$={() => startBlog()}
+					disabled={disableButton.value}
+				>
+					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
+				</button>
+			</label>
+		</div>
 	);
 });
