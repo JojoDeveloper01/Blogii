@@ -4,16 +4,20 @@ import BlogPost from "@layouts/BlogPost.astro";
 import { render } from "astro:content";
 
 const { slug } = Astro.params;
-const posts = await getCollection("blog");
-const post = posts.find((p) => p.id === slug);
 
-if (!post) {
-	throw new Error("Post não encontrado!");
+const blogs = await getCollection("blog");
+
+const blog = blogs.find((b) => b.id === slug);
+
+//console.log("blog: ", blog?.id);
+
+if (!blog) {
+	return Astro.redirect("/404");
 }
 
-const { Content } = await render(post);
+const { Content } = await render(blog);
 ---
 
-<BlogPost {...post.data}>
+<BlogPost {...blog.data}>
 	<Content />
 </BlogPost>

@@ -5,6 +5,7 @@ export interface BlogData {
 	data: {
 		title: string;
 		pubDate: Date;
+		updatedDate?: Date,
 		description?: string;
 		image?: string;
 	};

@@ -6,15 +6,17 @@ import LoginRegister from "@components/LoginRegister.astro";
 
 interface Props {
     title: string;
-    description: string;
+    description?: string;
     lang: string;
 }
 
 const { title, description, lang } = Astro.props;
+
+const des = description || "A blog";
 ---
 
-<html lang={lang}>
-    <Head {title} {description} />
+<html {lang}>
+    <Head {title} description={des} />
     <body>
         <LoginRegister />
         <Header {lang} />

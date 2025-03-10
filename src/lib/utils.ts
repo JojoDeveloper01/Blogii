@@ -25,6 +25,14 @@ export const sanitizeString = (string: string, option = 0) => {
 	return sanitized.toLowerCase();
 };
 
+export function formatDate(date: Date): string {
+	return date.toLocaleDateString("en-US", {
+		year: 'numeric',
+		month: 'short',
+		day: '2-digit',
+	});
+}
+
 export function generateNumericId() {
 	const timestamp = Date.now();
 	const randomNum = Math.floor(Math.random() * 1000);

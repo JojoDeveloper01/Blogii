@@ -1,0 +1,28 @@
+---
+import BlogPost from "@layouts/BlogPost.astro";
+import { render } from "astro:content";
+
+const slug = Astro.url.searchParams.get("id");
+
+let data;
+
+if (Astro.cookies.has("temp")) {
+    const getCookie = Astro.cookies.get("temp");
+    data = JSON.parse(getCookie?.value || "[]").data;
+    data.pubDate = new Date(data.pubDate);
+}
+
+const blog = data.title === slug ? data : null;
+
+if (!blog) {
+    return Astro.redirect("/404");
+}
+
+console.log("blog: ", blog);
+
+const { Content } = await render(blog);
+---
+
+<BlogPost {...blog}>
+    <Content />
+</BlogPost>

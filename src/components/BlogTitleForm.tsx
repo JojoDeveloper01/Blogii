@@ -1,11 +1,9 @@
-import { component$, useSignal, useResource$, $, Resource } from "@builder.io/qwik";
+import { component$, useResource$, $, Resource } from "@builder.io/qwik";
 import { getCollection } from "astro:content";
 import { TitleInput } from "./TitleInput";
-import { ErrorMessage } from "./ErrorMessage";
 import type { BlogData } from "@lib/types";
 
-export const BlogTitleForm = component$((lang: any) => {
-
+export const BlogTitleForm = component$(() => {
     // Carregar os blogs usando useResource$
     const blogData = useResource$<BlogData[]>(async () => {
         return await getCollection("blog");
@@ -13,7 +11,7 @@ export const BlogTitleForm = component$((lang: any) => {
 
     return (
         <div class="w-3/4 grid gap-2 text-left">
-            <TitleInput {...{ lang }} />
+            <TitleInput />
 
             {/* ✅ Usa o Resource apenas para garantir que os dados carreguem, sem exibir nada */}
             <Resource

@@ -5,52 +5,18 @@ import { actions } from "astro:actions";
 import { getCollection } from "astro:content";
 import { ErrorMessage } from "./ErrorMessage";
 
-export const TitleInput = component$((props: { lang: any }) => {
-	const { lang } = props;
+export const TitleInput = component$(() => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const disableButton = useSignal(false);
 
-	// ✅ Função para armazenar os dados do blog no sessionStorage
-	const saveBlogToSession = (blogData: BlogData) => {
-		sessionStorage.setItem("blogData", JSON.stringify(blogData));
-	};
+	// Função para construir a URL do blog
+	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
 
-	// ✅ Função para construir a URL do blog
-	const buildBlogURL = (title: string) => `${lang}/blog/${sanitizeString(title, 1)}`;
-
-	// ✅ Função para verificar se o blog está disponível
-	const checkBlogAvailability = async (blogURL: string, maxAttempts = 10, delay = 500) => {
-		let attempts = 0;
-
-		while (attempts < maxAttempts) {
-			attempts++;
-			try {
-				const response = await fetch(blogURL);
-				if (response.status === 200) {
-					console.log("Blog disponível. Redirecionando...");
-					return true;
-				}
-			} catch (error) {
-				console.error("Erro ao verificar o blog:", error);
-			}
-
-			await new Promise((resolve) => setTimeout(resolve, delay));
-		}
-
-		console.warn(`Máximo de tentativas (${maxAttempts}) atingido.`);
-		return false;
-	};
-
-	// ✅ Função para enviar os dados do blog
-	const sendBlogData = async (blogData: BlogData) => {
+	// Função para enviar os dados do blog
+	const sendBlogData = $(async (blogData: BlogData) => {
 		try {
-			const { error } = await actions.sendBlogData({
-				id: blogData.id,
-				body: blogData.body,
-				collection: blogData.collection,
-				data: blogData.data,
-			});
+			const { error } = await actions.sendBlogData(blogData);
 
 			if (error) {
 				console.error("Erro ao enviar dados do blog:", error);
@@ -62,9 +28,9 @@ export const TitleInput = component$((props: { lang: any }) => {
 			console.error("Erro ao enviar dados do blog:", error);
 			return false;
 		}
-	};
+	});
 
-	// ✅ Função principal para iniciar o blog
+	// Função principal para iniciar o blog
 	const startBlog = $(async () => {
 		if (!title.value.trim()) {
 			console.warn("Título inválido!");
@@ -73,7 +39,6 @@ export const TitleInput = component$((props: { lang: any }) => {
 
 		const sanitizedTitle = sanitizeString(title.value);
 		const blogData: BlogData = {
-			id: String(Date.now()), // Gera um ID simples (ou use uma função própria)
 			collection: "blog",
 			data: {
 				title: sanitizedTitle,
@@ -81,38 +46,44 @@ export const TitleInput = component$((props: { lang: any }) => {
 			},
 		};
 
-		saveBlogToSession(blogData);
-		const blogURL = buildBlogURL(sanitizedTitle);
+		// Store the blog data in a cookie
+		document.cookie = `temp=${JSON.stringify(blogData)}; path=/;`;
 
-		// ✅ Redireciona imediatamente
-		window.location.href = blogURL;
+		const blogURL = await buildBlogURL(sanitizedTitle);
+		/* const isDataSent = await sendBlogData(blogData); */
 
-		// ✅ Envia os dados do blog e verifica disponibilidade
-		const isDataSent = await sendBlogData(blogData);
-		if (isDataSent) {
-			const isAvailable = await checkBlogAvailability(blogURL);
-			if (!isAvailable) location.reload();
-		}
+		/* const s = await getBlogData(); */
+
+		/* if (isDataSent) { */
+		// Pequena pausa para garantir que o arquivo foi criado
+		//await new Promise((resolve) => setTimeout(resolve, 100));
+		window.location.href = `${blogURL}`;
+		//}
 	});
 
-	// ✅ Busca os blogs disponíveis (com `try/catch` para evitar erros)
-	const blogData = useResource$<BlogData[]>(async () => {
+	// Busca os blogs disponíveis (com `try/catch` para evitar erros)
+	const getBlogData = $(async () => {
 		try {
-			return await getCollection("blog");
+			const { error, data } = await actions.cleanCache({ a: "a" });
+			/* console.log("📂 Blogs disponíveis:", data?.blogs);
+			alert("Blog criado com sucesso! 4"); */
+			if (error) throw new Error("Erro ao buscar blogs");
+
+			return data.blogs;
 		} catch (error) {
-			console.error("Erro ao buscar blogs:", error);
+			console.error("❌ Erro ao buscar blogs:", error);
 			return [];
 		}
 	});
 
-	// ✅ Manipula a entrada do usuário
+	// Manipula a entrada do usuário
 	const handleInput = $(async (event: Event) => {
 		const inputValue = (event.target as HTMLInputElement).value.trim();
 		title.value = inputValue;
 
 		// Espera a resolução dos blogs antes de verificar a existência do título
-		const blogs = await blogData.value;
-		if (blogs?.some(blog => blog.data.title === inputValue)) {
+		const blogs = await getBlogData();
+		if (blogs?.some((blog) => blog.data.title === inputValue)) {
 			disableButton.value = true;
 			showError.value = true;
 		} else {
