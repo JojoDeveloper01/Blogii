@@ -3,15 +3,17 @@ import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
 import { ErrorMessage } from "./ErrorMessage";
+import { AskAuthentication } from "./AskAuthentication";
 
 interface TitleInputProps {
 	blogsData: BlogData[]
 	isAuthorized: boolean
 }
 
-export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputProps) => {
+export const TitleInput = component$(({ blogsData, authorization }: TitleInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
+	const message = useSignal("");
 	const disableButton = useSignal(true);
 
 	const blogs = { blogsData }.blogsData
@@ -41,6 +43,20 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		const urlTitle = sanitizeString(title.value, 1);
 		const sanitizedTitle = sanitizeString(title.value);
 
+		// Verifica se o título tem pelo menos 3 caracteres
+		if (sanitizedTitle.length < 3) {
+			showError.value = true;
+			message.value = "The title must be at least 3 characters long.";
+			return;
+		}
+
+		// Verifica se o título contém caracteres estranhos
+		if (!/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
+			showError.value = true;
+			message.value = "The title contains invalid characters.";
+			return;
+		}
+
 		console.log(sanitizedTitle)
 
 		const blogData: BlogData = {
@@ -55,7 +71,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 
 		alert(urlTitle + ": -- :" + sanitizedTitle)
 		// Store the blog data in a cookie
-		document.cookie = `temp=${JSON.stringify(blogData)}; path=/;`;
+		document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
 
 		const blogURL = await buildBlogURL(urlTitle);
 		/* const isDataSent = await sendBlogData(blogData); */
@@ -69,18 +85,10 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		// }
 	});
 
-	// Busca os blogs disponíveis (com `try/catch` para evitar erros)
-	const getBlogData = $(async () => {
-		try {
-			const { error, data } = await actions.cleanCache({ a: "a" });
-			/* console.log("📂 Blogs disponíveis:", data?.blogs);
-			alert("Blog criado com sucesso! 4"); */
-			if (error) throw new Error("Erro ao buscar blogs");
-
-			return data.blogs;
-		} catch (error) {
-			console.error("❌ Erro ao buscar blogs:", error);
-			return [];
+	const handleBeforeInput = $((event: InputEvent) => {
+		const input = event.data;
+		if (input && !/^[\p{L}\s]+$/u.test(input)) {
+			event.preventDefault();
 		}
 	});
 
@@ -139,8 +147,9 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					value={title.value}
 					onInput$={handleInput}
 					onKeyDown$={handleKeyDown}
+					onBeforeInput$={handleBeforeInput} // Bloqueia caracteres proibidos
 				/>
-				<ErrorMessage {...{ showError }} />
+				<ErrorMessage {...{ showError, message: message.value }} />
 				<button
 					type="button"
 					id="confirm-title"
@@ -151,6 +160,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
 				</button>
 			</label>
+			{authorization && (<AskAuthentication />)}
 		</div>
 	);
 });

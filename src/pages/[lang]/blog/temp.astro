@@ -9,12 +9,15 @@ let data;
 
 if (Astro.cookies.has("temp")) {
     const getCookie = Astro.cookies.get("temp");
-    data = JSON.parse(getCookie?.value || "[]").data;
+    // Decodificar o cookie corretamente
+    data = JSON.parse(decodeURIComponent(getCookie?.value || "[]")).data;
     data.pubDate = new Date(data.pubDate);
 }
 
+console.log("data.title: ", data.title);
+
 const sanitizedTitle = sanitizeString(String(data.title), 1);
-//console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
+console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
 
 const blog = sanitizedTitle === slug ? data : null;
 
