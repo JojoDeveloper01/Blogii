@@ -16,8 +16,6 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 
 	const blogs = { blogsData }.blogsData
 
-	//console.log("blogsData: ", blogs)
-
 	// Função para construir a URL do blog
 	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
 
@@ -68,7 +66,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		// Pequena pausa para garantir que o arquivo foi criado
 		//await new Promise((resolve) => setTimeout(resolve, 100));
 		window.location.href = `${blogURL}`;
-		//}
+		// }
 	});
 
 	// Busca os blogs disponíveis (com `try/catch` para evitar erros)
@@ -86,18 +84,42 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		}
 	});
 
-	// Manipula a entrada do usuário
-	const handleInput = $(async (event: Event) => {
-		const inputValue = (event.target as HTMLInputElement).value.trim();
-		title.value = inputValue
+	// Função combinada para processar input e tecla Enter
+	const processInput = $(async (inputValue: string) => {
+		title.value = inputValue.trim();
 
-		// Espera a resolução dos blogs antes de verificar a existência do título
-
-		if (blogs.length > 0 && isAuthorized === false) {
+		// Verifica o comprimento do título
+		if (title.value.length < 3) {
 			disableButton.value = true;
+			showError.value = false;
+			return false; // Retorna falso se o título for muito curto
+		}
+
+		// Verifica se o blog já existe e se o usuário está autorizado
+		if (blogs.length > 0 && isAuthorized === false) {
 			showError.value = true;
+			disableButton.value = true;
+			return false; // Retorna falso se houver erro
 		} else {
+			showError.value = false;
 			disableButton.value = false;
+			return true; // Retorna verdadeiro se tudo estiver OK
+		}
+	});
+
+	// Função para lidar com o evento de input
+	const handleInput = $(async (event: Event) => {
+		const inputValue = (event.target as HTMLInputElement).value;
+		await processInput(inputValue);
+	});
+
+	// Função para lidar com o evento de tecla pressionada
+	const handleKeyDown = $(async (event: KeyboardEvent) => {
+		if (event.key === "Enter") {
+			const isValid = await processInput(title.value);
+			if (isValid) {
+				startBlog();
+			}
 		}
 	});
 
@@ -116,11 +138,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					aria-label="Input para título do blog"
 					value={title.value}
 					onInput$={handleInput}
-					onKeyDown$={(event) => {
-						if (event.key === "Enter" && title.value.length >= 3) {
-							startBlog();
-						}
-					}}
+					onKeyDown$={handleKeyDown}
 				/>
 				<ErrorMessage {...{ showError }} />
 				<button

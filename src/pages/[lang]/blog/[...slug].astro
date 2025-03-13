@@ -9,7 +9,7 @@ const blogs = await getCollection("blog");
 
 const blog = blogs.find((b) => b.id === slug);
 
-//console.log("blog: ", blog?.id);
+console.log("blog: ", blog);
 
 if (!blog) {
 	return Astro.redirect("/404");
