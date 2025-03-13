@@ -5,10 +5,12 @@ import { getLangFromUrl } from "@i18n/utils";
 import Hero from "@components/Hero.astro";
 
 const lang = getLangFromUrl(Astro.url);
+
+const isAuthorized = false;
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-	<Hero {lang} />
+	<Hero {lang} {isAuthorized} />
 
 	<p>
 		Welcome to the official <a href="https://astro.build/">Astro</a>

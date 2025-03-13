@@ -11,6 +11,42 @@ const lang = getLangFromUrl(Astro.url);
 const { title, description, pubDate, updatedDate, image } = Astro.props;
 ---
 
+<Layout {title} {description} {lang}>
+	<article>
+		<div class="hero-image">
+			{
+				image && (
+					<img
+						transition:name={title}
+						width={1020}
+						height={510}
+						src={image}
+						alt=""
+					/>
+				)
+			}
+		</div>
+		<div class="prose">
+			<div class="title">
+				<div class="date">
+					<FormattedDate date={pubDate} />
+					{
+						updatedDate && (
+							<div class="last-updated-on">
+								Last updated on{" "}
+								<FormattedDate date={updatedDate} />
+							</div>
+						)
+					}
+				</div>
+				<h1>{title}</h1>
+				<hr />
+			</div>
+			<slot />
+		</div>
+	</article>
+</Layout>
+
 <style>
 	main {
 		width: calc(100% - 2em);
@@ -50,39 +86,3 @@ const { title, description, pubDate, updatedDate, image } = Astro.props;
 		font-style: italic;
 	}
 </style>
-
-<Layout {title} {description} {lang}>
-	<article>
-		<div class="hero-image">
-			{
-				image && (
-					<img
-						transition:name={title}
-						width={1020}
-						height={510}
-						src={image}
-						alt=""
-					/>
-				)
-			}
-		</div>
-		<div class="prose">
-			<div class="title">
-				<div class="date">
-					<FormattedDate date={pubDate} />
-					{
-						updatedDate && (
-							<div class="last-updated-on">
-								Last updated on{" "}
-								<FormattedDate date={updatedDate} />
-							</div>
-						)
-					}
-				</div>
-				<h1>{title}</h1>
-				<hr />
-			</div>
-			<slot />
-		</div>
-	</article>
-</Layout>

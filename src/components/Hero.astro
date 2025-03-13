@@ -8,8 +8,7 @@ const blogsData: BlogData[] = await getCollection("blog");
 
 //console.log("blogs: ", blogs);
 
-
-const { lang } = Astro.props;
+const { lang, isAuthorized } = Astro.props;
 ---
 
 <section
@@ -28,9 +27,9 @@ const { lang } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <TitleInput {blogsData} />
+        <TitleInput {blogsData} {isAuthorized} />
         {
-            blogsData && (
+            blogsData.length !== 0 && (
                 <div
                     id="blogsCreated"
                     class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}

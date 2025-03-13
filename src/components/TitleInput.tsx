@@ -4,12 +4,19 @@ import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
 import { ErrorMessage } from "./ErrorMessage";
 
-export const TitleInput = component$((blogsData: BlogData[]) => {
+interface TitleInputProps {
+	blogsData: BlogData[]
+	isAuthorized: boolean
+}
+
+export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const disableButton = useSignal(true);
 
-	const blogs = blogsData
+	const blogs = { blogsData }.blogsData
+
+	//console.log("blogsData: ", blogs)
 
 	// Função para construir a URL do blog
 	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
@@ -33,9 +40,11 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 
 	// Função principal para iniciar o blog 
 	const startBlog = $(async () => {
-		const sanitizedTitle = sanitizeString(title.value, 1);
+		const urlTitle = sanitizeString(title.value, 1);
+		const sanitizedTitle = sanitizeString(title.value);
+
 		console.log(sanitizedTitle)
-		alert(sanitizedTitle)
+
 		const blogData: BlogData = {
 			collection: "blog",
 			data: {
@@ -44,10 +53,13 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 			},
 		};
 
+		console.log(blogData.data)
+
+		alert(urlTitle + ": -- :" + sanitizedTitle)
 		// Store the blog data in a cookie
 		document.cookie = `temp=${JSON.stringify(blogData)}; path=/;`;
 
-		const blogURL = await buildBlogURL(sanitizedTitle);
+		const blogURL = await buildBlogURL(urlTitle);
 		/* const isDataSent = await sendBlogData(blogData); */
 
 		/* const s = await getBlogData(); */
@@ -81,8 +93,7 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 
 		// Espera a resolução dos blogs antes de verificar a existência do título
 
-		if (blogs.length > 0) {
-			console.log("blogs: ", blogs)
+		if (blogs.length > 0 && isAuthorized === false) {
 			disableButton.value = true;
 			showError.value = true;
 		} else {

@@ -1,5 +1,6 @@
 ---
 import BlogPost from "@layouts/BlogPost.astro";
+import { sanitizeString } from "@lib/utils";
 import { render } from "astro:content";
 
 const slug = Astro.url.searchParams.get("id");
@@ -12,13 +13,14 @@ if (Astro.cookies.has("temp")) {
     data.pubDate = new Date(data.pubDate);
 }
 
-const blog = data.title === slug ? data : null;
+const sanitizedTitle = sanitizeString(String(data.title), 1);
+//console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
+
+const blog = sanitizedTitle === slug ? data : null;
 
 if (!blog) {
     return Astro.redirect("/404");
 }
-
-//console.log("blog: ", blog);
 
 const { Content } = await render(blog);
 ---
