@@ -5,11 +5,11 @@ import { actions } from "astro:actions";
 import { ErrorMessage } from "./ErrorMessage";
 
 export const TitleInput = component$((blogsData: BlogData[]) => {
-	console.log("blogs: ", blogsData)
-
 	const title = useSignal("");
 	const showError = useSignal(false);
-	const disableButton = useSignal(false);
+	const disableButton = useSignal(true);
+
+	const blogs = blogsData
 
 	// Função para construir a URL do blog
 	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
@@ -33,12 +33,9 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 
 	// Função principal para iniciar o blog 
 	const startBlog = $(async () => {
-		if (!title.value.trim()) {
-			console.warn("Título inválido!");
-			return;
-		}
-
-		const sanitizedTitle = sanitizeString(title.value);
+		const sanitizedTitle = sanitizeString(title.value, 1);
+		console.log(sanitizedTitle)
+		alert(sanitizedTitle)
 		const blogData: BlogData = {
 			collection: "blog",
 			data: {
@@ -80,16 +77,16 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 	// Manipula a entrada do usuário
 	const handleInput = $(async (event: Event) => {
 		const inputValue = (event.target as HTMLInputElement).value.trim();
-		title.value = inputValue;
+		title.value = inputValue
 
 		// Espera a resolução dos blogs antes de verificar a existência do título
 
-		if (blogs?.some((b: BlogData) => b.data.title === inputValue)) {
+		if (blogs.length > 0) {
+			console.log("blogs: ", blogs)
 			disableButton.value = true;
 			showError.value = true;
 		} else {
-			disableButton.value = inputValue.length < 3;
-			showError.value = false;
+			disableButton.value = false;
 		}
 	});
 
@@ -109,7 +106,7 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 					value={title.value}
 					onInput$={handleInput}
 					onKeyDown$={(event) => {
-						if (event.key === "Enter" && title.value.trim().length >= 3) {
+						if (event.key === "Enter" && title.value.length >= 3) {
 							startBlog();
 						}
 					}}
@@ -118,7 +115,7 @@ export const TitleInput = component$((blogsData: BlogData[]) => {
 				<button
 					type="button"
 					id="confirm-title"
-					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 bg-[--text-color] text-[--bg-color] hover:text-[--orange]"
+					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 text-[--bg-color] hover:text-[--orange]"
 					onClick$={() => startBlog()}
 					disabled={disableButton.value}
 				>

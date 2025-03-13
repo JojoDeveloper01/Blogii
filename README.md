@@ -1,4 +1,4 @@
-[] send params in URL to
+[X] send params in URL to
 
 [] Many conflicts occur when clicking to create blog
 [] Too many lines are created when a blog is made

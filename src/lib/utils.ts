@@ -5,19 +5,20 @@ export const sanitizeString = (string: string, option = 0) => {
 	let sanitized = string;
 
 	if (option === 0) {
-		// Opção 1: Texto estranho para normal (sem nenhum caractere especial)
+		// Opção 0: Texto estranho para normal (sem nenhum caractere especial)
 		sanitized = sanitized
 			.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, "") // Remove TODOS os caracteres especiais
 			.replace(/\s+/g, " ") // Substitui múltiplos espaços por um único
 			.trim(); // Remove espaços extras nas extremidades
 	} else if (option === 1) {
-		// Opção 2: URL (espaços transformados em traços)
+		// Opção 1: URL (espaços transformados em traços)
 		sanitized = sanitized
+			.normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
 			.replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, "") // Remove TODOS os caracteres especiais
 			.replace(/\s+/g, "-") // Substitui múltiplos espaços por traços
 			.trim(); // Remove traços extras nas extremidades
 	} else if (option === 2) {
-		// Opção 3: URL para texto
+		// Opção 2: URL para texto
 		sanitized = sanitized.replace(/-+/g, " ").trim();
 	}
 
