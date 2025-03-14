@@ -4,17 +4,19 @@ import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
 import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
+import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
 
 interface TitleInputProps {
 	blogsData: BlogData[]
 	isAuthorized: boolean
 }
 
-export const TitleInput = component$(({ blogsData, authorization }: TitleInputProps) => {
+export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const message = useSignal("");
 	const disableButton = useSignal(true);
+	const messageToLoginOrCreateAccount = useSignal(false)
 
 	const blogs = { blogsData }.blogsData
 
@@ -46,14 +48,14 @@ export const TitleInput = component$(({ blogsData, authorization }: TitleInputPr
 		// Verifica se o título tem pelo menos 3 caracteres
 		if (sanitizedTitle.length < 3) {
 			showError.value = true;
-			message.value = "The title must be at least 3 characters long.";
+			message.value = amountCharactersError
 			return;
 		}
 
 		// Verifica se o título contém caracteres estranhos
 		if (!/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
 			showError.value = true;
-			message.value = "The title contains invalid characters.";
+			message.value = invalidCharactersError;
 			return;
 		}
 
@@ -100,15 +102,21 @@ export const TitleInput = component$(({ blogsData, authorization }: TitleInputPr
 		if (title.value.length < 3) {
 			disableButton.value = true;
 			showError.value = false;
+			message.value = amountCharactersError
 			return false; // Retorna falso se o título for muito curto
 		}
 
 		// Verifica se o blog já existe e se o usuário está autorizado
 		if (blogs.length > 0 && isAuthorized === false) {
 			showError.value = true;
+			message.value = blogAlreadyCreated;
+			messageToLoginOrCreateAccount.value = true
+			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
 			disableButton.value = true;
 			return false; // Retorna falso se houver erro
 		} else {
+			messageToLoginOrCreateAccount.value = false
+			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
 			showError.value = false;
 			disableButton.value = false;
 			return true; // Retorna verdadeiro se tudo estiver OK
@@ -160,7 +168,7 @@ export const TitleInput = component$(({ blogsData, authorization }: TitleInputPr
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
 				</button>
 			</label>
-			{authorization && (<AskAuthentication />)}
+			{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
 		</div>
 	);
 });
