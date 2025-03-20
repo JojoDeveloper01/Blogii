@@ -1,9 +1,11 @@
 ---
+import Editing from "@components/Editing/Editing.astro";
 import BlogPost from "@layouts/BlogPost.astro";
 import { sanitizeString } from "@lib/utils";
 import { render } from "astro:content";
 
 const slug = Astro.url.searchParams.get("id");
+const isEditing = Astro.url.searchParams.get("editing");
 
 const data = Astro.cookies.has("temp")
     ? JSON.parse(decodeURIComponent(Astro.cookies.get("temp")?.value || "[]"))
@@ -23,5 +25,5 @@ const { Content } = await render(blog);
 ---
 
 <BlogPost {...blog}>
-    <Content />
+    {isEditing ? <Editing /> : <Content />}
 </BlogPost>

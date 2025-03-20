@@ -21,7 +21,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 	const blogs = { blogsData }.blogsData
 
 	// Função para construir a URL do blog
-	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
+	const buildTempBlogURL = $((title: string) => `blog/temp?id=${title}&editing=true`);
 
 	// Função para enviar os dados do blog
 	const sendBlogData = $(async (blogData: BlogData) => {
@@ -42,45 +42,31 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 
 	// Função principal para iniciar o blog 
 	const startBlog = $(async () => {
-		const urlTitle = sanitizeString(title.value, 1);
 		const sanitizedTitle = sanitizeString(title.value);
 
-		// Verifica se o título tem pelo menos 3 caracteres
-		if (sanitizedTitle.length < 3) {
+		if (sanitizedTitle.length < 3 || !/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
 			showError.value = true;
-			message.value = amountCharactersError
-			return;
-		}
-
-		// Verifica se o título contém caracteres estranhos
-		if (!/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
-			showError.value = true;
-			message.value = invalidCharactersError;
+			message.value = sanitizedTitle.length < 3 ? amountCharactersError : invalidCharactersError;
 			return;
 		}
 
 		const blogData: BlogData = {
 			collection: "blog",
-			data: {
-				title: sanitizedTitle,
-				pubDate: new Date(),
-			},
+			data: { title: sanitizedTitle, pubDate: new Date() },
 		};
 
-		// Store the blog data in a cookie
-		document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
+		const blogURL = await buildTempBlogURL(sanitizeString(title.value, 1));
 
-		const blogURL = await buildBlogURL(urlTitle);
+		if (!isAuthorized) {
+			document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
+			window.location.href = blogURL;
+			return;
+		}
 
-		/* const isDataSent = await sendBlogData(blogData); */
-
-		/* const s = await getBlogData(); */
-
-		/* if (isDataSent) { */
-		// Pequena pausa para garantir que o arquivo foi criado
-		//await new Promise((resolve) => setTimeout(resolve, 100));
-		window.location.href = `${blogURL}`;
-		// }
+		if (await sendBlogData(blogData)) {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			window.location.href = blogURL;
+		}
 	});
 
 	const handleBeforeInput = $((event: InputEvent) => {
@@ -152,7 +138,6 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					onKeyDown$={handleKeyDown}
 					onBeforeInput$={handleBeforeInput} // Bloqueia caracteres proibidos
 				/>
-				<ErrorMessage {...{ showError, message: message.value }} />
 				<button
 					type="button"
 					id="confirm-title"
@@ -163,7 +148,10 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
 				</button>
 			</label>
-			{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
+			<div>
+				<ErrorMessage {...{ showError, message: message.value }} />
+				{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
+			</div>
 		</div>
 	);
 });
