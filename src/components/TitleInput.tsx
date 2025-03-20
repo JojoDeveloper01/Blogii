@@ -1,4 +1,4 @@
-import { component$, $, useSignal, useResource$, Resource } from "@builder.io/qwik";
+import { component$, $, useSignal } from "@builder.io/qwik";
 import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
@@ -59,8 +59,6 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 			return;
 		}
 
-		console.log(sanitizedTitle)
-
 		const blogData: BlogData = {
 			collection: "blog",
 			data: {
@@ -69,13 +67,11 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 			},
 		};
 
-		console.log(blogData.data)
-
-		alert(urlTitle + ": -- :" + sanitizedTitle)
 		// Store the blog data in a cookie
 		document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
 
 		const blogURL = await buildBlogURL(urlTitle);
+
 		/* const isDataSent = await sendBlogData(blogData); */
 
 		/* const s = await getBlogData(); */
@@ -102,24 +98,23 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		if (title.value.length < 3) {
 			disableButton.value = true;
 			showError.value = false;
-			message.value = amountCharactersError
-			return false; // Retorna falso se o título for muito curto
+			message.value = amountCharactersError;
+			messageToLoginOrCreateAccount.value = false;
+			return false;
 		}
 
 		// Verifica se o blog já existe e se o usuário está autorizado
 		if (blogs.length > 0 && isAuthorized === false) {
 			showError.value = true;
 			message.value = blogAlreadyCreated;
-			messageToLoginOrCreateAccount.value = true
-			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
+			messageToLoginOrCreateAccount.value = true;
 			disableButton.value = true;
-			return false; // Retorna falso se houver erro
+			return false;
 		} else {
-			messageToLoginOrCreateAccount.value = false
-			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
+			messageToLoginOrCreateAccount.value = false;
 			showError.value = false;
 			disableButton.value = false;
-			return true; // Retorna verdadeiro se tudo estiver OK
+			return true;
 		}
 	});
 

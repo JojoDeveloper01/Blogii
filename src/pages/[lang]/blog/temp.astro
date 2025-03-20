@@ -5,21 +5,15 @@ import { render } from "astro:content";
 
 const slug = Astro.url.searchParams.get("id");
 
-let data;
+const data = Astro.cookies.has("temp")
+    ? JSON.parse(decodeURIComponent(Astro.cookies.get("temp")?.value || "[]"))
+          .data
+    : null;
 
-if (Astro.cookies.has("temp")) {
-    const getCookie = Astro.cookies.get("temp");
-    // Decodificar o cookie corretamente
-    data = JSON.parse(decodeURIComponent(getCookie?.value || "[]")).data;
-    data.pubDate = new Date(data.pubDate);
-}
+if (data) data.pubDate = new Date(data.pubDate);
 
-console.log("data.title: ", data.title);
-
-const sanitizedTitle = sanitizeString(String(data.title), 1);
-console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
-
-const blog = sanitizedTitle === slug ? data : null;
+const blog =
+    sanitizeString(String(data?.title || ""), 1) === slug ? data : null;
 
 if (!blog) {
     return Astro.redirect("/404");

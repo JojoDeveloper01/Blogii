@@ -6,9 +6,20 @@ import type { BlogData } from "@lib/types";
 
 const blogsData: BlogData[] = await getCollection("blog");
 
-//console.log("blogs: ", blogsData);
+const { lang, isAuthorized, tempBlog } = Astro.props;
 
-const { lang, isAuthorized } = Astro.props;
+//console.log("blog: ", blog);
+
+const data =
+    blogsData.length !== 0 && isAuthorized
+        ? blogsData
+        : tempBlog && !isAuthorized
+          ? Array.isArray(tempBlog)
+              ? tempBlog
+              : [tempBlog]
+          : [];
+
+console.log("data: ", data);
 ---
 
 <section
@@ -27,9 +38,9 @@ const { lang, isAuthorized } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <TitleInput {blogsData} {isAuthorized} />
+        <TitleInput blogsData={data} {isAuthorized} />
         {
-            blogsData.length !== 0 && (
+            data.length > 0 && (
                 <div
                     id="blogsCreated"
                     class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
@@ -38,11 +49,11 @@ const { lang, isAuthorized } = Astro.props;
                         Blogs Criados:
                     </h3>
                     <ul class="space-y-2">
-                        {blogsData.map((blog) => (
+                        {data.map((blog: BlogData) => (
                             <li class="flex items-center justify-center space-x-2">
                                 <span class="text-orange-400">&rarr;</span>
                                 <a
-                                    href={`blog/${sanitizeString(blog.data.title, 1)}`}
+                                    href={`blog/${isAuthorized ? sanitizeString(blog.data.title, 1) : "temp?id=" + sanitizeString(blog.data.title, 1)}`}
                                     class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
                                 >
                                     {sanitizeString(blog.data.title)}
