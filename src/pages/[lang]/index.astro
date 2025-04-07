@@ -7,7 +7,11 @@ import { tempBlog } from "src/store";
 
 const lang = getLangFromUrl(Astro.url);
 
-const isAuthorized = false;
+const tempBlog = Astro.cookies.has("temp")
+	? JSON.parse(decodeURIComponent(Astro.cookies.get("temp")?.value || "[]"))
+	: null;
+
+const isAuthorized = true;
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>

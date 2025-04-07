@@ -1,4 +1,4 @@
-import { component$, $, useSignal, useResource$, Resource } from "@builder.io/qwik";
+import { component$, $, useSignal } from "@builder.io/qwik";
 import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
@@ -21,7 +21,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 	const blogs = { blogsData }.blogsData
 
 	// Função para construir a URL do blog
-	const buildBlogURL = $((title: string) => `blog/temp?id=${title}`);
+	const buildTempBlogURL = $((title: string) => `blog/temp?id=${title}&editing=true`);
 
 	// Função para enviar os dados do blog
 	const sendBlogData = $(async (blogData: BlogData) => {
@@ -42,49 +42,31 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 
 	// Função principal para iniciar o blog 
 	const startBlog = $(async () => {
-		const urlTitle = sanitizeString(title.value, 1);
 		const sanitizedTitle = sanitizeString(title.value);
 
-		// Verifica se o título tem pelo menos 3 caracteres
-		if (sanitizedTitle.length < 3) {
+		if (sanitizedTitle.length < 3 || !/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
 			showError.value = true;
-			message.value = amountCharactersError
+			message.value = sanitizedTitle.length < 3 ? amountCharactersError : invalidCharactersError;
 			return;
 		}
-
-		// Verifica se o título contém caracteres estranhos
-		if (!/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
-			showError.value = true;
-			message.value = invalidCharactersError;
-			return;
-		}
-
-		console.log(sanitizedTitle)
 
 		const blogData: BlogData = {
 			collection: "blog",
-			data: {
-				title: sanitizedTitle,
-				pubDate: new Date(),
-			},
+			data: { title: sanitizedTitle, pubDate: new Date() },
 		};
 
-		console.log(blogData.data)
+		const blogURL = await buildTempBlogURL(sanitizeString(title.value, 1));
 
-		alert(urlTitle + ": -- :" + sanitizedTitle)
-		// Store the blog data in a cookie
-		document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
+		if (!isAuthorized) {
+			document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
+			window.location.href = blogURL;
+			return;
+		}
 
-		const blogURL = await buildBlogURL(urlTitle);
-		/* const isDataSent = await sendBlogData(blogData); */
-
-		/* const s = await getBlogData(); */
-
-		/* if (isDataSent) { */
-		// Pequena pausa para garantir que o arquivo foi criado
-		//await new Promise((resolve) => setTimeout(resolve, 100));
-		window.location.href = `${blogURL}`;
-		// }
+		if (await sendBlogData(blogData)) {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			window.location.href = blogURL;
+		}
 	});
 
 	const handleBeforeInput = $((event: InputEvent) => {
@@ -102,24 +84,23 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		if (title.value.length < 3) {
 			disableButton.value = true;
 			showError.value = false;
-			message.value = amountCharactersError
-			return false; // Retorna falso se o título for muito curto
+			message.value = amountCharactersError;
+			messageToLoginOrCreateAccount.value = false;
+			return false;
 		}
 
 		// Verifica se o blog já existe e se o usuário está autorizado
 		if (blogs.length > 0 && isAuthorized === false) {
 			showError.value = true;
 			message.value = blogAlreadyCreated;
-			messageToLoginOrCreateAccount.value = true
-			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
+			messageToLoginOrCreateAccount.value = true;
 			disableButton.value = true;
-			return false; // Retorna falso se houver erro
+			return false;
 		} else {
-			messageToLoginOrCreateAccount.value = false
-			console.log("messageToLoginOrCreateAccount.value: ", messageToLoginOrCreateAccount.value)
+			messageToLoginOrCreateAccount.value = false;
 			showError.value = false;
 			disableButton.value = false;
-			return true; // Retorna verdadeiro se tudo estiver OK
+			return true;
 		}
 	});
 
@@ -157,7 +138,6 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					onKeyDown$={handleKeyDown}
 					onBeforeInput$={handleBeforeInput} // Bloqueia caracteres proibidos
 				/>
-				<ErrorMessage {...{ showError, message: message.value }} />
 				<button
 					type="button"
 					id="confirm-title"
@@ -168,7 +148,10 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
 				</button>
 			</label>
-			{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
+			<div>
+				<ErrorMessage {...{ showError, message: message.value }} />
+				{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
+			</div>
 		</div>
 	);
 });
