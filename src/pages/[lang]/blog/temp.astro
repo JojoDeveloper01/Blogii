@@ -2,24 +2,20 @@
 import BlogPost from "@layouts/BlogPost.astro";
 import { sanitizeString } from "@lib/utils";
 import { render } from "astro:content";
+import { tempBlog } from "src/store";
 
 const slug = Astro.url.searchParams.get("id");
 
-let data;
+if (tempBlog) {
+    tempBlog.data.pubDate = new Date(tempBlog.data.pubDate);
+}      
 
-if (Astro.cookies.has("temp")) {
-    const getCookie = Astro.cookies.get("temp");
-    // Decodificar o cookie corretamente
-    data = JSON.parse(decodeURIComponent(getCookie?.value || "[]")).data;
-    data.pubDate = new Date(data.pubDate);
-}
+//console.log("tempBlog.title: ", tempBlog?.data?.title);
 
-console.log("data.title: ", data.title);
-
-const sanitizedTitle = sanitizeString(String(data.title), 1);
+const sanitizedTitle = sanitizeString(String(tempBlog?.data?.title), 1);
 console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
 
-const blog = sanitizedTitle === slug ? data : null;
+const blog = sanitizedTitle === slug ? tempBlog : null;
 
 if (!blog) {
     return Astro.redirect("/404");
@@ -28,6 +24,6 @@ if (!blog) {
 const { Content } = await render(blog);
 ---
 
-<BlogPost {...blog}>
+<BlogPost {...tempBlog}>
     <Content />
 </BlogPost>
