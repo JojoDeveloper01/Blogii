@@ -1,20 +1,24 @@
 ---
-import Editing from "@components/Editing/Editing.astro";
 import BlogPost from "@layouts/BlogPost.astro";
 import { sanitizeString } from "@lib/utils";
 import { render } from "astro:content";
-import { tempBlog } from "src/store";
+import { getTemp } from "@lib/utils";
+import Editing from "@components/Editing/Editing.astro";
 
 const slug = Astro.url.searchParams.get("id");
 
+console.log("slug: ", slug);
+
+const tempBlog = getTemp(Astro);
+
 if (tempBlog) {
     tempBlog.data.pubDate = new Date(tempBlog.data.pubDate);
-}      
+}
 
-//console.log("tempBlog.title: ", tempBlog?.data?.title);
+//console.log("tempBlog: ", tempBlog);
 
 const sanitizedTitle = sanitizeString(String(tempBlog?.data?.title), 1);
-console.log("sanitizedTitle: ", sanitizedTitle, "--", slug);
+console.log("sanitizedTitle: ", sanitizedTitle, "=", slug);
 
 const blog = sanitizedTitle === slug ? tempBlog : null;
 
@@ -25,6 +29,6 @@ if (!blog) {
 const { Content } = await render(blog);
 ---
 
-<BlogPost {...tempBlog}>
+<BlogPost {...tempBlog.data}>
     <Content />
 </BlogPost>

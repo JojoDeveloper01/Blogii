@@ -9,6 +9,8 @@ const posts = (await getCollection("blog")).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
+console.log("posts: ", posts);
+
 const lang = getLangFromUrl(Astro.url);
 ---
 

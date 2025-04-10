@@ -1,10 +1,3 @@
 ---
-export function getTemp() {
-    if (Astro.cookies.has("temp")) {
-        const getCookie = Astro.cookies.get("temp");
-        // Decodificar o cookie corretamente
-        return JSON.parse(decodeURIComponent(getCookie?.value || "[]"));
-    }
-    return null;
-}
+
 ---

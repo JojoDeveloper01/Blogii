@@ -43,3 +43,12 @@ export function generateNumericId() {
 	const randomNum = Math.floor(Math.random() * 1000);
 	return `${timestamp}${randomNum}`;
 }
+
+export function getTemp(Astro: { cookies: { has: (arg0: string) => any; get: (arg0: string) => any; }; }) {
+	if (Astro.cookies.has("temp")) {
+		const getCookie = Astro.cookies.get("temp");
+		// Decodificar o cookie corretamente
+		return JSON.parse(decodeURIComponent(getCookie?.value || "[]"));
+	}
+	return null;
+}

@@ -3,19 +3,25 @@ import Layout from "@layouts/Layout.astro";
 import Hero from "@components/Hero.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@lib/consts";
 import { getLangFromUrl } from "@i18n/utils";
-import { tempBlog } from "src/store";
+import { getCollection } from "astro:content";
+import type { BlogData } from "@lib/types";
+import { getTemp } from "@lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
 
-const tempBlog = Astro.cookies.has("temp")
-	? JSON.parse(decodeURIComponent(Astro.cookies.get("temp")?.value || "[]"))
-	: null;
+//console.log("blogsData: ", blogsData);
+
+const isTemp = Astro.cookies.has("temp");
+
+const blogsData: BlogData[] = isTemp
+	? [getTemp(Astro)]
+	: await getCollection("blog");
 
 const isAuthorized = true;
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-	<Hero {lang} {isAuthorized} {tempBlog} />
+	<Hero {lang} {isAuthorized} {blogsData} {isTemp} />
 
 	<p>
 		Welcome to the official <a href="https://astro.build/">Astro</a>

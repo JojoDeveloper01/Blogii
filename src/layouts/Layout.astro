@@ -3,7 +3,6 @@ import Head from "@components/Head.astro";
 import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
 import LoginRegister from "@components/LoginRegister.astro";
-import { tempBlog } from "src/store";
 
 interface Props {
     title: string;
@@ -14,13 +13,6 @@ interface Props {
 const { title, description, lang } = Astro.props;
 
 const des = description || "A blog";
-
-if (Astro.cookies.has("temp")) {
-    const getCookie = Astro.cookies.get("temp");
-    // Decodificar o cookie corretamente
-    const temp = JSON.parse(decodeURIComponent(getCookie?.value || "[]"));
-    tempBlog.set(temp);
-}
 ---
 
 <html {lang}>
