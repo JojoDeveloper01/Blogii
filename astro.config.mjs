@@ -1,16 +1,13 @@
-// @ts-check
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
-
 import tailwind from "@astrojs/tailwind";
-import node from "@astrojs/node";
-
 import qwikdev from "@qwikdev/astro";
+import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-    site: "http://localhost:4321",
+    site: "https://myblogii.vercel.app",
     integrations: [mdx(), sitemap(), tailwind(), qwikdev()],
 
     output: "server",
@@ -18,6 +15,20 @@ export default defineConfig({
         host: "0.0.0.0",
     },
     adapter: node({
-        mode: "standalone",
+        mode: "standalone"
     }),
+
+    experimental: {
+        session: true
+    },
+
+    vite: {
+        server: {
+            watch: {
+                // Isso torna a observação de arquivos mais agressiva
+                usePolling: true,
+                interval: 500,
+            },
+        },
+    },
 });

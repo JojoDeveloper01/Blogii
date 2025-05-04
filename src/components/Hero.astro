@@ -5,7 +5,7 @@ import type { BlogData } from "@lib/types";
 
 //console.log("blogs: ", blogsData);
 
-const { lang, isAuthorized, blogsData, isTemp } = Astro.props;
+const { lang, isAuthorized, blogsData } = Astro.props;
 ---
 
 <section
@@ -39,7 +39,7 @@ const { lang, isAuthorized, blogsData, isTemp } = Astro.props;
                             <li class="flex items-center justify-center space-x-2">
                                 <span class="text-orange-400">&rarr;</span>
                                 <a
-                                    href={`blog${isTemp ? "/temp" : ""}?id=${sanitizeString(blog.data.title, 1)}&editing=true`}
+                                    href={`blog${isAuthorized ? "" : "/temp"}?id=${sanitizeString(blog.data.title, 1)}&editing=true`}
                                     class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
                                 >
                                     {sanitizeString(blog.data.title)}

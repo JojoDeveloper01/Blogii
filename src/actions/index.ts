@@ -1,11 +1,9 @@
-import { getCollection } from "astro:content";
-import type { BlogData } from "@lib/types";
-import { formatDate } from "@lib/utils";
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
+import type { BlogData } from "@lib/types";
+import { formatDate } from "@lib/utils";
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { cp } from "fs";
 
 const baseBlogData = z.object({
     id: z.string().optional(),
@@ -24,41 +22,43 @@ export const server = {
         input: baseBlogData,
         handler: async (input) => {
             try {
-
-                await createBLog(input)
-
-                return { valid: true };
+                await createBlog(input);
+                return { success: true };
             } catch (error) {
                 if (error instanceof z.ZodError) {
-                    return {
-                        valid: false,
-                        message: error.errors[0].message,
-                    };
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: error.errors[0].message
+                    });
                 }
-                throw error;
-            }
-        },
-    }),
-    cleanCache: defineAction({
-        input: z.object({
-            a: z.any(),
-        }),
-        handler: async (input) => {
-            console.log("Cleaning cache for collection:", input);
-            try {
-                const blogs = await getCollection("blog");
-                console.log("Cache cleaned for collection:", blogs);
-                return { blogs };
-            } catch (error: any) {
-                throw new ActionError(error.message);
+                throw new ActionError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: error instanceof Error ? error.message : "Unknown error occurred"
+                });
             }
         }
     }),
+
+    cleanCache: defineAction({
+        input: z.object({
+            collection: z.literal("blog").optional()
+        }),
+        handler: async ({ collection }) => {
+            try {
+                /* const blogs = await getCollection(collection || "blog");
+                return { success: true, blogs }; */
+            } catch (error: any) {
+                throw new ActionError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: error.message
+                });
+            }
+        }
+    })
 }
-async function createBLog(entry: BlogData) {
 
+async function createBlog(entry: BlogData) {
     const data = entry.data;
-
     const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
 
     const frontMatter = {
@@ -75,6 +75,5 @@ async function createBLog(entry: BlogData) {
     const markdownContent = `---\n${frontMatterString}\n---`;
 
     await fs.writeFile(filePath, markdownContent, "utf8");
-
-    console.log(`📄 File Created succesfully: ${filePath}`);
+    console.log(`📄 File Created successfully: ${filePath}`);
 }

@@ -44,11 +44,41 @@ export function generateNumericId() {
 	return `${timestamp}${randomNum}`;
 }
 
-export function getTemp(Astro: { cookies: { has: (arg0: string) => any; get: (arg0: string) => any; }; }) {
-	if (Astro.cookies.has("temp")) {
-		const getCookie = Astro.cookies.get("temp");
-		// Decodificar o cookie corretamente
-		return JSON.parse(decodeURIComponent(getCookie?.value || "[]"));
+export function getTemp(Astro: { cookies: { has: (key: string) => boolean; get: (key: string) => { value: string } | undefined } }) {
+	if (Astro.cookies.has("tempBlog")) {
+		const cookie = Astro.cookies.get("tempBlog");
+		try {
+			return JSON.parse(decodeURIComponent(cookie?.value || ""));
+		} catch (err) {
+			console.error("Erro ao decodificar o conteúdo da cookie:", err);
+			return undefined;
+		}
 	}
-	return null;
+	return undefined;
+}
+
+export function editorJsToMarkdown(data: any): string {
+	let markdown = '';
+
+	for (const block of data.blocks) {
+		switch (block.type) {
+			case 'paragraph':
+				markdown += `${block.data.text}\n\n`;
+				break;
+			case 'header':
+				markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
+				break;
+			case 'list':
+				const tag = block.data.style === 'ordered' ? '1.' : '-';
+				for (const item of block.data.items) {
+					markdown += `${tag} ${item}\n`;
+				}
+				markdown += '\n';
+				break;
+			default:
+				markdown += `<!-- Unsupported block: ${block.type} -->\n\n`;
+		}
+	}
+
+	return markdown.trim();
 }

@@ -8,20 +8,20 @@ import type { BlogData } from "@lib/types";
 import { getTemp } from "@lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
+const isAuthorized = false;
+
+const temp = getTemp(Astro);
+const blogsData: BlogData[] = isAuthorized
+	? await getCollection("blog")
+	: temp
+		? [temp]
+		: [];
 
 //console.log("blogsData: ", blogsData);
-
-const isTemp = Astro.cookies.has("temp");
-
-const blogsData: BlogData[] = isTemp
-	? [getTemp(Astro)]
-	: await getCollection("blog");
-
-const isAuthorized = true;
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-	<Hero {lang} {isAuthorized} {blogsData} {isTemp} />
+	<Hero {lang} {isAuthorized} {blogsData} />
 
 	<p>
 		Welcome to the official <a href="https://astro.build/">Astro</a>

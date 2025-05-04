@@ -26,14 +26,14 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 	// Função para enviar os dados do blog
 	const sendBlogData = $(async (blogData: BlogData) => {
 		try {
-			const { error } = await actions.sendBlogData(blogData);
+			const { data, error } = await actions.sendBlogData(blogData);
 
 			if (error) {
-				console.error("Erro ao enviar dados do blog:", error);
+				console.error("Erro ao enviar dados do blog:", error.message);
 				return false;
 			}
 
-			return true;
+			return data.success;
 		} catch (error) {
 			console.error("Erro ao enviar dados do blog:", error);
 			return false;
@@ -58,7 +58,7 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 		const blogURL = await buildTempBlogURL(sanitizeString(title.value, 1));
 
 		if (!isAuthorized) {
-			document.cookie = `temp=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
+			document.cookie = `tempBlog=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
 			window.location.href = blogURL;
 			return;
 		}
