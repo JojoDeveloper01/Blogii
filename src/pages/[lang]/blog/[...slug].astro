@@ -1,41 +1,48 @@
 ---
 import BlogPost from "@layouts/BlogPost.astro";
 import { render } from "astro:content";
-import { getTemp, sanitizeString } from "@lib/utils";
 import { Editor } from "@components/Editing/Editor";
 
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
-
 const id = Astro.url.searchParams.get("id");
 const editing = Astro.url.searchParams.get("editing");
 
+//console.log("Route Debug:", { currentPage, id, editing });
+
 let blog = null;
+let needsClientData = false;
 
 if (currentPage === "temp") {
-	const tempBlog = getTemp(Astro);
-
-	//console.log("tempBlog:", JSON.stringify(tempBlog, null, 2));
-
-	if (tempBlog) {
-		tempBlog.data.pubDate = new Date(tempBlog.data.pubDate);
-	}
-
-	const sanitizedTitle = sanitizeString(String(tempBlog?.data?.title), 1);
-	blog = sanitizedTitle === id ? tempBlog : null;
+	needsClientData = true;
+	blog = {
+		id: id || "",
+		collection: "blog" as const,
+		data: {
+			title: id || "",
+			pubDate: new Date(),
+		},
+	};
 }
 
-//console.log("sanitizedTitle: ", sanitizedTitle, "=", slug);
-
-if (!blog) {
-	return Astro.redirect("/404");
-}
-
-const { Content } = await render(blog);
+const { Content } =
+	blog && !needsClientData ? await render(blog) : { Content: null };
 ---
 
-<BlogPost {...blog.data}>
-	{editing ? <Editor {blog} /> : <Content />}
-</BlogPost>
+{
+	needsClientData && blog ? (
+		<BlogPost {...blog.data}>
+			<Editor blog={blog} client:load />
+		</BlogPost>
+	) : blog ? (
+		<BlogPost {...blog.data}>
+			{editing ? (
+				<Editor blog={blog} client:load />
+			) : Content ? (
+				<Content />
+			) : null}
+		</BlogPost>
+	) : null
+}
 
 <style>
 	/* Personalizar o bloco do editor */

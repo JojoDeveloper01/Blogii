@@ -2,6 +2,7 @@ import { component$, $, useSignal } from "@builder.io/qwik";
 import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { actions } from "astro:actions";
+import { blogDB } from "@services/indexedDB";
 import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
 import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
@@ -52,20 +53,26 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 
 		const blogData: BlogData = {
 			collection: "blog",
-			data: { title: sanitizedTitle, pubDate: new Date() },
+			data: {
+				title: sanitizedTitle,
+				pubDate: new Date()
+			},
 		};
 
-		const blogURL = await buildTempBlogURL(sanitizeString(title.value, 1));
+		try {
+			// Primeiro salvar no IndexedDB
+			await blogDB.saveTempBlog(blogData);
 
-		if (!isAuthorized) {
-			document.cookie = `tempBlog=${encodeURIComponent(JSON.stringify(blogData))}; path=/;`;
-			window.location.href = blogURL;
-			return;
-		}
+			// Disparar evento customizado
+			window.dispatchEvent(new Event('navigation-update'));
 
-		if (await sendBlogData(blogData)) {
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// Depois redirecionar
+			const blogURL = `blog/temp?id=${sanitizeString(title.value, 1)}&editing=true`;
 			window.location.href = blogURL;
+		} catch (error) {
+			console.error("Erro ao salvar blog:", error);
+			showError.value = true;
+			message.value = "Erro ao criar blog. Tente novamente.";
 		}
 	});
 
@@ -89,18 +96,24 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 			return false;
 		}
 
-		// Verifica se o blog já existe e se o usuário está autorizado
-		if (blogs.length > 0 && isAuthorized === false) {
-			showError.value = true;
-			message.value = blogAlreadyCreated;
-			messageToLoginOrCreateAccount.value = true;
-			disableButton.value = true;
-			return false;
-		} else {
+		try {
+			// Verificar se já existe um blog no IndexedDB
+			const existingBlog = await blogDB.getTempBlog();
+			if (existingBlog && !isAuthorized) {
+				showError.value = true;
+				message.value = blogAlreadyCreated;
+				messageToLoginOrCreateAccount.value = true;
+				disableButton.value = true;
+				return false;
+			}
+
 			messageToLoginOrCreateAccount.value = false;
 			showError.value = false;
 			disableButton.value = false;
 			return true;
+		} catch (error) {
+			console.error("Erro ao verificar blog existente:", error);
+			return false;
 		}
 	});
 

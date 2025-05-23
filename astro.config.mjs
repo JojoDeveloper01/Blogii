@@ -7,7 +7,7 @@ import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-    site: "https://myblogii.vercel.app",
+    site: "https://myblogii.com",
     integrations: [mdx(), sitemap(), tailwind(), qwikdev()],
 
     output: "server",

@@ -1,9 +1,7 @@
 ---
-import { sanitizeString } from "@lib/utils";
 import { TitleInput } from "./TitleInput";
+import { DynamicBlogList } from "./DynamicBlogList";
 import type { BlogData } from "@lib/types";
-
-//console.log("blogs: ", blogsData);
 
 const { lang, isAuthorized, blogsData } = Astro.props;
 ---
@@ -24,32 +22,8 @@ const { lang, isAuthorized, blogsData } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <TitleInput {blogsData} {isAuthorized} />
-        {
-            blogsData.length !== 0 && (
-                <div
-                    id="blogsCreated"
-                    class="w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto"
-                >
-                    <h3 class="mb-4 text-lg font-bold text-orange-500">
-                        Blogs Criados:
-                    </h3>
-                    <ul class="space-y-2">
-                        {blogsData.map((blog: BlogData) => (
-                            <li class="flex items-center justify-center space-x-2">
-                                <span class="text-orange-400">&rarr;</span>
-                                <a
-                                    href={`blog${isAuthorized ? "" : "/temp"}?id=${sanitizeString(blog.data.title, 1)}&editing=true`}
-                                    class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
-                                >
-                                    {sanitizeString(blog.data.title)}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )
-        }
+        <TitleInput blogsData={blogsData} {isAuthorized} client:load />
+        <DynamicBlogList {isAuthorized} client:load />
     </div>
 </section>
 

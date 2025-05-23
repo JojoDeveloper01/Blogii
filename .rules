@@ -106,3 +106,5 @@
   - Implement performance budgets and monitoring.
 
   Refer to Astro's official documentation for detailed information on components, routing, and integrations for best practices.
+
+  Use qwik instead of react, prioritize always the perfonmance and fast as possible

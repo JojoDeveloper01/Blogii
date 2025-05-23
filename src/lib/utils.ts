@@ -44,19 +44,6 @@ export function generateNumericId() {
 	return `${timestamp}${randomNum}`;
 }
 
-export function getTemp(Astro: { cookies: { has: (key: string) => boolean; get: (key: string) => { value: string } | undefined } }) {
-	if (Astro.cookies.has("tempBlog")) {
-		const cookie = Astro.cookies.get("tempBlog");
-		try {
-			return JSON.parse(decodeURIComponent(cookie?.value || ""));
-		} catch (err) {
-			console.error("Erro ao decodificar o conteúdo da cookie:", err);
-			return undefined;
-		}
-	}
-	return undefined;
-}
-
 export function editorJsToMarkdown(data: any): string {
 	let markdown = '';
 

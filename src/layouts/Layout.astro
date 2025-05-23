@@ -18,6 +18,26 @@ const des = description || "A blog";
 <html {lang}>
     <Head {title} description={des} />
     <body>
+        <script>
+            import { blogDB } from "@services/indexedDB";
+
+            // Pré-carregar dados do IndexedDB
+            const preloadDB = async () => {
+                try {
+                    await blogDB.init();
+                    await blogDB.getTempBlog(); // Pré-carregar para o cache
+                } catch (err) {
+                    console.error("Erro ao pré-carregar DB:", err);
+                }
+            };
+
+            preloadDB();
+
+            // Limpar cache ao desmontar
+            window.addEventListener("unload", () => {
+                blogDB.clearCache();
+            });
+        </script>
         <LoginRegister />
         <Header {lang} />
         <main>

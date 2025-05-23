@@ -3,21 +3,15 @@ import Layout from "@layouts/Layout.astro";
 import Hero from "@components/Hero.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@lib/consts";
 import { getLangFromUrl } from "@i18n/utils";
-import { getCollection } from "astro:content";
 import type { BlogData } from "@lib/types";
-import { getTemp } from "@lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const isAuthorized = false;
 
-const temp = getTemp(Astro);
-const blogsData: BlogData[] = isAuthorized
-	? await getCollection("blog")
-	: temp
-		? [temp]
-		: [];
+// Inicializar blogsData como array vazio
+let blogsData: BlogData[] = [];
 
-//console.log("blogsData: ", blogsData);
+// Se não estiver autorizado, tentaremos pegar o blog temporário no cliente
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
@@ -71,3 +65,46 @@ const blogsData: BlogData[] = isAuthorized
 		</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
 	</p>
 </Layout>
+
+<script>
+	import { blogDB } from "@services/indexedDB";
+	import { sanitizeString } from "@lib/utils";
+
+	async function updateBlogsList() {
+		try {
+			const tempBlog = await blogDB.getTempBlog();
+			//console.log("Blog temporário carregado:", tempBlog);
+
+			if (tempBlog) {
+				const blogsCreatedElement =
+					document.getElementById("blogsCreated");
+				if (blogsCreatedElement) {
+					blogsCreatedElement.style.display = "block";
+					const blogsList = blogsCreatedElement.querySelector("ul");
+					if (blogsList) {
+						const blogTitle = sanitizeString(tempBlog.data.title);
+						const blogId = sanitizeString(tempBlog.data.title, 1);
+
+						blogsList.innerHTML = `
+							<li class="flex items-center justify-center space-x-2">
+								<span class="text-orange-400">&rarr;</span>
+								<a href="blog/temp?id=${blogId}&editing=true"
+								   class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200">
+									${blogTitle}
+								</a>
+							</li>
+						`;
+					}
+				}
+			}
+		} catch (err) {
+			console.error("Erro ao atualizar lista de blogs:", err);
+		}
+	}
+
+	// Atualizar lista ao carregar a página
+	updateBlogsList();
+
+	// Atualizar quando houver mudanças no IndexedDB
+	window.addEventListener("storage", updateBlogsList);
+</script>
