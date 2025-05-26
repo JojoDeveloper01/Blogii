@@ -151,6 +151,23 @@ export class BlogDatabase {
         return sanitizeString(blog.data.title, 1) === id;
     }
 
+    async updateBlog(blog: BlogData) {
+        await this.init();
+        if (!this.db) throw new Error("Database not initialized");
+        const tx = this.db.transaction('drafts', 'readwrite');
+        const store = tx.objectStore('drafts');
+
+        // Use the title as the key for the blog
+        const key = blog.data.title;
+        await new Promise<void>((resolve, reject) => {
+            const request = store.put(blog, key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+
+        return blog;
+    }
+
     // Limpar cache quando necessário
     clearCache() {
         this.cache.clear();

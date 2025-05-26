@@ -8,7 +8,21 @@ import node from "@astrojs/node";
 // https://astro.build/config
 export default defineConfig({
     site: "https://myblogii.com",
-    integrations: [mdx(), sitemap(), tailwind(), qwikdev()],
+    integrations: [mdx(), sitemap({
+        i18n: {
+            defaultLocale: 'pt',
+            locales: {
+                pt: 'pt-PT',
+                en: 'en-US'
+            }
+        },
+        customPages: [
+            '/',
+            '/en',
+            '/blogs',
+            '/en/blogs',
+        ]
+    }), tailwind(), qwikdev()],
 
     output: "server",
     server: {
@@ -30,5 +44,13 @@ export default defineConfig({
                 interval: 500,
             },
         },
+        build: {
+            modulePreload: {
+                polyfill: true
+            }
+        },
+        resolve: {
+            preserveSymlinks: true
+        }
     },
 });

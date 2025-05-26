@@ -2,10 +2,12 @@
 import BlogPost from "@layouts/BlogPost.astro";
 import { render } from "astro:content";
 import { Editor } from "@components/Editing/Editor";
+import { getLangFromUrl } from "@i18n/utils";
 
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 const id = Astro.url.searchParams.get("id");
 const editing = Astro.url.searchParams.get("editing");
+const lang = getLangFromUrl(Astro.url);
 
 //console.log("Route Debug:", { currentPage, id, editing });
 
@@ -31,12 +33,12 @@ const { Content } =
 {
 	needsClientData && blog ? (
 		<BlogPost {...blog.data}>
-			<Editor blog={blog} client:load />
+			<Editor blog={blog} lang={lang} client:load />
 		</BlogPost>
 	) : blog ? (
 		<BlogPost {...blog.data}>
 			{editing ? (
-				<Editor blog={blog} client:load />
+				<Editor blog={blog} lang={lang} client:load />
 			) : Content ? (
 				<Content />
 			) : null}

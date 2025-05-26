@@ -3,31 +3,44 @@ import type { BlogData } from "@lib/types";
 import { sanitizeString } from "@lib/utils";
 import { blogDB } from "@services/indexedDB";
 
-interface DynamicBlogListProps {
-    isAuthorized: boolean;
-}
-
-export const DynamicBlogList = component$<DynamicBlogListProps>(({ isAuthorized }) => {
+export const DynamicBlogList = component$<{ isAuthorized: boolean }>(({ isAuthorized }) => {
     const blogsData = useSignal<BlogData[]>([]);
     const isLoading = useSignal(true);
+    const isMounted = useSignal(true);
 
+    // Carregar blogs
     useVisibleTask$(async ({ cleanup }) => {
-        const controller = new AbortController();
+        if (!isMounted.value) return;
+
         try {
             const tempBlog = await blogDB.getTempBlog();
-            if (tempBlog && !controller.signal.aborted) {
+            if (tempBlog && isMounted.value) {
                 blogsData.value = [tempBlog];
             }
+        } catch (err) {
+            console.error("Erro ao carregar blog:", err);
         } finally {
-            isLoading.value = false;
+            if (isMounted.value) {
+                isLoading.value = false;
+            }
         }
-        cleanup(() => controller.abort());
+
+        cleanup(() => {
+            isMounted.value = false;
+        });
     });
 
+    // Atualizar na navegação
     useOnWindow('navigation-update', $(async () => {
-        if (!isLoading.value) {
+        if (!isMounted.value) return;
+
+        try {
             const tempBlog = await blogDB.getTempBlog();
-            if (tempBlog) blogsData.value = [tempBlog];
+            if (tempBlog && isMounted.value) {
+                blogsData.value = [tempBlog];
+            }
+        } catch (err) {
+            console.error("Erro ao recarregar blog:", err);
         }
     }));
 
