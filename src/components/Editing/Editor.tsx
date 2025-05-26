@@ -123,7 +123,7 @@ export const Editor = component$(
                             },
                             inlineToolbar: true,
                         },
-                        list: { class: List, inlineToolbar: true },
+                        list: { class: List as any, inlineToolbar: true },
                         image: {
                             class: ImageTool,
                             config: {
