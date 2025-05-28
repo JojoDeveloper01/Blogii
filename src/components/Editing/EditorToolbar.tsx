@@ -1,8 +1,9 @@
 import { component$, type Signal, $, useSignal } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
-import { blogDB } from "@services/indexedDB";
-import { sanitizeString } from "@lib/utils";
+import { executeEditorCommand, updateBlogTitle, deleteBlog } from "@lib/utils";
+import { TitleInputBase } from '@components/shared/TitleInputBase';
+import { ConfirmDialog } from '@components/shared/ConfirmDialog';
 
 interface EditorToolbarProps {
     title: Signal<string>;
@@ -16,97 +17,58 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
     const saveTimeout = useSignal<number | null>(null);
     const showSaveSuccess = useSignal(false);
     const isSaving = useSignal(false);
+    const errorMessage = useSignal("");
 
     const executeCommand = $((command: string, params?: any) => {
-        if (!editor.value?.isReady) {
-            console.warn('Editor not ready');
-            return;
-        }
-
-        switch (command) {
-            case 'header':
-                editor.value.blocks.insert('header', {
-                    level: params || 2,
-                    text: 'New Heading'
-                });
-                break;
-            case 'paragraph':
-                editor.value.blocks.insert('paragraph', {
-                    text: 'New paragraph'
-                });
-                break;
-            case 'style':
-                const selection = window.getSelection();
-                if (!selection?.toString()) return;
-
-                switch (params) {
-                    case 'bold':
-                        document.execCommand('bold', false);
-                        break;
-                    case 'italic':
-                        document.execCommand('italic', false);
-                        break;
-                    case 'underline':
-                        document.execCommand('underline', false);
-                        break;
-                }
-                break;
-        }
+        executeEditorCommand(editor.value, command, params);
     });
 
     const updateTitleAndURL = $(async () => {
-        const newTitle = title.value.trim();
-        if (!newTitle) return;
+        await updateBlogTitle(title.value, {
+            onSuccess: () => {
+                // Show success feedback
+                showSaveSuccess.value = true;
+                setTimeout(() => {
+                    showSaveSuccess.value = false;
+                }, 2000);
 
-        try {
-            // Update URL
-            const currentUrl = new URL(window.location.href);
-            const sanitizedTitle = sanitizeString(newTitle);
-            currentUrl.searchParams.set('id', sanitizedTitle);
-            window.history.replaceState({}, '', currentUrl.toString());
-
-            // Update IndexedDB
-            const tempBlog = await blogDB.getTempBlog();
-            if (tempBlog) {
-                const updatedBlog = {
-                    ...tempBlog,
-                    data: {
-                        ...tempBlog.data,
-                        title: newTitle,
-                        lastUpdated: new Date().toISOString()
-                    }
-                };
-                await blogDB.saveTempBlog(updatedBlog);
-                try {
-                    await blogDB.updateBlog(updatedBlog);
-                } catch (err) {
-                    console.warn('Failed to update main blog, but temp blog was saved:', err);
-                }
+                originalTitle.value = title.value;
+                hasChanges.value = false;
+                isSaving.value = false;
+            },
+            onError: () => {
+                isSaving.value = false;
             }
-
-            // Show success feedback
-            showSaveSuccess.value = true;
-            setTimeout(() => {
-                showSaveSuccess.value = false;
-            }, 2000);
-
-            originalTitle.value = title.value;
-            hasChanges.value = false;
-            isSaving.value = false;
-        } catch (err) {
-            console.error('Error updating title:', err);
-            isSaving.value = false;
-        }
+        });
     });
 
-    const autoSave = $(() => {
+    const autoSave = $((newTitle: string) => {
         if (saveTimeout.value) {
             clearTimeout(saveTimeout.value);
         }
+
+        if (newTitle === originalTitle.value) {
+            hasChanges.value = false;
+            return;
+        }
+
+        hasChanges.value = true;
         isSaving.value = true;
+
         saveTimeout.value = window.setTimeout(async () => {
             await updateTitleAndURL();
-        }, 2000);
+        }, 1500); // Reduced to 1.5 seconds
+    });
+
+    const handleDelete = $(async () => {
+        await deleteBlog({
+            onSuccess: () => {
+                window.location.href = `/${lang}/`;
+            },
+            onError: (error) => {
+                errorMessage.value = error;
+            }
+        });
     });
 
     return (
@@ -117,22 +79,17 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                         <a href={`/${lang}/`} class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
                             <span dangerouslySetInnerHTML={icons.back} />
                         </a>
-                        <a href="." class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-                            <span dangerouslySetInnerHTML={icons.blogs} />
-                            <span class="text-sm font-medium">Blogs</span>
-                        </a>
                     </div>
                     <div class="flex-1 flex items-center space-x-2 relative">
-                        <input
-                            type="text"
-                            value={title.value}
-                            title='Title of the blog'
-                            onChange$={(e) => {
-                                title.value = (e.target as HTMLInputElement).value;
+                        <TitleInputBase
+                            value={title}
+                            onInput$={(newValue) => {
+                                title.value = newValue;
                                 hasChanges.value = title.value !== originalTitle.value;
-                                autoSave();
+                                autoSave(newValue);
                             }}
-                            class="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors"
+                            onEnter$={updateTitleAndURL}
+                            className="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors hover:border-gray-300"
                             placeholder="Title of the blog"
                         />
                         {hasChanges.value && isSaving.value && (
@@ -143,11 +100,28 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                         {showSaveSuccess.value && (
                             <div class="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 flex items-center space-x-1">
                                 <span>Saved</span>
-                                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
                             </div>
                         )}
+                    </div>
+                    <div class="flex items-center space-x-3 pl-4 border-l">
+                        <button
+                            onClick$={() => {
+                                const dialog = document.getElementById('delete-blog-dialog') as HTMLDialogElement;
+                                dialog?.showModal();
+                            }}
+                            class="text-red-500 hover:text-red-700 p-2 transition-colors"
+                            title="Delete blog"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                        <a href="." class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+                            <span dangerouslySetInnerHTML={icons.blogs} />
+                            <span class="text-sm font-medium">MyBlogiis</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -164,7 +138,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                             }
                         }}
                     >
-                        <option value="">Text style</option>
+                        <option value="">Add text type</option>
                         <option value="1">Heading 1</option>
                         <option value="2">Heading 2</option>
                         <option value="3">Heading 3</option>
@@ -189,6 +163,17 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                     />
                 </div>
             </div>
+            <ConfirmDialog
+                id="delete-blog-dialog"
+                onConfirm$={handleDelete}
+                title="Delete Blog"
+                message="Are you sure you want to delete this blog? This action cannot be undone."
+            />
+            {errorMessage.value && (
+                <div class="mt-2 text-red-500 p-2">
+                    {errorMessage.value}
+                </div>
+            )}
         </div>
     );
 });

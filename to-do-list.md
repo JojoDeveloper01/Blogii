@@ -9,10 +9,13 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 
 [] Improve the blog editor
-    [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word") 
-    [] The title has to be editable,
+    [X] The title has to be editable,
+    [] cant be create a new blog with the URL if already wasnt created with the blog name creator 
     [] Has to have a preview button, the link it'll be `id=seila&editing=false` or something like that
     [] Should have various templates from the DB
+    [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
+
+[] In the home page has to show only the blog name creator and if the are more blogiis, show them but not before
 
 [] Add authentication
 

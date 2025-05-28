@@ -168,6 +168,24 @@ export class BlogDatabase {
         return blog;
     }
 
+    async deleteTempBlog(): Promise<void> {
+        await this.init();
+        if (!this.db) throw new Error("Database not initialized");
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction([STORE_TEMP], 'readwrite');
+            const store = transaction.objectStore(STORE_TEMP);
+            const request = store.clear();
+
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                // Clear cache after successful deletion
+                this.cache.delete('tempBlog');
+                resolve();
+            };
+        });
+    }
+
     // Limpar cache quando necessário
     clearCache() {
         this.cache.clear();

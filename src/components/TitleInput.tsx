@@ -1,11 +1,9 @@
 import { component$, $, useSignal } from "@builder.io/qwik";
 import type { BlogData } from "@lib/types";
-import { sanitizeString } from "@lib/utils";
-import { actions } from "astro:actions";
-import { blogDB } from "@services/indexedDB";
 import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
-import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
+import { TitleInputBase } from './shared/TitleInputBase';
+import { startBlog, processInput } from '@lib/utils';
 
 interface TitleInputProps {
 	blogsData: BlogData[]
@@ -17,145 +15,50 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 	const showError = useSignal(false);
 	const message = useSignal("");
 	const disableButton = useSignal(true);
-	const messageToLoginOrCreateAccount = useSignal(false)
+	const messageToLoginOrCreateAccount = useSignal(false);
 
-	const blogs = { blogsData }.blogsData
-
-	// Função para construir a URL do blog
-	const buildTempBlogURL = $((title: string) => `blog/temp?id=${title}&editing=true`);
-
-	// Função para enviar os dados do blog
-	const sendBlogData = $(async (blogData: BlogData) => {
-		try {
-			const { data, error } = await actions.sendBlogData(blogData);
-
-			if (error) {
-				console.error("Erro ao enviar dados do blog:", error.message);
-				return false;
-			}
-
-			return data.success;
-		} catch (error) {
-			console.error("Erro ao enviar dados do blog:", error);
-			return false;
-		}
+	const handleStartBlog = $(async () => {
+		await startBlog(title.value, (show, msg) => {
+			showError.value = show;
+			message.value = msg;
+		});
 	});
 
-	// Função principal para iniciar o blog 
-	const startBlog = $(async () => {
-		const sanitizedTitle = sanitizeString(title.value);
-
-		if (sanitizedTitle.length < 3 || !/^[\p{L}\s]+$/u.test(sanitizedTitle)) {
-			showError.value = true;
-			message.value = sanitizedTitle.length < 3 ? amountCharactersError : invalidCharactersError;
-			return;
-		}
-
-		const blogData: BlogData = {
-			collection: "blog",
-			data: {
-				title: sanitizedTitle,
-				pubDate: new Date()
-			},
-		};
-
-		try {
-			// Primeiro salvar no IndexedDB
-			await blogDB.saveTempBlog(blogData);
-
-			// Disparar evento customizado
-			window.dispatchEvent(new Event('navigation-update'));
-
-			// Depois redirecionar
-			const blogURL = `blog/temp?id=${sanitizeString(title.value, 1)}&editing=true`;
-			window.location.href = blogURL;
-		} catch (error) {
-			console.error("Erro ao salvar blog:", error);
-			showError.value = true;
-			message.value = "Erro ao criar blog. Tente novamente.";
-		}
-	});
-
-	const handleBeforeInput = $((event: InputEvent) => {
-		const input = event.data;
-		if (input && !/^[\p{L}\s]+$/u.test(input)) {
-			event.preventDefault();
-		}
-	});
-
-	// Função combinada para processar input e tecla Enter
-	const processInput = $(async (inputValue: string) => {
+	const handleProcessInput = $(async (inputValue: string) => {
 		title.value = inputValue.trim();
-
-		// Verifica o comprimento do título
-		if (title.value.length < 3) {
-			disableButton.value = true;
-			showError.value = false;
-			message.value = amountCharactersError;
-			messageToLoginOrCreateAccount.value = false;
-			return false;
-		}
-
-		try {
-			// Verificar se já existe um blog no IndexedDB
-			const existingBlog = await blogDB.getTempBlog();
-			if (existingBlog && !isAuthorized) {
-				showError.value = true;
-				message.value = blogAlreadyCreated;
-				messageToLoginOrCreateAccount.value = true;
-				disableButton.value = true;
-				return false;
-			}
-
-			messageToLoginOrCreateAccount.value = false;
-			showError.value = false;
-			disableButton.value = false;
-			return true;
-		} catch (error) {
-			console.error("Erro ao verificar blog existente:", error);
-			return false;
-		}
+		return await processInput(title.value, isAuthorized, (state) => {
+			showError.value = state.error;
+			message.value = state.msg;
+			messageToLoginOrCreateAccount.value = state.login;
+			disableButton.value = state.disabled;
+		});
 	});
 
 	// Função para lidar com o evento de input
-	const handleInput = $(async (event: Event) => {
-		const inputValue = (event.target as HTMLInputElement).value;
-		await processInput(inputValue);
-	});
-
-	// Função para lidar com o evento de tecla pressionada
-	const handleKeyDown = $(async (event: KeyboardEvent) => {
-		if (event.key === "Enter") {
-			const isValid = await processInput(title.value);
-			if (isValid) {
-				startBlog();
-			}
-		}
+	const handleInput = $(async (newValue: string) => {
+		await handleProcessInput(newValue);
 	});
 
 	return (
 		<div class="w-3/4 grid gap-2 text-left">
-			<label
-				for="title-start"
-				class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl"
-			>
-				<input
-					name="title-start"
-					type="text"
-					id="blog-title"
-					class="w-full px-4 py-2 bg-transparent rounded-xl text-[1vw] max-phone:text-[3vw]"
-					placeholder="Start your idea here..."
-					aria-label="Input para título do blog"
-					value={title.value}
+			<label class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl">
+				<TitleInputBase
+					value={title}
 					onInput$={handleInput}
-					onKeyDown$={handleKeyDown}
-					onBeforeInput$={handleBeforeInput} // Bloqueia caracteres proibidos
+					onEnter$={async () => {
+						const isValid = await handleProcessInput(title.value);
+						if (isValid) {
+							handleStartBlog();
+						}
+					}}
+					className="w-full px-4 py-2 bg-transparent rounded-xl text-[1vw] max-phone:text-[3vw]"
+					placeholder="Start your idea here..."
 				/>
 				<button
 					type="button"
 					id="confirm-title"
 					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 text-[--bg-color] hover:text-[--orange]"
-					onClick$={() => startBlog()}
+					onClick$={() => handleStartBlog()}
 					disabled={disableButton.value}
 				>
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />

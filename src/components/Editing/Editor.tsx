@@ -238,7 +238,7 @@ export const Editor = component$(
         return (
             <div class="relative editor-wrapper min-h-screen">
                 <EditorToolbar title={title} lang={langSignal} editor={editorInstance} />
-                <div class="editor-container max-w-[850px] mx-auto min-h-[1056px] shadow-lg my-4">
+                <div class="editor-container max-w-[850px] mx-auto min-h-[1056px] my-4">
                     <div
                         id="editorjs"
                         class="p-4 min-h-[500px] bg-white border border-[#cbcbcb] rounded-lg shadow-md"
