@@ -1,16 +1,21 @@
 import type { BlogData } from "@lib/types";
-import { sanitizeString } from "@lib/utils";
 
 const DB_NAME = 'blogiiDB';
-const DB_VERSION = 1;
-const STORE_DRAFTS = 'drafts';
-const STORE_TEMP = 'tempBlog';
+const DB_VERSION = 2;
+const STORE_BLOGS = 'blogs';
 
-export class BlogDatabase {
+export interface IBlogDatabase {
+    getBlog(id: string): Promise<BlogData | null>;
+    saveBlog(blog: BlogData): Promise<void>;
+    getAllBlogs(): Promise<BlogData[]>;
+    deleteBlog(id: string): Promise<void>;
+    close(): Promise<void>;
+}
+
+export class BlogDatabase implements IBlogDatabase {
     private static instance: BlogDatabase;
     private db: IDBDatabase | null = null;
     private connecting: Promise<void> | null = null;
-    private cache: Map<string, any> = new Map();
 
     private constructor() { }
 
@@ -21,7 +26,7 @@ export class BlogDatabase {
         return BlogDatabase.instance;
     }
 
-    async init(): Promise<void> {
+    public async init(): Promise<void> {
         if (this.db) return;
         if (this.connecting) return this.connecting;
 
@@ -30,39 +35,39 @@ export class BlogDatabase {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
 
                 request.onerror = () => {
-                    this.connecting = null;
+                    console.error('Error opening database:', request.error);
                     reject(request.error);
                 };
 
                 request.onsuccess = () => {
+                    console.log('Database opened successfully');
                     this.db = request.result;
-
-                    // Reabrir conexão se fechar inesperadamente
-                    this.db.onclose = () => {
-                        this.db = null;
-                        this.connecting = null;
-                    };
-
-                    this.db.onerror = (event) => {
-                        console.error("Database error:", event);
-                    };
-
                     resolve();
                 };
 
                 request.onupgradeneeded = (event) => {
                     const db = (event.target as IDBOpenDBRequest).result;
-
-                    if (!db.objectStoreNames.contains(STORE_DRAFTS)) {
-                        db.createObjectStore(STORE_DRAFTS, { keyPath: 'id', autoIncrement: true });
+                    const oldVersion = event.oldVersion;
+                    
+                    // Create blogs store if it doesn't exist
+                    if (!db.objectStoreNames.contains(STORE_BLOGS)) {
+                        console.log('Creating blogs store');
+                        db.createObjectStore(STORE_BLOGS, { keyPath: 'id' });
                     }
 
-                    if (!db.objectStoreNames.contains(STORE_TEMP)) {
-                        db.createObjectStore(STORE_TEMP, { keyPath: 'id' });
+                    // Handle migration from old stores
+                    if (oldVersion < 2) {
+                        // Delete old stores if they exist
+                        if (db.objectStoreNames.contains('drafts')) {
+                            db.deleteObjectStore('drafts');
+                        }
+                        if (db.objectStoreNames.contains('tempBlog')) {
+                            db.deleteObjectStore('tempBlog');
+                        }
                     }
                 };
             } catch (err) {
-                this.connecting = null;
+                console.error('Error in init:', err);
                 reject(err);
             }
         });
@@ -70,128 +75,64 @@ export class BlogDatabase {
         return this.connecting;
     }
 
-    async getTempBlog(): Promise<BlogData | null> {
-        // Verificar cache primeiro
-        if (this.cache.has('tempBlog')) {
-            return this.cache.get('tempBlog');
-        }
-
+    async getBlog(id: string): Promise<BlogData | null> {
         await this.init();
         if (!this.db) throw new Error("Database not initialized");
 
         return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction([STORE_TEMP], 'readonly');
-            const store = transaction.objectStore(STORE_TEMP);
-            const request = store.get('temp');
+            const transaction = this.db!.transaction([STORE_BLOGS], 'readonly');
+            const store = transaction.objectStore(STORE_BLOGS);
+            const request = store.get(id);
 
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                const result = request.result || null;
-                // Armazenar em cache
-                this.cache.set('tempBlog', result);
-                resolve(result);
-            };
+            request.onsuccess = () => resolve(request.result || null);
         });
     }
 
-    async saveTempBlog(blog: BlogData): Promise<void> {
+    async saveBlog(blog: BlogData): Promise<void> {
         await this.init();
         if (!this.db) throw new Error("Database not initialized");
 
         return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction([STORE_TEMP], 'readwrite');
-            const store = transaction.objectStore(STORE_TEMP);
-            const request = store.put({ ...blog, id: 'temp' });
+            const transaction = this.db!.transaction([STORE_BLOGS], 'readwrite');
+            const store = transaction.objectStore(STORE_BLOGS);
+            const request = store.put(blog);
 
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                // Atualizar cache
-                this.cache.set('tempBlog', blog);
-                resolve();
-            };
+            request.onsuccess = () => resolve();
         });
     }
 
-    async saveDraft(draft: BlogData): Promise<number> {
+    async getAllBlogs(): Promise<BlogData[]> {
         await this.init();
         if (!this.db) throw new Error("Database not initialized");
 
         return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction([STORE_DRAFTS], 'readwrite');
-            const store = transaction.objectStore(STORE_DRAFTS);
-
-            const request = store.add(draft);
-
-            transaction.onerror = () => reject(transaction.error);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result as number);
-        });
-    }
-
-    async getAllDrafts(): Promise<BlogData[]> {
-        await this.init();
-        if (!this.db) throw new Error("Database not initialized");
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction([STORE_DRAFTS], 'readonly');
-            const store = transaction.objectStore(STORE_DRAFTS);
-
+            const transaction = this.db!.transaction([STORE_BLOGS], 'readonly');
+            const store = transaction.objectStore(STORE_BLOGS);
             const request = store.getAll();
 
-            transaction.onerror = () => reject(transaction.error);
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => resolve(request.result || []);
         });
     }
 
-    async validateBlogId(id: string): Promise<boolean> {
-        const blog = await this.getTempBlog();
-        if (!blog) return false;
-
-        return sanitizeString(blog.data.title, 1) === id;
-    }
-
-    async updateBlog(blog: BlogData) {
-        await this.init();
-        if (!this.db) throw new Error("Database not initialized");
-        const tx = this.db.transaction('drafts', 'readwrite');
-        const store = tx.objectStore('drafts');
-
-        // Use the title as the key for the blog
-        const key = blog.data.title;
-        await new Promise<void>((resolve, reject) => {
-            const request = store.put(blog, key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-
-        return blog;
-    }
-
-    async deleteTempBlog(): Promise<void> {
+    async deleteBlog(id: string): Promise<void> {
         await this.init();
         if (!this.db) throw new Error("Database not initialized");
 
         return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction([STORE_TEMP], 'readwrite');
-            const store = transaction.objectStore(STORE_TEMP);
-            const request = store.clear();
+            const transaction = this.db!.transaction([STORE_BLOGS], 'readwrite');
+            const store = transaction.objectStore(STORE_BLOGS);
+            const request = store.delete(id);
 
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                // Clear cache after successful deletion
-                this.cache.delete('tempBlog');
-                resolve();
-            };
+            request.onsuccess = () => resolve();
         });
     }
 
     // Limpar cache quando necessário
-    clearCache() {
-        this.cache.clear();
-    }
-
-    close() {
+    async close(): Promise<void> {
         if (this.db) {
             this.db.close();
             this.db = null;
@@ -203,7 +144,9 @@ export class BlogDatabase {
 export const blogDB = BlogDatabase.getInstance();
 
 if (typeof window !== 'undefined') {
-    blogDB.init().catch(console.error);
+    blogDB.init().then(() => {
+    }).catch(error => {
+    });
 
     window.addEventListener('unload', () => {
         if (blogDB['db']) {

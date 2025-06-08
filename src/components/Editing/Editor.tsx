@@ -4,11 +4,31 @@ import type EditorJS from "@editorjs/editorjs";
 import type { BlogData } from "@lib/types";
 import { blogDB } from "@services/indexedDB";
 import { EditorToolbar } from "./EditorToolbar";
-import { compressImage } from "@lib/utils";
+import { compressImage, generateNumericId } from "@lib/utils";
 
 export const Editor = component$(
     ({ blog, lang }: { blog: BlogData; lang: string }) => {
-        const editorInstance = useSignal<EditorJS>();
+        // Get initial preview mode from URL and track it with a signal
+        const isPreviewMode = useSignal(false);
+        
+        // Listen for URL changes and update preview mode
+        useVisibleTask$(({ cleanup }) => {
+            const updatePreviewMode = () => {
+                const editing = new URLSearchParams(window.location.search).get('editing');
+                isPreviewMode.value = editing === 'false';
+                if (editorInstance.value?.isReady) {
+                    editorInstance.value.readOnly.toggle(isPreviewMode.value);
+                }
+            };
+            
+            // Initial update
+            updatePreviewMode();
+            
+            // Listen for URL changes
+            window.addEventListener('popstate', updatePreviewMode);
+            cleanup(() => window.removeEventListener('popstate', updatePreviewMode));
+        });
+        const editorInstance = useSignal<EditorJS | null>(null);
         const editorReady = useSignal(false);
         const lastSaved = useSignal<Date | null>(null);
         const saveStatus = useSignal("");
@@ -91,22 +111,23 @@ export const Editor = component$(
                     import("@editorjs/table").then((m) => m.default),
                 ]);
 
-                const tempBlog = await blogDB.getTempBlog();
-                const parsedData = tempBlog?.body
-                    ? typeof tempBlog.body === "string"
-                        ? JSON.parse(tempBlog.body)
-                        : tempBlog.body
+                const savedBlog = blog.id ? await blogDB.getBlog(blog.id) : null;
+                const parsedData = savedBlog?.body
+                    ? typeof savedBlog.body === "string"
+                        ? JSON.parse(savedBlog.body)
+                        : savedBlog.body
                     : { blocks: [] };
 
                 const initialData = await sanitizeInitialData(parsedData);
 
-                if (tempBlog?.data.title) {
-                    title.value = tempBlog.data.title;
+                if (savedBlog?.data.title) {
+                    title.value = savedBlog.data.title;
                 }
 
                 const editor = new EditorJS({
                     holder: "editorjs",
                     data: initialData,
+                    readOnly: isPreviewMode.value,
                     tools: {
                         paragraph: {
                             class: Paragraph as any,
@@ -200,8 +221,9 @@ export const Editor = component$(
                             if (saveTimeout.value) clearTimeout(saveTimeout.value);
                             saveTimeout.value = window.setTimeout(async () => {
                                 const output = await editor.save();
-                                await blogDB.saveTempBlog({
-                                    ...blog,
+                                await blogDB.saveBlog({
+                                    id: blog.id || generateNumericId(),
+                                    collection: blog.collection,
                                     data: { ...blog.data, title: title.value },
                                     body: JSON.stringify(output),
                                 });
@@ -230,14 +252,14 @@ export const Editor = component$(
                 }
                 if (editorInstance.value) {
                     editorInstance.value.destroy();
-                    editorInstance.value = undefined;
+                    editorInstance.value = null;
                 }
             });
         });
 
         return (
             <div class="relative editor-wrapper min-h-screen">
-                <EditorToolbar title={title} lang={langSignal} editor={editorInstance} />
+                <EditorToolbar title={title} lang={langSignal} editor={editorInstance} isPreview={isPreviewMode.value} />
                 <div class="editor-container max-w-[850px] mx-auto min-h-[1056px] my-4">
                     <div
                         id="editorjs"

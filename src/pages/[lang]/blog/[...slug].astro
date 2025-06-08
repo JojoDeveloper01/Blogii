@@ -1,18 +1,38 @@
 ---
-import BlogPost from "@layouts/BlogPost.astro";
-import { render } from "astro:content";
-import { Editor } from "@components/Editing/Editor";
 import { getLangFromUrl } from "@i18n/utils";
+import BlogPost from "@layouts/BlogPost.astro";
+import { Editor } from "@components/Editing/Editor";
+import { render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 const id = Astro.url.searchParams.get("id");
 const editing = Astro.url.searchParams.get("editing");
 const lang = getLangFromUrl(Astro.url);
 
-//console.log("Route Debug:", { currentPage, id, editing });
-
 let blog = null;
 let needsClientData = false;
+
+const cookie = Astro.cookies.get("blogiis");
+const blogs = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+
+const blogData = blogs.find((blog: { id: string; title: string }) => blog.id === id);
+const title = blogData?.title;
+
+//console.log("Route Debug:", lang, currentPage, id, title, editing);
+
+// Validate required parameters
+if (!id || !title) {
+	return Astro.redirect(`/${lang}`);
+}
+
+// Set editing mode
+if (editing !== "true" && editing !== "false") {
+	// Default to editing mode
+	const url = new URL(Astro.url);
+	url.searchParams.set('editing', 'true');
+	return Astro.redirect(url.toString());
+}
 
 if (currentPage === "temp") {
 	needsClientData = true;
@@ -20,10 +40,11 @@ if (currentPage === "temp") {
 		id: id || "",
 		collection: "blog" as const,
 		data: {
-			title: id || "",
+			title: title || "",
 			pubDate: new Date(),
+			isPreview: editing === "false",
 		},
-	};
+	} as CollectionEntry<"blog">;
 }
 
 const { Content } =
@@ -33,12 +54,12 @@ const { Content } =
 {
 	needsClientData && blog ? (
 		<BlogPost {...blog.data}>
-			<Editor blog={blog} lang={lang} client:load />
+			<Editor {blog} {lang} client:load />
 		</BlogPost>
 	) : blog ? (
 		<BlogPost {...blog.data}>
 			{editing ? (
-				<Editor blog={blog} lang={lang} client:load />
+				<Editor {blog} {lang} client:load />
 			) : Content ? (
 				<Content />
 			) : null}

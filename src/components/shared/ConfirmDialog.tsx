@@ -18,7 +18,7 @@ export const ConfirmDialog = component$<ConfirmDialogProps>(({
             id={id}
             class="backdrop:bg-black/50 rounded-lg p-6 max-w-sm w-full mx-auto shadow-xl bg-white dark:bg-gray-800"
         >
-            <h3 class="text-lg font-semibold mb-2e">{title}</h3>
+            <h3 class="text-lg font-semibold mb-2e text-white">{title}</h3>
             <p class="text-gray-600 dark:text-gray-300 mb-6">{message}</p>
             <div class="flex justify-end space-x-3">
                 <button

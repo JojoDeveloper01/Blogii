@@ -1,4 +1,4 @@
-import { component$, type Signal, $, useSignal } from '@builder.io/qwik';
+import { component$, type Signal, $, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
 import { executeEditorCommand, updateBlogTitle, deleteBlog } from "@lib/utils";
@@ -8,10 +8,64 @@ import { ConfirmDialog } from '@components/shared/ConfirmDialog';
 interface EditorToolbarProps {
     title: Signal<string>;
     lang: string;
-    editor: Signal<EditorJS | undefined>;
+    editor: Signal<EditorJS | null>;
+    isPreview?: boolean;
 }
 
 export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, editor }) => {
+    const blogId = useSignal<string | null>(null);
+    const isPreviewMode = useSignal(false);
+
+    // Function to sync URL with current preview mode
+    const syncUrlWithMode = $(() => {
+        if (typeof window === 'undefined') return;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('editing', (!isPreviewMode.value).toString());
+        window.history.pushState({}, '', url);
+    });
+
+    // Function to toggle preview mode
+    const togglePreviewMode = $(() => {
+        isPreviewMode.value = !isPreviewMode.value;
+        if (editor.value?.isReady) {
+            editor.value.readOnly.toggle();
+        }
+        syncUrlWithMode();
+    });
+
+    // Initialize blogId, icons, and preview mode
+    useVisibleTask$(({ track }) => {
+        if (typeof window === 'undefined') return;
+
+        // Get blog ID from URL
+        const params = new URLSearchParams(window.location.search);
+        blogId.value = params.get('id');
+        
+        // Add preview and edit icons
+        icons.preview = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        icons.edit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+
+        // Set initial preview mode from URL
+        const editing = params.get('editing');
+        if (editing === 'false') {
+            isPreviewMode.value = true;
+            if (editor.value?.isReady) {
+                editor.value.readOnly.toggle();
+            }
+            syncUrlWithMode();
+        }
+
+        // Listen for URL changes
+        window.addEventListener('popstate', () => {
+            const currentEditing = new URLSearchParams(window.location.search).get('editing');
+            const shouldBePreview = currentEditing === 'false';
+            if (shouldBePreview !== isPreviewMode.value) {
+                togglePreviewMode();
+            }
+        });
+    });
+
     const originalTitle = useSignal(title.value);
     const hasChanges = useSignal(false);
     const saveTimeout = useSignal<number | null>(null);
@@ -23,8 +77,13 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
         executeEditorCommand(editor.value, command, params);
     });
 
-    const updateTitleAndURL = $(async () => {
-        await updateBlogTitle(title.value, {
+    const updateTitle = $(async () => {
+        if (!blogId.value) {
+            errorMessage.value = "Could not find blog ID";
+            return;
+        }
+
+        await updateBlogTitle(title.value, blogId.value, {
             onSuccess: () => {
                 // Show success feedback
                 showSaveSuccess.value = true;
@@ -55,15 +114,24 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
         hasChanges.value = true;
         isSaving.value = true;
 
-        saveTimeout.value = window.setTimeout(async () => {
-            await updateTitleAndURL();
-        }, 1500); // Reduced to 1.5 seconds
+        if (typeof window !== 'undefined') {
+            saveTimeout.value = window.setTimeout(async () => {
+                await updateTitle();
+            }, 1500); // Reduced to 1.5 seconds
+        }
     });
 
     const handleDelete = $(async () => {
-        await deleteBlog({
+        if (!blogId.value) {
+            errorMessage.value = "Could not find blog ID";
+            return;
+        }
+        
+        await deleteBlog(blogId.value, {
             onSuccess: () => {
-                window.location.href = `/${lang}/`;
+                if (typeof window !== 'undefined') {
+                    window.location.href = `/${lang}/`;
+                }
             },
             onError: (error) => {
                 errorMessage.value = error;
@@ -81,17 +149,23 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                         </a>
                     </div>
                     <div class="flex-1 flex items-center space-x-2 relative">
-                        <TitleInputBase
-                            value={title}
-                            onInput$={(newValue) => {
-                                title.value = newValue;
-                                hasChanges.value = title.value !== originalTitle.value;
-                                autoSave(newValue);
-                            }}
-                            onEnter$={updateTitleAndURL}
-                            className="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors hover:border-gray-300"
-                            placeholder="Title of the blog"
-                        />
+                        {isPreviewMode.value ? (
+                            <div class="flex-1 px-4 py-2 text-lg font-medium">
+                                {title.value}
+                            </div>
+                        ) : (
+                            <TitleInputBase
+                                value={title}
+                                onInput$={(newValue) => {
+                                    title.value = newValue;
+                                    hasChanges.value = title.value !== originalTitle.value;
+                                    autoSave(newValue);
+                                }}
+                                onEnter$={updateTitle}
+                                className="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors hover:border-gray-300"
+                                placeholder="Title of the blog"
+                            />
+                        )}
                         {hasChanges.value && isSaving.value && (
                             <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                                 Saving...
@@ -106,8 +180,10 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                     <div class="flex items-center space-x-3 pl-4 border-l">
                         <button
                             onClick$={() => {
-                                const dialog = document.getElementById('delete-blog-dialog') as HTMLDialogElement;
-                                dialog?.showModal();
+                                if (typeof window !== 'undefined') {
+                                    const dialog = document.getElementById('delete-blog-dialog') as HTMLDialogElement;
+                                    dialog?.showModal();
+                                }
                             }}
                             class="text-red-500 hover:text-red-700 p-2 transition-colors"
                             title="Delete blog"
@@ -118,14 +194,21 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                                 <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                             </svg>
                         </button>
-                        <a href="." class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-                            <span dangerouslySetInnerHTML={icons.blogs} />
-                            <span class="text-sm font-medium">MyBlogiis</span>
-                        </a>
+                        <button
+                            onClick$={togglePreviewMode}
+                            class="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                            title={isPreviewMode.value ? "Back to editing" : "Preview mode"}
+                        >
+                            <span dangerouslySetInnerHTML={isPreviewMode.value ? icons.edit : icons.preview} />
+                            <span class="text-sm font-medium">
+                                {isPreviewMode.value ? "Edit" : "Preview"}
+                            </span>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="flex items-center p-2 space-x-4">
+            <div class="flex items-center p-2 space-x-4" style={{ display: isPreviewMode.value ? 'none' : 'flex' }}>
+                {/* Editor toolbar only shown in edit mode */}
                 <div class="flex items-center space-x-1">
                     <select
                         class="bg-transparent text-sm p-1 border rounded"

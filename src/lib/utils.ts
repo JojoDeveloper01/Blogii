@@ -1,4 +1,5 @@
 import { blogDB } from "@services/indexedDB";
+import type { BlogData } from "@lib/types";
 import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
 
 // string para remover os traços e acentos e acrescentar false para deixar os traços e deixar os acentos
@@ -116,7 +117,7 @@ export const compressImage = async (base64: string): Promise<string> => {
 	return markdown.trim();
 } */
 
-export const startBlog = async (title: string, showError: (show: boolean, msg: string) => void) => {
+export const startBlog = async (title: string, showError: (show: boolean, msg: string) => void): Promise<{ id: string; path: string } | undefined> => {
 	const { isValid, sanitized } = validateTitle(title);
 
 	if (!isValid) {
@@ -125,21 +126,96 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 	}
 
 	try {
-		await blogDB.saveTempBlog({
+		const blogId = generateNumericId();
+		await blogDB.saveBlog({
+			id: blogId,
 			collection: "blog",
-			data: { title: sanitized, pubDate: new Date() }
+			data: { 
+				title: sanitized, 
+				pubDate: new Date() 
+			},
 		});
-		window.dispatchEvent(new Event('navigation-update'));
-		window.location.href = `blog/temp?id=${sanitizeString(title, 1)}&editing=true`;
+
+		// Add to cookie
+		if (typeof window !== 'undefined') {
+			cookieUtils.addBlogToCookie({ id: blogId, title: sanitized });
+			window.dispatchEvent(new Event('navigation-update'));
+		}
+
+		return { 
+			id: blogId,
+			path: `blog/temp?id=${blogId}&editing=true`
+		};
 	} catch (error) {
 		console.error("Erro ao salvar blog:", error);
-		showError(true, "Erro ao criar blog. Tente novamente.");
+		showError(true, "Erro ao criar blog. Tente novamente");
+		return undefined;
+	}
+};
+
+interface BlogCookieItem {
+	id: string;
+	title: string;
+}
+
+// Only use these functions on the client side
+export const cookieUtils = {
+	getCookie(name: string): string | null {
+		if (typeof document === 'undefined') return null;
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+		return null;
+	},
+
+	setCookie(name: string, value: string, days: number) {
+		if (typeof document === 'undefined') return;
+		const expires = new Date();
+		expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+		const encodedValue = encodeURIComponent(value);
+		document.cookie = `${name}=${encodedValue};expires=${expires.toUTCString()};path=/`;
+	},
+
+	getStoredBlogs(): BlogCookieItem[] {
+		if (typeof document === 'undefined') return [];
+		const cookie = this.getCookie('blogiis');
+		if (!cookie) return [];
+		try {
+			return JSON.parse(decodeURIComponent(cookie));
+		} catch {
+			return [];
+		}
+	},
+
+	addBlogToCookie(blog: BlogCookieItem) {
+		if (typeof document === 'undefined') return;
+		const blogs = this.getStoredBlogs();
+		blogs.push(blog);
+		this.setCookie('blogiis', JSON.stringify(blogs), 30);
+	},
+
+	removeBlogFromCookie(blogId: string) {
+		if (typeof document === 'undefined') return;
+		const blogs = this.getStoredBlogs();
+		const filteredBlogs = blogs.filter(blog => blog.id !== blogId);
+		this.setCookie('blogiis', JSON.stringify(filteredBlogs), 30);
+	},
+
+	updateBlogInCookie(blogId: string, title: string) {
+		if (typeof document === 'undefined') return;
+		const blogs = this.getStoredBlogs();
+		const blogIndex = blogs.findIndex(blog => blog.id === blogId);
+		if (blogIndex !== -1) {
+			blogs[blogIndex].title = title;
+			this.setCookie('blogiis', JSON.stringify(blogs), 30);
+		}
 	}
 };
 
 export const processInput = async (
 	title: string,
 	isAuthorized: boolean,
+	hasBlogs: boolean,
 	setState: (state: { error: boolean; msg: string; login: boolean; disabled: boolean }) => void
 ) => {
 	const trimmed = title.trim();
@@ -150,8 +226,7 @@ export const processInput = async (
 	}
 
 	try {
-		const existingBlog = await blogDB.getTempBlog();
-		if (existingBlog && !isAuthorized) {
+		if (hasBlogs && !isAuthorized) {
 			setState({ error: true, msg: blogAlreadyCreated, login: true, disabled: true });
 			return false;
 		}
@@ -203,6 +278,7 @@ export const executeEditorCommand = (editor: any, command: string, params?: any)
 
 export const updateBlogTitle = async (
 	title: string,
+	blogId: string,
 	callbacks: {
 		onSuccess: () => void;
 		onError: () => void;
@@ -216,25 +292,23 @@ export const updateBlogTitle = async (
 	}
 
 	try {
-		const currentUrl = new URL(window.location.href);
-		currentUrl.searchParams.set('id', sanitizeString(sanitized, 1));
-		window.history.replaceState({}, '', currentUrl.toString());
-
-		const tempBlog = await blogDB.getTempBlog();
-		if (tempBlog) {
-			const updatedBlog = {
-				...tempBlog,
+		const blog = await blogDB.getBlog(blogId);
+		if (blog) {
+			const updatedBlog: BlogData = {
+				...blog,
 				data: {
-					...tempBlog.data,
+					...blog.data,
 					title: sanitized,
-					lastUpdated: new Date().toISOString()
+					updatedDate: new Date()
 				}
 			};
-			await blogDB.saveTempBlog(updatedBlog);
-			try {
-				await blogDB.updateBlog(updatedBlog);
-			} catch (err) {
-				console.warn('Failed to update main blog, but temp blog was saved:', err);
+
+			// Update blog in IndexedDB
+			await blogDB.saveBlog(updatedBlog);
+
+			// Update title in cookie
+			if (typeof window !== 'undefined') {
+				cookieUtils.updateBlogInCookie(blogId, sanitized);
 			}
 		}
 
@@ -246,17 +320,45 @@ export const updateBlogTitle = async (
 };
 
 export const deleteBlog = async (
+	blogId: string,
 	callbacks: {
 		onSuccess: () => void;
-		onError: (error: string) => void;
+		onError: (error: any) => void;
 	}
 ) => {
 	try {
-		await blogDB.deleteTempBlog();
+		// Delete from IndexedDB
+		await blogDB.deleteBlog(blogId);
+
+		// Delete from cookie on client side
+		if (typeof window !== 'undefined') {
+			cookieUtils.removeBlogFromCookie(blogId);
+		}
+
 		callbacks.onSuccess();
 	} catch (error) {
-		console.error("Error deleting blog:", error);
-		callbacks.onError("Failed to delete blog. Please try again.");
+		console.error('Error deleting blog:', error);
+		callbacks.onError(error);
 	}
 };
 
+export const createBlog = async (entry: BlogData, path: any, fs: any) => {
+    const data = entry.data;
+    const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
+
+    const frontMatter = {
+        title: data.title,
+        description: data.description || "",
+        image: data.image || "",
+        pubDate: formatDate(data.pubDate),
+    };
+
+    const frontMatterString = Object.entries(frontMatter)
+        .map(([key, value]) => `${key}: "${value}"`)
+        .join('\n');
+
+    const markdownContent = `---\n${frontMatterString}\n---`;
+
+    await fs.writeFile(filePath, markdownContent, "utf8");
+    console.log(`📄 File Created successfully: ${filePath}`);
+}

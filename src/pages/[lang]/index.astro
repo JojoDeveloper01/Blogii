@@ -12,6 +12,14 @@ const isAuthorized = false;
 let blogsData: BlogData[] = [];
 
 // Se não estiver autorizado, tentaremos pegar o blog temporário no cliente
+if (!isAuthorized) {
+    const cookie = Astro.cookies.get("blogiis");
+    try {
+        blogsData = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+    } catch (error) {
+        console.error("Erro ao ler o cookie 'blogiis'", error);
+    }
+}
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
@@ -70,46 +78,3 @@ let blogsData: BlogData[] = [];
 		</p>
 	</main>
 </Layout>
-
-<script>
-	import { blogDB } from "@services/indexedDB";
-	import { sanitizeString } from "@lib/utils";
-
-	async function updateBlogsList() {
-		try {
-			const tempBlog = await blogDB.getTempBlog();
-			//console.log("Blog temporário carregado:", tempBlog);
-
-			if (tempBlog) {
-				const blogsCreatedElement =
-					document.getElementById("blogsCreated");
-				if (blogsCreatedElement) {
-					blogsCreatedElement.style.display = "block";
-					const blogsList = blogsCreatedElement.querySelector("ul");
-					if (blogsList) {
-						const blogTitle = sanitizeString(tempBlog.data.title);
-						const blogId = sanitizeString(tempBlog.data.title, 1);
-
-						blogsList.innerHTML = `
-							<li class="flex items-center justify-center space-x-2">
-								<span class="text-orange-400">&rarr;</span>
-								<a href="blog/temp?id=${blogId}&editing=true"
-								   class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200">
-									${blogTitle}
-								</a>
-							</li>
-						`;
-					}
-				}
-			}
-		} catch (err) {
-			console.error("Erro ao atualizar lista de blogs:", err);
-		}
-	}
-
-	// Atualizar lista ao carregar a página
-	updateBlogsList();
-
-	// Atualizar quando houver mudanças no IndexedDB
-	window.addEventListener("storage", updateBlogsList);
-</script>

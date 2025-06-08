@@ -8,21 +8,27 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 
 
-[] Improve the blog editor
+[X] Improve the blog editor 1
     [X] The title has to be editable,
-    [] cant be create a new blog with the URL if already wasnt created with the blog name creator 
-    [] Has to have a preview button, the link it'll be `id=seila&editing=false` or something like that
-    [] Should have various templates from the DB
-    [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
+    [X] cant be create a new blog with the URL if already wasnt created with the blog name creator 
+    [X] Has to have a preview button, the link it'll be `id=372843434&editing=false` or something like that
 
-[] In the home page has to show only the blog name creator and if the are more blogiis, show them but not before
+[X] In the home page has to show only the blog name creator and if there's more blogiis, show them but not before
 
-[] Add authentication
+[X] Well load to the input js the title of the blog  
+
+[] Add authentication - Supabase (with google, facebook, microsoft and apple)
 
 [] Add dashboard
 
 [] Add profile
 
-[] Add feedback
+[] Add the options to enable the comments on the blog
+
+[] Improve the blog editor 2
+    [] Should have various templates from the DB
+    [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
+
+
 
 

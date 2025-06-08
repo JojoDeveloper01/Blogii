@@ -1,9 +1,10 @@
 ---
 import { TitleInput } from "./TitleInput";
-import { DynamicBlogList } from "./DynamicBlogList";
-import type { BlogData } from "@lib/types";
+import { sanitizeString } from "@lib/utils";
 
 const { lang, isAuthorized, blogsData } = Astro.props;
+
+const hasBlogs: boolean = blogsData.length > 0;
 ---
 
 <section
@@ -22,8 +23,32 @@ const { lang, isAuthorized, blogsData } = Astro.props;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
-        <TitleInput blogsData={blogsData} {isAuthorized} client:load />
-        <DynamicBlogList {isAuthorized} client:load />
+        <TitleInput {isAuthorized} {hasBlogs} client:load />
+        {
+            hasBlogs && (
+                <div
+                    id="blogsCreated"
+                    class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
+                >
+                    <h3 class="mb-4 text-lg font-bold text-orange-500">
+                        Blogs Criados:
+                    </h3>
+                    <ul class="space-y-2">
+                        {blogsData.map((blog: { id: string; title: string; }) => (
+                            <li class="flex items-center justify-center space-x-2">
+                                <span class="text-orange-400">&rarr;</span>
+                                <a
+                                    href={`/${lang}/blog/temp?id=${blog.id}&editing=true`}
+                                    class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
+                                >
+                                    {sanitizeString(blog.title)}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )
+        }
     </div>
 </section>
 

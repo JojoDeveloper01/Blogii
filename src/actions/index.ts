@@ -1,9 +1,16 @@
-import { defineAction, ActionError } from "astro:actions";
+import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import type { BlogData } from "@lib/types";
-import { formatDate } from "@lib/utils";
-import * as fs from 'fs/promises';
+import { createBlog } from "@lib/utils";
 import * as path from 'path';
+import * as fs from 'fs/promises';
+import { supabase } from "@lib/supabase";
+import type { Provider } from '@supabase/supabase-js';
+
+class ActionError extends Error {
+    constructor(public message: string, public code?: string) {
+        super(message);
+    }
+}
 
 const baseBlogData = z.object({
     id: z.string().optional(),
@@ -18,23 +25,52 @@ const baseBlogData = z.object({
 })
 
 export const server = {
+    auth: {
+        signInWithOAuth: defineAction({
+            input: z.object({
+                provider: z.enum(['google', 'facebook', 'apple', 'microsoft']) as z.ZodType<Provider>
+            }),
+            handler: async ({ provider }) => {
+                try {
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider,
+                        options: {
+                            redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback`
+                        }
+                    });
+                    
+                    if (error) throw error;
+                    return { success: true, url: data.url };
+                } catch (error) {
+                    console.error('Failed to login:', error);
+                    throw new Error('Failed to login');
+                }
+            }
+        }),
+        signOut: defineAction({
+            handler: async () => {                                                                          
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+                    return { success: true, redirectTo: '/' };
+                } catch (error) {
+                    console.error('Failed to sign out:', error);
+                    throw new ActionError('Failed to sign out');
+                }
+            }
+        })
+    },
     sendBlogData: defineAction({
         input: baseBlogData,
         handler: async (input) => {
             try {
-                await createBlog(input);
+                await createBlog(input, path, fs);
                 return { success: true };
             } catch (error) {
                 if (error instanceof z.ZodError) {
-                    throw new ActionError({
-                        code: "BAD_REQUEST",
-                        message: error.errors[0].message
-                    });
+                    throw new ActionError(error.errors[0].message, "BAD_REQUEST");
                 }
-                throw new ActionError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: error instanceof Error ? error.message : "Unknown error occurred"
-                });
+                throw new ActionError(error instanceof Error ? error.message : "Unknown error occurred", "INTERNAL_SERVER_ERROR");
             }
         }
     }),
@@ -48,32 +84,8 @@ export const server = {
                 /* const blogs = await getCollection(collection || "blog");
                 return { success: true, blogs }; */
             } catch (error: any) {
-                throw new ActionError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: error.message
-                });
+                throw new ActionError(error.message, "INTERNAL_SERVER_ERROR");
             }
         }
     })
-}
-
-async function createBlog(entry: BlogData) {
-    const data = entry.data;
-    const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
-
-    const frontMatter = {
-        title: data.title,
-        description: data.description || "",
-        image: data.image || "",
-        pubDate: formatDate(data.pubDate),
-    };
-
-    const frontMatterString = Object.entries(frontMatter)
-        .map(([key, value]) => `${key}: "${value}"`)
-        .join('\n');
-
-    const markdownContent = `---\n${frontMatterString}\n---`;
-
-    await fs.writeFile(filePath, markdownContent, "utf8");
-    console.log(`📄 File Created successfully: ${filePath}`);
 }

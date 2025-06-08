@@ -1,16 +1,15 @@
 import { component$, $, useSignal } from "@builder.io/qwik";
-import type { BlogData } from "@lib/types";
 import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
 import { TitleInputBase } from './shared/TitleInputBase';
-import { startBlog, processInput } from '@lib/utils';
+import { startBlog, processInput } from "@lib/utils";
 
 interface TitleInputProps {
-	blogsData: BlogData[]
+	hasBlogs: boolean,	
 	isAuthorized: boolean
 }
 
-export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputProps) => {
+export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const message = useSignal("");
@@ -18,15 +17,19 @@ export const TitleInput = component$(({ blogsData, isAuthorized }: TitleInputPro
 	const messageToLoginOrCreateAccount = useSignal(false);
 
 	const handleStartBlog = $(async () => {
-		await startBlog(title.value, (show, msg) => {
+		const blogResult = await startBlog(title.value, (show, msg) => {
 			showError.value = show;
 			message.value = msg;
 		});
+		
+		if (blogResult && typeof window !== 'undefined') {
+            window.location.href = blogResult.path;
+        }
 	});
 
 	const handleProcessInput = $(async (inputValue: string) => {
 		title.value = inputValue.trim();
-		return await processInput(title.value, isAuthorized, (state) => {
+		return await processInput(title.value, isAuthorized, hasBlogs, (state) => {
 			showError.value = state.error;
 			message.value = state.msg;
 			messageToLoginOrCreateAccount.value = state.login;

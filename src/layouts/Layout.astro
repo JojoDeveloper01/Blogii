@@ -2,7 +2,6 @@
 import Head from "@components/Head.astro";
 import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
-import LoginRegister from "@components/LoginRegister.astro";
 
 interface Props {
     title: string;
@@ -12,34 +11,43 @@ interface Props {
 }
 
 const { title, description, hideHeaderFooter, lang } = Astro.props;
-
-const des = description || "A blog";
 ---
 
 <html {lang}>
-    <Head {title} description={des} />
+    <Head {title} {description} />
     <body>
         <script>
             import { blogDB } from "@services/indexedDB";
 
-            // Pré-carregar dados do IndexedDB
-            const preloadDB = async () => {
+            // Initialize IndexedDB
+            const initDB = async () => {
                 try {
+                    console.log('Initializing IndexedDB...');
                     await blogDB.init();
-                    await blogDB.getTempBlog(); // Pré-carregar para o cache
+                    console.log('IndexedDB initialized, preloading data...');
+                    const blogs = await blogDB.getAllBlogs();
+                    console.log('Preloaded', blogs.length, 'blogs');
                 } catch (err) {
-                    console.error("Erro ao pré-carregar DB:", err);
+                    console.error('Error initializing IndexedDB:', err);
+                    // If database is blocked, try to close it and retry
+                    if (err instanceof Error && err.name === 'InvalidStateError') {
+                        try {
+                            await blogDB.close();
+                            await blogDB.init();
+                        } catch (retryErr) {
+                            console.error('Retry failed:', retryErr);
+                        }
+                    }
                 }
             };
 
-            preloadDB();
+            initDB();
 
             // Limpar cache ao desmontar
             window.addEventListener("unload", () => {
-                blogDB.clearCache();
+                blogDB.close();
             });
         </script>
-        <LoginRegister />
         {!hideHeaderFooter && <Header {lang} />}
         <div>
             <slot />
