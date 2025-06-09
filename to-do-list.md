@@ -17,18 +17,27 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [X] Well load to the input js the title of the blog  
 
-[] Add authentication - Supabase (with google, facebook, microsoft and apple)
+[X] Add authentication - Supabase (with google, facebook, microsoft)
+    [] Save the User data on the server
+    [] When the user is logged in has to save automatly the temporal blog on the server and delete the temporal blog on the local
 
 [] Add dashboard
+    [] Has to show the blogs of the user
+    [] Has to show the analytics of the blogs of the user
+        [] Create a table to save the analaitics of the blogs of the user
+        [] Has to connect with google analitics or something like that
+        [] Has to show the number of posts, views, likes of the blog
+    [] Has to show the comments of the blogs of the user
+    [] Has to show the settings of the blogs of the user
 
-[] Add profile
+[] Make the publish button
+    [] Has to save the blog on the repository, create a .mk on the folder "Content"
 
+[] Ask to chatGPT how i can make a domian name to link to the blog like `blog-name.myblogii.com`
+
+[] Add Comments on the blog
 [] Add the options to enable the comments on the blog
 
 [] Improve the blog editor 2
     [] Should have various templates from the DB
     [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
-
-
-
-

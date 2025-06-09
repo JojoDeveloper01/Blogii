@@ -28,7 +28,7 @@ export const server = {
     auth: {
         signInWithOAuth: defineAction({
             input: z.object({
-                provider: z.enum(['google', 'facebook', 'apple', 'microsoft']) as z.ZodType<Provider>
+                provider: z.enum(['google', 'facebook', 'azure']) as z.ZodType<Provider>
             }),
             handler: async ({ provider }) => {
                 try {
@@ -40,6 +40,32 @@ export const server = {
                     });
                     
                     if (error) throw error;
+
+                    // After successful OAuth, get the user session
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                    if (sessionError) throw sessionError;
+
+                    if (session?.user) {
+                        // Check if user already exists in our users table
+                        const { data: existingUser } = await supabase
+                            .from('users')
+                            .select('id')
+                            .eq('email', session.user.email)
+                            .single();
+
+                        if (!existingUser) {
+                            // Insert new user into our users table
+                            const { error: insertError } = await supabase
+                                .from('users')
+                                .insert({
+                                    id: session.user.id,
+                                    email: session.user.email,
+                                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0]
+                                });
+                            if (insertError) throw insertError;
+                        }
+                    }
+
                     return { success: true, url: data.url };
                 } catch (error) {
                     console.error('Failed to login:', error);

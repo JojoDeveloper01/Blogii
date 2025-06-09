@@ -1,29 +1,25 @@
 ---
-interface Props {
-    provider: 'google' | 'facebook' | 'apple' | 'microsoft';
-}
-
-const { provider } = Astro.props;
-
-// Import all SVG icons statically
 import googleIcon from '/public/Icons/google.svg?raw';
 import facebookIcon from '/public/Icons/facebook.svg?raw';
-import appleIcon from '/public/Icons/apple.svg?raw';
-import microsoftIcon from '/public/Icons/microsoft.svg?raw';
+import azureIcon from '/public/Icons/microsoft.svg?raw';
 
 const icons = {
     google: googleIcon,
     facebook: facebookIcon,
-    apple: appleIcon,
-    microsoft: microsoftIcon
+    azure: azureIcon
 };
 
 const styles = {
     google: 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700',
     facebook: 'bg-[#1877f2] text-white hover:bg-[#0c63d4]',
-    apple: 'bg-black text-white hover:bg-zinc-800',
-    microsoft: 'bg-[#0078d4] text-white hover:bg-[#005a9e]'
+    azure: 'bg-[#0078d4] text-white hover:bg-[#005a9e]'
 };
+
+interface Props {
+    provider: 'google' | 'facebook' | 'azure';
+}
+
+const { provider } = Astro.props;
 ---
 
 <button

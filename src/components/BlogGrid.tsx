@@ -19,17 +19,13 @@ export const BlogGrid = component$<BlogGridProps>(({ lang }) => {
         }
     });
 
-    console.log('Rendering grid with blogs:', blogs.value);
     return (
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {blogs.value.map((blog, index) => {
-                console.log('Rendering blog card:', blog.id, blog.data.title);
                 // Parse blog content to get first image and text
                 let content: any = {};
                 try {
-                    console.log('Blog body type:', typeof blog.body);
                     content = typeof blog.body === 'string' ? JSON.parse(blog.body) : blog.body;
-                    console.log('Parsed content:', content);
                 } catch (e) {
                     console.error('Error parsing blog content for blog', blog.id, ':', e);
                 }

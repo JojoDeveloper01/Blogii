@@ -108,3 +108,82 @@
   Refer to Astro's official documentation for detailed information on components, routing, and integrations for best practices.
 
   Use qwik instead of react, prioritize always the perfonmance and fast as possible
+
+
+Sql Data Supabase:
+
+ -- Tabela de utilizadores
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  full_name text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabela de blogs
+create table blogs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  title text not null,
+  description text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabela de posts
+create table posts (
+  id uuid primary key default gen_random_uuid(),
+  blog_id uuid references blogs(id) on delete cascade,
+  title text not null,
+  content text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabela de settings com limites
+create table settings (
+  id serial primary key,
+  max_blogs_per_user integer not null default 10,
+  max_posts_per_blog integer not null default 20,
+  updated_at timestamp with time zone default now()
+);
+
+-- Inserir limites iniciais
+insert into settings (max_blogs_per_user, max_posts_per_blog)
+values (10, 20);
+
+-- Função para limitar número de blogs por user
+create or replace function enforce_blog_limit()
+returns trigger as $$
+declare
+  limit_value integer;
+begin
+  select max_blogs_per_user into limit_value from settings limit 1;
+  if (select count(*) from blogs where user_id = new.user_id) >= limit_value then
+    raise exception 'User cannot have more than % blogs', limit_value;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+-- Trigger para blogs
+create trigger blog_limit_trigger
+before insert on blogs
+for each row execute function enforce_blog_limit();
+
+-- Função para limitar número de posts por blog
+create or replace function enforce_post_limit()
+returns trigger as $$
+declare
+  limit_value integer;
+begin
+  select max_posts_per_blog into limit_value from settings limit 1;
+  if (select count(*) from posts where blog_id = new.blog_id) >= limit_value then
+    raise exception 'A blog cannot have more than % posts', limit_value;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+-- Trigger para posts
+create trigger post_limit_trigger
+before insert on posts
+for each row execute function enforce_post_limit();
