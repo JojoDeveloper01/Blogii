@@ -1,16 +1,13 @@
 ---
 import SocialButton from "./SocialButton.astro";
 import UserMenu from "./UserMenu.astro";
-import { supabase } from "@lib/supabase";
 
-const {
-    data: { user },
-} = await supabase.auth.getUser();
+const { user } = Astro.props;
 ---
 
 {
     user ? (
-        <UserMenu user={user} />
+        <UserMenu {user} />
     ) : (
         <button
             onclick="document.getElementById('login-dialog').showModal()"

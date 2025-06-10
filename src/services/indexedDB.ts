@@ -40,7 +40,6 @@ export class BlogDatabase implements IBlogDatabase {
                 };
 
                 request.onsuccess = () => {
-                    console.log('Database opened successfully');
                     this.db = request.result;
                     resolve();
                 };
@@ -51,7 +50,6 @@ export class BlogDatabase implements IBlogDatabase {
                     
                     // Create blogs store if it doesn't exist
                     if (!db.objectStoreNames.contains(STORE_BLOGS)) {
-                        console.log('Creating blogs store');
                         db.createObjectStore(STORE_BLOGS, { keyPath: 'id' });
                     }
 
@@ -141,16 +139,16 @@ export class BlogDatabase implements IBlogDatabase {
     }
 }
 
-export const blogDB = BlogDatabase.getInstance();
+export const localBlogDB = BlogDatabase.getInstance();
 
 if (typeof window !== 'undefined') {
-    blogDB.init().then(() => {
+    localBlogDB.init().then(() => {
     }).catch(error => {
     });
 
     window.addEventListener('unload', () => {
-        if (blogDB['db']) {
-            blogDB['db'].close();
+        if (localBlogDB['db']) {
+            localBlogDB['db'].close();
         }
     });
 }

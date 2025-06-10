@@ -1,0 +1,67 @@
+---
+import { getLangFromUrl } from "@i18n/utils";
+import type { PostData } from "@lib/types";
+import { BlogTitleEditor } from "@components/Editing/BlogTitleEditor";
+import Dashboard from "@layouts/Dashboard.astro";
+
+const lang = getLangFromUrl(Astro.url);
+
+const blogId = Astro.url.pathname.split("/").find(id => /^\d+$/.test(id)) || "";
+
+let blogs = null;
+
+const cookie = Astro.cookies.get("blogiis");
+try {
+	blogs = cookie ? JSON.parse(cookie.value) : [];
+} catch (error) {
+	console.error("Erro ao ler o cookie 'blogiis'", error);
+}
+
+const blogData = blogs.find(
+	(blog: { id: string; title: string; posts: PostData[] }) =>
+		blog.id === blogId,
+);
+
+if (!blogData) {
+	return Astro.redirect(`/${lang}`);
+}
+---
+
+<Dashboard>
+	<BlogTitleEditor
+		{blogId}
+		initialTitle={blogData.title}
+		client:load
+	/>
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+		<a
+			href={`${blogId}/new`}
+			class="block relative overflow-hidden rounded-lg shadow hover:shadow-lg transition-all duration-300 aspect-square hover:scale-[1.02] bg-gray-100 hover:bg-gray-200"
+		>
+			<div class="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+				<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				</svg>
+				<span class="mt-2 text-lg font-semibold">New Post</span>
+			</div>
+		</a>
+		{
+			blogData?.posts?.map((post: PostData) => (
+				<a
+					href={`${blogId}/${post.id}`}
+					class="block relative overflow-hidden rounded-lg shadow hover:shadow-lg transition-all duration-300 aspect-square hover:scale-[1.02]"
+				>
+					<div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60 z-10" />
+					<div class="absolute bottom-0 left-0 right-0 p-4 text-white z-20">
+						<h2 class="text-xl font-semibold mb-2 line-clamp-2">
+							{post.title}
+						</h2>
+					</div>
+					<div class="absolute inset-0 bg-gray-200 z-0">
+						{/* Placeholder for post background */}
+					</div>
+				</a>
+			))
+		}
+	</div>
+</Dashboard>

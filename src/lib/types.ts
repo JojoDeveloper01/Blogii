@@ -1,5 +1,13 @@
+export interface PostData {
+    id: string;
+    title: string;
+    content?: string;
+    created_at: Date;
+    updated_at?: Date;
+}
+
 export interface BlogData {
-    id?: string; //only has id if it's already saved on DB
+    id?: string;
     body?: string;
     collection: string;
     data: {
@@ -8,5 +16,15 @@ export interface BlogData {
         updatedDate?: Date,
         description?: string;
         image?: string;
+        posts?: PostData[];
     };
+}
+
+export interface BlogCookieItem {
+	id: string;
+	title: string;
+	posts: Array<{
+		id: string;
+		title: string;
+	}>;
 }

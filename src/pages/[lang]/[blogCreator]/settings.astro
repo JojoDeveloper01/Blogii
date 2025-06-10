@@ -1,0 +1,43 @@
+---
+import Dashboard from "@layouts/Dashboard.astro";
+import type { PostData } from "@lib/types";
+import { getLangFromUrl } from "@i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
+
+if (!blogId) {
+	return Astro.redirect(`/${lang}`);
+}
+
+let blogs = null;
+
+const cookie = Astro.cookies.get("blogiis");
+try {
+	blogs = cookie ? JSON.parse(cookie.value) : [];
+} catch (error) {
+	console.error("Erro ao ler o cookie 'blogiis'", error);
+}
+
+const blogData = blogs.find(
+	(blog: { id: string; title: string; posts: PostData[] }) =>
+		blog.id === blogId,
+);
+
+if (!blogData) {
+	return Astro.redirect(`/${lang}`);
+}
+---
+
+<Dashboard>
+	<ul class="space-y-2 text-sm">
+		<li class="flex items-center space-x-2">
+			<span class="font-bold">Domain</span>
+			<span class="text-gray-500 dark:text-gray-400">coming soon</span>
+		</li>
+		<li class="flex items-center space-x-2">
+			<span class="font-bold">Themes</span>
+			<span class="text-gray-500 dark:text-gray-400">coming soon</span>
+		</li>
+	</ul>
+</Dashboard>

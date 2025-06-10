@@ -54,7 +54,6 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 							handleStartBlog();
 						}
 					}}
-					className="w-full px-4 py-2 bg-transparent rounded-xl text-[1vw] max-phone:text-[3vw]"
 					placeholder="Start your idea here..."
 				/>
 				<button

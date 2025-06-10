@@ -4,6 +4,8 @@ import { sanitizeString } from "@lib/utils";
 
 const { lang, isAuthorized, blogsData } = Astro.props;
 
+//console.log(blogsData[0].posts);
+
 const hasBlogs: boolean = blogsData.length > 0;
 ---
 
@@ -34,11 +36,11 @@ const hasBlogs: boolean = blogsData.length > 0;
                         Blogs Criados:
                     </h3>
                     <ul class="space-y-2">
-                        {blogsData.map((blog: { id: string; title: string; }) => (
+                        {blogsData.map((blog: { id: string; title: string; posts: { id: string; }[]; }) => (
                             <li class="flex items-center justify-center space-x-2">
                                 <span class="text-orange-400">&rarr;</span>
                                 <a
-                                    href={`/${lang}/blog/temp?id=${blog.id}&editing=true`}
+                                    href={`/${lang}/${blog.id}`}
                                     class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
                                 >
                                     {sanitizeString(blog.title)}

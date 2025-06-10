@@ -1,19 +1,20 @@
-import { component$, type Signal, $, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$, type Signal } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
-import { executeEditorCommand, updateBlogTitle, deleteBlog } from "@lib/utils";
+import { executeEditorCommand } from "@lib/utils";
 import { TitleInputBase } from '@components/shared/TitleInputBase';
 import { ConfirmDialog } from '@components/shared/ConfirmDialog';
+import { handleDelete, updatePostTitle, useAutoSave } from "./editorConfig";
 
 interface EditorToolbarProps {
+    blogId: string;
+    postId: string;
     title: Signal<string>;
     lang: string;
     editor: Signal<EditorJS | null>;
-    isPreview?: boolean;
 }
 
-export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, editor }) => {
-    const blogId = useSignal<string | null>(null);
+export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, editor, blogId, postId }) => {
     const isPreviewMode = useSignal(false);
 
     // Function to sync URL with current preview mode
@@ -40,8 +41,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
 
         // Get blog ID from URL
         const params = new URLSearchParams(window.location.search);
-        blogId.value = params.get('id');
-        
+
         // Add preview and edit icons
         icons.preview = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         icons.edit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
@@ -67,75 +67,18 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
     });
 
     const originalTitle = useSignal(title.value);
-    const hasChanges = useSignal(false);
-    const saveTimeout = useSignal<number | null>(null);
+    const { hasChanges, isSaving, createAutoSave } = useAutoSave();
     const showSaveSuccess = useSignal(false);
-    const isSaving = useSignal(false);
     const errorMessage = useSignal("");
 
     const executeCommand = $((command: string, params?: any) => {
         executeEditorCommand(editor.value, command, params);
     });
 
-    const updateTitle = $(async () => {
-        if (!blogId.value) {
-            errorMessage.value = "Could not find blog ID";
-            return;
-        }
-
-        await updateBlogTitle(title.value, blogId.value, {
-            onSuccess: () => {
-                // Show success feedback
-                showSaveSuccess.value = true;
-                setTimeout(() => {
-                    showSaveSuccess.value = false;
-                }, 2000);
-
-                originalTitle.value = title.value;
-                hasChanges.value = false;
-                isSaving.value = false;
-            },
-            onError: () => {
-                isSaving.value = false;
-            }
-        });
-    });
-
-    const autoSave = $((newTitle: string) => {
-        if (saveTimeout.value) {
-            clearTimeout(saveTimeout.value);
-        }
-
-        if (newTitle === originalTitle.value) {
-            hasChanges.value = false;
-            return;
-        }
-
-        hasChanges.value = true;
-        isSaving.value = true;
-
-        if (typeof window !== 'undefined') {
-            saveTimeout.value = window.setTimeout(async () => {
-                await updateTitle();
-            }, 1500); // Reduced to 1.5 seconds
-        }
-    });
-
-    const handleDelete = $(async () => {
-        if (!blogId.value) {
-            errorMessage.value = "Could not find blog ID";
-            return;
-        }
-        
-        await deleteBlog(blogId.value, {
-            onSuccess: () => {
-                if (typeof window !== 'undefined') {
-                    window.location.href = `/${lang}/`;
-                }
-            },
-            onError: (error) => {
-                errorMessage.value = error;
-            }
+    const handleAutoSave = $((newTitle: string) => {
+        title.value = newTitle;
+        createAutoSave(newTitle, originalTitle.value, async () => {
+            await updatePostTitle(newTitle, blogId, postId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle);
         });
     });
 
@@ -144,7 +87,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
             <div class="flex items-center p-1 border-b border-gray-300">
                 <div class="flex items-center space-x-2 px-2 w-full">
                     <div class="flex items-center space-x-3 pr-4 border-r">
-                        <a href={`/${lang}/`} class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+                        <a href={`/${lang}/${blogId}`} class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
                             <span dangerouslySetInnerHTML={icons.back} />
                         </a>
                     </div>
@@ -156,14 +99,9 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                         ) : (
                             <TitleInputBase
                                 value={title}
-                                onInput$={(newValue) => {
-                                    title.value = newValue;
-                                    hasChanges.value = title.value !== originalTitle.value;
-                                    autoSave(newValue);
-                                }}
-                                onEnter$={updateTitle}
-                                className="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors hover:border-gray-300"
-                                placeholder="Title of the blog"
+                                onInput$={handleAutoSave}
+                                onEnter$={() => updatePostTitle(title.value, blogId, postId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle)}
+                                placeholder="Title of the post"
                             />
                         )}
                         {hasChanges.value && isSaving.value && (
@@ -248,7 +186,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
             </div>
             <ConfirmDialog
                 id="delete-blog-dialog"
-                onConfirm$={handleDelete}
+                onConfirm$={() => handleDelete(blogId, lang, errorMessage)}
                 title="Delete Blog"
                 message="Are you sure you want to delete this blog? This action cannot be undone."
             />

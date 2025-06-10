@@ -1,0 +1,86 @@
+---
+import Dashboard from "@layouts/Dashboard.astro";
+import type { PostData } from "@lib/types";
+import { getLangFromUrl } from "@i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
+
+if (!blogId) {
+	return Astro.redirect(`/${lang}`);
+}
+
+let blogs = null;
+
+const cookie = Astro.cookies.get("blogiis");
+try {
+	blogs = cookie ? JSON.parse(cookie.value) : [];
+} catch (error) {
+	console.error("Erro ao ler o cookie 'blogiis'", error);
+}
+
+const blogData = blogs.find(
+	(blog: { id: string; title: string; posts: PostData[] }) =>
+		blog.id === blogId,
+);
+
+if (!blogData) {
+	return Astro.redirect(`/${lang}`);
+}
+---
+
+<Dashboard>
+    <section class="p-6">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
+            Analíticas do Blog
+        </h1>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    Visualizações
+                </h2>
+                <p
+                    class="text-2xl font-semibold text-blue-600 dark:text-blue-400"
+                >
+                    1.235
+                </p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    Curtidas
+                </h2>
+                <p
+                    class="text-2xl font-semibold text-green-600 dark:text-green-400"
+                >
+                    328
+                </p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    Posts Publicados
+                </h2>
+                <p
+                    class="text-2xl font-semibold text-purple-600 dark:text-purple-400"
+                >
+                    0
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <h2
+                class="text-xl font-semibold text-gray-700 dark:text-white mb-4"
+            >
+                Resumo de Atividade
+            </h2>
+            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                <li>📅 Último post publicado há 3 dias</li>
+                <li>👥 124 visitantes únicos este mês</li>
+                <li>💬 45 comentários recebidos</li>
+            </ul>
+        </div>
+    </section>
+</Dashboard>

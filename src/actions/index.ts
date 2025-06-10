@@ -46,24 +46,90 @@ export const server = {
                     if (sessionError) throw sessionError;
 
                     if (session?.user) {
+                        console.log('User session:', session.user);
+                        
                         // Check if user already exists in our users table
-                        const { data: existingUser } = await supabase
+                        const { data: existingUser, error: checkError } = await supabase
                             .from('users')
                             .select('id')
                             .eq('email', session.user.email)
                             .single();
 
+                        if (checkError && checkError.code !== 'PGRST116') {
+                            console.error('Error checking existing user:', checkError);
+                            throw checkError;
+                        }
+
                         if (!existingUser) {
+                            const userData = {
+                                id: session.user.id,
+                                email: session.user.email,
+                                name: session.user.user_metadata?.name || 
+                                      session.user.user_metadata?.full_name || 
+                                      session.user.user_metadata?.given_name || 
+                                      session.user.email?.split('@')[0]
+                            };
+                            console.log('Inserting user data:', userData);
+
                             // Insert new user into our users table
                             const { error: insertError } = await supabase
                                 .from('users')
-                                .insert({
-                                    id: session.user.id,
-                                    email: session.user.email,
-                                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0]
-                                });
-                            if (insertError) throw insertError;
+                                .insert(userData);
+
+                            if (insertError) {
+                                console.error('Error inserting user:', insertError);
+                                throw insertError;
+                            }
+                            console.log('User inserted successfully');
                         }
+
+                        // Get temporary blog from cookies
+                        const cookies = document.cookie.split(';');
+                        const blogCookie = cookies.find(cookie => cookie.trim().startsWith('blogiis='));
+                        
+                        if (blogCookie) {
+                            try {
+                                const tempBlogData = JSON.parse(decodeURIComponent(blogCookie.split('=')[1]));
+                                
+                                if (tempBlogData && tempBlogData.length > 0) {
+                                    // Check if user already has a blog
+                                    const { data: existingBlog } = await supabase
+                                        .from('blogs')
+                                        .select('id')
+                                        .eq('user_id', session.user.id)
+                                        .single();
+
+                                    if (!existingBlog) {
+                                        // Save temporary blog to database
+                                        const blogData = {
+                                            user_id: session.user.id,
+                                            title: tempBlogData[0].data.title,
+                                            description: tempBlogData[0].data.description || ''
+                                        };
+
+                                        const { error: blogError } = await supabase
+                                            .from('blogs')
+                                            .insert(blogData);
+
+                                        if (blogError) {
+                                            console.error('Error saving blog:', blogError);
+                                            throw blogError;
+                                        }
+
+                                        console.log('Temporary blog saved to database');
+                                        
+                                        // Clear the cookie after successful save
+                                        document.cookie = 'blogiis=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+                                    } else {
+                                        console.log('User already has a blog');
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error processing temporary blog:', error);
+                            }
+                        }
+                    } else {
+                        console.log('No user session found');
                     }
 
                     return { success: true, url: data.url };

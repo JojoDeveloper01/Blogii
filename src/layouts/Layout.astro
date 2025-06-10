@@ -16,24 +16,21 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
 <html {lang}>
     <Head {title} {description} />
     <body>
-        <script>
-            import { blogDB } from "@services/indexedDB";
+       <!--  <script>
+            import { localBlogDB } from "@services/indexedDB";
 
             // Initialize IndexedDB
             const initDB = async () => {
                 try {
-                    console.log('Initializing IndexedDB...');
-                    await blogDB.init();
-                    console.log('IndexedDB initialized, preloading data...');
-                    const blogs = await blogDB.getAllBlogs();
-                    console.log('Preloaded', blogs.length, 'blogs');
+                    await localBlogDB.init();
+                    const blogs = await localBlogDB.getAllBlogs();
                 } catch (err) {
                     console.error('Error initializing IndexedDB:', err);
                     // If database is blocked, try to close it and retry
                     if (err instanceof Error && err.name === 'InvalidStateError') {
                         try {
-                            await blogDB.close();
-                            await blogDB.init();
+                            await localBlogDB.close();
+                            await localBlogDB.init();
                         } catch (retryErr) {
                             console.error('Retry failed:', retryErr);
                         }
@@ -45,9 +42,9 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
 
             // Limpar cache ao desmontar
             window.addEventListener("unload", () => {
-                blogDB.close();
+                localBlogDB.close();
             });
-        </script>
+        </script> -->
         {!hideHeaderFooter && <Header {lang} />}
         <div>
             <slot />

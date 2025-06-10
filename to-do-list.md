@@ -17,9 +17,16 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [X] Well load to the input js the title of the blog  
 
+[] When the blog is created:
+    [] Has to create automatly a Post, "first post"
+    [] 
+
 [X] Add authentication - Supabase (with google, facebook, microsoft)
-    [] Save the User data on the server
-    [] When the user is logged in has to save automatly the temporal blog on the server and delete the temporal blog on the local
+    [X] Save the User data on the server
+    [] Add Local Blog to the DB 
+        [] Has to save the temporal blog on the server
+        [] If its logged, get the blog from the DB
+        [] Has to delete the temporal blog on the local
 
 [] Add dashboard
     [] Has to show the blogs of the user

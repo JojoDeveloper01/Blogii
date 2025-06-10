@@ -1,11 +1,11 @@
 import rss from "@astrojs/rss";
-import { blogDB } from "@services/indexedDB";
+import { localBlogDB } from "@services/indexedDB";
 import { getLangFromUrl } from "@i18n/utils";
 import { sanitizeString } from "@lib/utils";
 
 export async function GET(context) {
 	const lang = getLangFromUrl(context.url);
-	const blogs = await blogDB.getAllDrafts();
+	const blogs = await localBlogDB.getAllDrafts();
 
 	return rss({
 		title: "Blogii",

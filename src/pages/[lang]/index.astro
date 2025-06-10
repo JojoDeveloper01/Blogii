@@ -4,18 +4,25 @@ import Hero from "@components/Hero.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@lib/consts";
 import { getLangFromUrl } from "@i18n/utils";
 import type { BlogData } from "@lib/types";
+import { supabase } from "@lib/supabase";
+
+const {
+	data: { user },
+} = await supabase.auth.getUser();
 
 const lang = getLangFromUrl(Astro.url);
-const isAuthorized = false;
+const isAuthorized = Boolean(user);
 
 // Inicializar blogsData como array vazio
 let blogsData: BlogData[] = [];
 
-// Se não estiver autorizado, tentaremos pegar o blog temporário no cliente
-if (!isAuthorized) {
+if (isAuthorized) {
+    
+}
+else{
     const cookie = Astro.cookies.get("blogiis");
     try {
-        blogsData = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+		blogsData = cookie ? JSON.parse(cookie.value) : [];
     } catch (error) {
         console.error("Erro ao ler o cookie 'blogiis'", error);
     }

@@ -1,5 +1,5 @@
-import { blogDB } from "@services/indexedDB";
-import type { BlogData } from "@lib/types";
+import { localBlogDB } from "@services/indexedDB";
+import type { BlogCookieItem, BlogData } from "@lib/types";
 import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
 
 // string para remover os traços e acentos e acrescentar false para deixar os traços e deixar os acentos
@@ -52,42 +52,62 @@ export function formatDate(date: Date): string {
 	});
 }
 
-export function generateNumericId() {
+export function generateLongNumericId() {
 	const timestamp = Date.now();
 	const randomNum = Math.floor(Math.random() * 1000);
 	return `${timestamp}${randomNum}`;
 }
 
+export function generateShortNumericId() {
+	return `${Math.floor(Math.random() * 10000)}`;
+}
+
 export const compressImage = async (base64: string): Promise<string> => {
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		const img = new Image();
-		img.src = base64;
+		img.crossOrigin = 'anonymous';
+		
 		img.onload = () => {
-			const canvas = document.createElement('canvas');
-			const ctx = canvas.getContext('2d');
+			try {
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
 
-			// Reduzir tamanho da imagem
-			const maxWidth = 800;
-			const maxHeight = 600;
-			let width = img.width;
-			let height = img.height;
+				if (!ctx) {
+					throw new Error('Could not get canvas context');
+				}
 
-			if (width > maxWidth) {
-				height = (maxWidth * height) / width;
-				width = maxWidth;
+				// Reduzir tamanho da imagem
+				const maxWidth = 800;
+				const maxHeight = 600;
+				let width = img.width;
+				let height = img.height;
+
+				if (width > maxWidth) {
+					height = Math.round((maxWidth * height) / width);
+					width = maxWidth;
+				}
+				if (height > maxHeight) {
+					width = Math.round((maxHeight * width) / height);
+					height = maxHeight;
+				}
+
+				canvas.width = width;
+				canvas.height = height;
+				ctx.drawImage(img, 0, 0, width, height);
+
+				// Comprimir com qualidade reduzida
+				const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+				resolve(compressedData);
+			} catch (error) {
+				reject(error);
 			}
-			if (height > maxHeight) {
-				width = (maxHeight * width) / height;
-				height = maxHeight;
-			}
-
-			canvas.width = width;
-			canvas.height = height;
-			ctx?.drawImage(img, 0, 0, width, height);
-
-			// Comprimir com qualidade reduzida
-			resolve(canvas.toDataURL('image/jpeg', 0.6));
 		};
+
+		img.onerror = () => {
+			reject(new Error('Failed to load image'));
+		};
+
+		img.src = base64;
 	});
 };
 
@@ -119,32 +139,56 @@ export const compressImage = async (base64: string): Promise<string> => {
 
 export const startBlog = async (title: string, showError: (show: boolean, msg: string) => void): Promise<{ id: string; path: string } | undefined> => {
 	const { isValid, sanitized } = validateTitle(title);
+	const sanitizedTitle = sanitized
 
 	if (!isValid) {
-		showError(true, sanitized.length < 3 ? amountCharactersError : invalidCharactersError);
+		showError(true, sanitizedTitle.length < 3 ? amountCharactersError : invalidCharactersError);
 		return;
 	}
 
 	try {
-		const blogId = generateNumericId();
-		await blogDB.saveBlog({
+		const blogId = generateLongNumericId();
+		const postId = generateShortNumericId();
+		const postTitle = 'This is your first post';
+
+		// Create initial post with full data for IndexedDB
+		const firstPost = {
+			id: postId,
+			title: postTitle,
+			content: '',
+			created_at: new Date()
+		};
+
+		const blogData = {
 			id: blogId,
 			collection: "blog",
 			data: { 
-				title: sanitized, 
-				pubDate: new Date() 
+				title: sanitizedTitle, 
+				pubDate: new Date(),
+				posts: [firstPost]
 			},
-		});
+		};
 
-		// Add to cookie
+		await localBlogDB.saveBlog(blogData);
+
+		// Add minimal data to cookie
 		if (typeof window !== 'undefined') {
-			cookieUtils.addBlogToCookie({ id: blogId, title: sanitized });
+			const cookieBlogData = { 
+				id: blogId, 
+				title: sanitizedTitle,
+				posts: [{
+					id: postId,
+					title: postTitle
+				}]
+			};
+			
+			cookieUtils.addBlogToCookie(cookieBlogData);
 			window.dispatchEvent(new Event('navigation-update'));
 		}
 
 		return { 
 			id: blogId,
-			path: `blog/temp?id=${blogId}&editing=true`
+			path: `${blogId}/${postId}`
 		};
 	} catch (error) {
 		console.error("Erro ao salvar blog:", error);
@@ -152,11 +196,6 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 		return undefined;
 	}
 };
-
-interface BlogCookieItem {
-	id: string;
-	title: string;
-}
 
 // Only use these functions on the client side
 export const cookieUtils = {
@@ -276,49 +315,6 @@ export const executeEditorCommand = (editor: any, command: string, params?: any)
 	}
 };
 
-export const updateBlogTitle = async (
-	title: string,
-	blogId: string,
-	callbacks: {
-		onSuccess: () => void;
-		onError: () => void;
-	}
-) => {
-	const { isValid, sanitized } = validateTitle(title);
-
-	if (!isValid) {
-		console.warn('Title validation failed');
-		return;
-	}
-
-	try {
-		const blog = await blogDB.getBlog(blogId);
-		if (blog) {
-			const updatedBlog: BlogData = {
-				...blog,
-				data: {
-					...blog.data,
-					title: sanitized,
-					updatedDate: new Date()
-				}
-			};
-
-			// Update blog in IndexedDB
-			await blogDB.saveBlog(updatedBlog);
-
-			// Update title in cookie
-			if (typeof window !== 'undefined') {
-				cookieUtils.updateBlogInCookie(blogId, sanitized);
-			}
-		}
-
-		callbacks.onSuccess();
-	} catch (err) {
-		console.error('Error updating title:', err);
-		callbacks.onError();
-	}
-};
-
 export const deleteBlog = async (
 	blogId: string,
 	callbacks: {
@@ -328,7 +324,7 @@ export const deleteBlog = async (
 ) => {
 	try {
 		// Delete from IndexedDB
-		await blogDB.deleteBlog(blogId);
+		await localBlogDB.deleteBlog(blogId);
 
 		// Delete from cookie on client side
 		if (typeof window !== 'undefined') {
@@ -362,3 +358,4 @@ export const createBlog = async (entry: BlogData, path: any, fs: any) => {
     await fs.writeFile(filePath, markdownContent, "utf8");
     console.log(`📄 File Created successfully: ${filePath}`);
 }
+

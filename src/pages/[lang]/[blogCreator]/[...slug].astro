@@ -1,0 +1,100 @@
+---
+import { getLangFromUrl } from "@i18n/utils";
+import BlogPost from "@layouts/BlogPost.astro";
+import { Editor } from "@components/Editing/Editor";
+import { render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+
+const blogId = Astro.url.pathname.split("/").find(id => /^\d+$/.test(id))
+const postId = Astro.url.pathname.split("/").slice(-1)[0];
+const editing = Astro.url.searchParams.get("editing");
+
+const lang = getLangFromUrl(Astro.url);
+
+let blog = null;
+let needsClientData = false;
+
+const cookie = Astro.cookies.get("blogiis");
+const blogs = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+
+const blogData = blogs.find(
+    (blog: { id: string; title: string }) => blog.id === blogId,
+);
+const postData = blogData?.posts.find(
+    (post: { id: string }) => post.id === postId,
+);
+
+// Validate required parameters
+if (!blogData || !postData) {
+    return Astro.redirect(`/${lang}`);
+}
+
+const blogTitle = blogData?.title;
+
+// Set editing mode
+if (editing !== "true" && editing !== "false") {
+    // Default to editing mode
+    const url = new URL(Astro.url);
+    url.searchParams.set("editing", "true");
+    return Astro.redirect(url.toString());
+}
+
+needsClientData = true;
+blog = {
+    id: blogId,
+    collection: "blog" as const,
+    data: {
+        posts: [postData],
+        title: blogTitle,
+        pubDate: new Date(),
+        isPreview: editing === "false",
+    },
+} as CollectionEntry<"blog">;
+
+const { Content } =
+    blog && !needsClientData ? await render(blog) : { Content: null };
+---
+
+{
+    needsClientData && blog ? (
+        <BlogPost {...blog.data}>
+            <Editor {blog} {lang} client:load />
+        </BlogPost>
+    ) : blog ? (
+        <BlogPost {...blog.data}>
+            {editing ? (
+                <Editor {blog} {lang} client:load />
+            ) : Content ? (
+                <Content />
+            ) : null}
+        </BlogPost>
+    ) : null
+}
+
+<style>
+    /* Personalizar o bloco do editor */
+    #editorjs {
+        background-color: #f9fafb;
+        color: #111827;
+        border: 2px solid #cbd5e1;
+        border-radius: 0.5rem;
+    }
+
+    /* Blocos de texto */
+    .ce-paragraph {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #1f2937;
+    }
+
+    /* Botões e barra de ferramentas */
+    .ce-toolbar__plus,
+    .ce-toolbar__settings-btn {
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }
+
+    .ce-toolbar__plus:hover {
+        background-color: #cbd5e1;
+    }
+</style>

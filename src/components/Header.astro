@@ -2,6 +2,12 @@
 import HeaderLink from "@components/HeaderLink.astro";
 import { SITE_TITLE } from "@lib/consts";
 import LoginButtons from "./LoginButtons.astro";
+import { supabase } from "@lib/supabase";
+
+
+const {
+	data: { user },
+} = await supabase.auth.getUser();
 
 const { lang } = Astro.props;
 ---
@@ -15,7 +21,7 @@ const { lang } = Astro.props;
 			<HeaderLink href={`/${lang}/about`}>About</HeaderLink>
 		</div>
 		<div>
-			<LoginButtons />
+			<LoginButtons {user}/>
 		</div>
 	</nav>
 </header>

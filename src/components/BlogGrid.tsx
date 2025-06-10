@@ -1,5 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { blogDB } from '@services/indexedDB';
+import { localBlogDB } from '@services/indexedDB';
 import type { BlogData } from '@lib/types';
 
 interface BlogGridProps {
@@ -12,7 +12,7 @@ export const BlogGrid = component$<BlogGridProps>(({ lang }) => {
     // Fetch drafts and temp blog on component mount
     useVisibleTask$(async () => {
         try {
-            const allBlogs = await blogDB.getAllBlogs();
+            const allBlogs = await localBlogDB.getAllBlogs();
             blogs.value = allBlogs;
         } catch (error) {
             console.error('Error fetching blogs:', error);
@@ -42,7 +42,7 @@ export const BlogGrid = component$<BlogGridProps>(({ lang }) => {
                 return (
                     <a 
                         key={blog.id}
-                        href={`/temp?id=${blog.id}&editing=true`}
+                        href={`${blog.data.title}?id=${blog.id}`}
                         class="block relative overflow-hidden rounded-lg shadow hover:shadow-lg transition-all duration-300 aspect-square hover:scale-[1.02]"
                     >
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60 z-10"></div>
@@ -77,7 +77,7 @@ export const BlogGrid = component$<BlogGridProps>(({ lang }) => {
                                     onClick$={async (e) => {
                                         e.preventDefault();
                                         try {
-                                            await blogDB.saveBlog({
+                                            await localBlogDB.saveBlog({
                                                 ...blog,
                                             });
                                             window.location.reload();

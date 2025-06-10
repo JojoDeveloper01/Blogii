@@ -1,0 +1,80 @@
+---
+import Layout from "./Layout.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "@lib/consts";
+import { getLangFromUrl } from "@i18n/utils";
+import { supabase } from "@lib/supabase";
+import type { PostData } from "@lib/types";
+
+const lang = getLangFromUrl(Astro.url);
+const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
+
+if (!blogId) {
+	return Astro.redirect(`/${lang}`);
+}
+
+let blogs = null;
+
+const cookie = Astro.cookies.get("blogiis");
+try {
+	blogs = cookie ? JSON.parse(cookie.value) : [];
+} catch (error) {
+	console.error("Erro ao ler o cookie 'blogiis'", error);
+}
+
+const blogData = blogs.find(
+	(blog: { id: string; title: string; posts: PostData[] }) =>
+		blog.id === blogId,
+);
+
+if (!blogData) {
+	return Astro.redirect(`/${lang}`);
+}
+
+const {
+	data: { user },
+} = await supabase.auth.getUser();
+---
+
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
+	<main class="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)]">
+		<div class="flex gap-6 flex-wrap lg:flex-nowrap">
+			<aside
+				class="bg-white rounded-lg shadow-lg p-4 w-full lg:w-64 max-w-sm"
+			>
+				<ul class="divide-y divide-gray-300">
+					<li class="py-2">
+						<a
+							href={`/${lang}/${blogId}`}
+							class="block text-gray-900 hover:text-gray-700 transition-colors duration-200"
+						>
+							Post
+						</a>
+					</li>
+					<li class="py-2">
+						<a
+							href={`/${lang}/${blogId}/settings`}
+							class="block text-gray-900 hover:text-gray-700 transition-colors duration-200"
+						>
+							Settings
+						</a>
+					</li>
+					{
+						user && (
+							<li class="py-2">
+								<a
+									href={`/${lang}/${blogId}/analytics`}
+									class="block text-gray-900 hover:text-gray-700 transition-colors duration-200"
+								>
+									Analytics
+								</a>
+							</li>
+						)
+					}
+				</ul>
+			</aside>
+			<div class="flex-1 flex flex-col gap-6">
+				<slot />
+			</div>
+		</div>
+	</main>
+</Layout>
