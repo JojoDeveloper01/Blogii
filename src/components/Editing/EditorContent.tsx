@@ -30,8 +30,12 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
             try {
                 // First try to get the content from IndexedDB
                 const savedBlog = await localBlogDB.getBlog(blogId);
+
+                // Find the specific post by ID
+                const savedPost = savedBlog?.data?.posts?.find(p => p.id === postId);
+                const currentPost = blog.data.posts?.find(p => p.id === postId);
                 
-                const rawContent = savedBlog?.data?.posts?.[0]?.content || blog.data.posts?.[0]?.content;
+                const rawContent = savedPost?.content || currentPost?.content;
 
                 if (typeof rawContent === 'string') {
                     content = JSON.parse(rawContent);

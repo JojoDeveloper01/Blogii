@@ -23,7 +23,11 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
 
     const handleInput = $((e: Event) => {
         const input = (e.target as HTMLInputElement).value;
-        const { sanitized } = validateTitle(input);
+        const { isValid, sanitized } = validateTitle(input);
+        if (!isValid && input.length > 0) {
+            e.preventDefault();
+            return;
+        }
         value.value = sanitized;
         onInput$(sanitized);
     });
@@ -31,7 +35,10 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
     const handlePaste = $((e: ClipboardEvent) => {
         e.preventDefault();
         const pastedText = e.clipboardData?.getData('text') || '';
-        const { sanitized } = validateTitle(pastedText);
+        const { isValid, sanitized } = validateTitle(pastedText);
+        if (!isValid && pastedText.length > 0) {
+            return;
+        }
         value.value = sanitized;
         onInput$(sanitized);
     });
@@ -39,6 +46,8 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
     const handleKeyDown = $((e: KeyboardEvent) => {
         if (e.key === 'Enter' && onEnter$) {
             e.preventDefault();
+            const { isValid } = validateTitle(value.value);
+            if (!isValid) return;
             onEnter$();
         }
     });

@@ -17,9 +17,8 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [X] Well load to the input js the title of the blog  
 
-[] When the blog is created:
-    [] Has to create automatly a Post, "first post"
-    [] 
+[x] When the blog is created:
+    [x] Has to create automatly a Post, "first post"
 
 [X] Add authentication - Supabase (with google, facebook, microsoft)
     [X] Save the User data on the server
@@ -28,9 +27,9 @@ The user can administrate his blog posts on the dashboard and see analytics abou
         [] If its logged, get the blog from the DB
         [] Has to delete the temporal blog on the local
 
-[] Add dashboard
-    [] Has to show the blogs of the user
-    [] Has to show the analytics of the blogs of the user
+[x] Add dashboard
+    [x] Has to show their posts of the their blog to the user
+    [] Has to show the analytics of the blogs of the user (if its logged in)
         [] Create a table to save the analaitics of the blogs of the user
         [] Has to connect with google analitics or something like that
         [] Has to show the number of posts, views, likes of the blog
@@ -40,7 +39,7 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 [] Make the publish button
     [] Has to save the blog on the repository, create a .mk on the folder "Content"
 
-[] Ask to chatGPT how i can make a domian name to link to the blog like `blog-name.myblogii.com`
+[x] Ask to chatGPT how i can make a domian name to link to the blog like `blog-name.myblogii.com`
 
 [] Add Comments on the blog
 [] Add the options to enable the comments on the blog

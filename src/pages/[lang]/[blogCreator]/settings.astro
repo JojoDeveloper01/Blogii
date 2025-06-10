@@ -2,6 +2,7 @@
 import Dashboard from "@layouts/Dashboard.astro";
 import type { PostData } from "@lib/types";
 import { getLangFromUrl } from "@i18n/utils";
+import { DeleteBlog } from "@components/Settings/DeleteBlog";
 
 const lang = getLangFromUrl(Astro.url);
 const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
@@ -38,6 +39,29 @@ if (!blogData) {
 		<li class="flex items-center space-x-2">
 			<span class="font-bold">Themes</span>
 			<span class="text-gray-500 dark:text-gray-400">coming soon</span>
+		</li>
+		<li>
+			<div class="mt-8 border-t pt-8">
+				<h2 class="text-lg font-semibold text-red-600 mb-4">
+					Danger Zone
+				</h2>
+				<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+					<h3 class="text-base font-medium text-red-800 mb-2">
+						Delete Blog
+					</h3>
+					<p class="text-sm text-red-600 mb-4">
+						Once you delete a blog, there is no going back. Please
+						be certain.
+					</p>
+					<button
+						onclick="document.getElementById('delete-blog-dialog').showModal()"
+						class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+					>
+						Delete Blog
+					</button>
+					<DeleteBlog {blogId} {lang} client:idle />
+				</div>
+			</div>
 		</li>
 	</ul>
 </Dashboard>

@@ -1,10 +1,12 @@
-import { component$, useSignal, $, useVisibleTask$, type Signal } from '@builder.io/qwik';
+import { component$, useSignal, $, useVisibleTask$, type Signal, type QRL } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
 import { executeEditorCommand } from "@lib/utils";
+import { validateTitle } from "@lib/utils";
 import { TitleInputBase } from '@components/shared/TitleInputBase';
 import { ConfirmDialog } from '@components/shared/ConfirmDialog';
-import { handleDelete, updatePostTitle, useAutoSave } from "./editorConfig";
+import { updatePostTitle, useAutoSave, deletePost } from "./editorConfig";
+import { localBlogDB } from "@services/indexedDB";
 
 interface EditorToolbarProps {
     blogId: string;
@@ -12,56 +14,51 @@ interface EditorToolbarProps {
     title: Signal<string>;
     lang: string;
     editor: Signal<EditorJS | null>;
+    isPreviewMode: Signal<boolean>;
+    onTogglePreview$: QRL<() => void>;
 }
 
-export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, editor, blogId, postId }) => {
-    const isPreviewMode = useSignal(false);
+export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, editor, blogId, postId, isPreviewMode, onTogglePreview$ }) => {
+    const showOptions = useSignal(false);
 
-    // Function to sync URL with current preview mode
-    const syncUrlWithMode = $(() => {
-        if (typeof window === 'undefined') return;
+    // Initialize preview and edit icons
+    icons.preview = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    icons.edit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
 
-        const url = new URL(window.location.href);
-        url.searchParams.set('editing', (!isPreviewMode.value).toString());
-        window.history.pushState({}, '', url);
-    });
 
-    // Function to toggle preview mode
-    const togglePreviewMode = $(() => {
-        isPreviewMode.value = !isPreviewMode.value;
-        if (editor.value?.isReady) {
-            editor.value.readOnly.toggle();
+
+    const canDelete = useSignal(false);
+    const errorMessage = useSignal("");
+
+    // Check if we can show delete button (more than one post)
+    useVisibleTask$(async () => {
+        try {
+            const blog = await localBlogDB.getBlog(blogId);
+            const posts = blog?.data?.posts || [];
+            if (posts.length > 1) {
+                canDelete.value = true;
+            }
+        } catch (error) {
+            console.error('Error checking posts count:', error);
         }
-        syncUrlWithMode();
     });
 
-    // Initialize blogId, icons, and preview mode
+    const handleDeletePost = $(async () => {
+        try {
+            await deletePost(blogId, postId, lang);
+        } catch (error) {
+            errorMessage.value = error instanceof Error ? error.message : 'Error deleting post';
+        }
+    });
     useVisibleTask$(({ track }) => {
         if (typeof window === 'undefined') return;
-
-        // Get blog ID from URL
-        const params = new URLSearchParams(window.location.search);
-
-        // Add preview and edit icons
-        icons.preview = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-        icons.edit = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-
-        // Set initial preview mode from URL
-        const editing = params.get('editing');
-        if (editing === 'false') {
-            isPreviewMode.value = true;
-            if (editor.value?.isReady) {
-                editor.value.readOnly.toggle();
-            }
-            syncUrlWithMode();
-        }
 
         // Listen for URL changes
         window.addEventListener('popstate', () => {
             const currentEditing = new URLSearchParams(window.location.search).get('editing');
             const shouldBePreview = currentEditing === 'false';
             if (shouldBePreview !== isPreviewMode.value) {
-                togglePreviewMode();
+                onTogglePreview$();
             }
         });
     });
@@ -69,16 +66,21 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
     const originalTitle = useSignal(title.value);
     const { hasChanges, isSaving, createAutoSave } = useAutoSave();
     const showSaveSuccess = useSignal(false);
-    const errorMessage = useSignal("");
 
     const executeCommand = $((command: string, params?: any) => {
         executeEditorCommand(editor.value, command, params);
     });
 
-    const handleAutoSave = $((newTitle: string) => {
-        title.value = newTitle;
-        createAutoSave(newTitle, originalTitle.value, async () => {
-            await updatePostTitle(newTitle, blogId, postId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle);
+    const handleAutoSave = $((newValue: string) => {
+        const validation = validateTitle(newValue);
+        if (!validation.isValid) {
+            errorMessage.value = 'Title must be at least 3 characters long and contain only letters, numbers, and spaces';
+            return;
+        }
+        errorMessage.value = '';
+        title.value = validation.sanitized;
+        createAutoSave(validation.sanitized, originalTitle.value, async (value) => {
+            await updatePostTitle(value, blogId, postId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle);
         });
     });
 
@@ -117,31 +119,64 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                     </div>
                     <div class="flex items-center space-x-3 pl-4 border-l">
                         <button
-                            onClick$={() => {
-                                if (typeof window !== 'undefined') {
-                                    const dialog = document.getElementById('delete-blog-dialog') as HTMLDialogElement;
-                                    dialog?.showModal();
-                                }
-                            }}
-                            class="text-red-500 hover:text-red-700 p-2 transition-colors"
-                            title="Delete blog"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 6h18"></path>
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                        <button
-                            onClick$={togglePreviewMode}
-                            class="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-                            title={isPreviewMode.value ? "Back to editing" : "Preview mode"}
+                            onClick$={onTogglePreview$}
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors duration-200"
                         >
                             <span dangerouslySetInnerHTML={isPreviewMode.value ? icons.edit : icons.preview} />
                             <span class="text-sm font-medium">
                                 {isPreviewMode.value ? "Edit" : "Preview"}
                             </span>
                         </button>
+
+                        {/* Three dots menu */}
+                        {canDelete.value && (
+                            <div class="relative">
+                                <button
+                                    onClick$={() => showOptions.value = !showOptions.value}
+                                    class="p-2 hover:bg-gray-100 rounded-lg focus:outline-none"
+                                    title="More options"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="1"></circle>
+                                        <circle cx="12" cy="5" r="1"></circle>
+                                        <circle cx="12" cy="19" r="1"></circle>
+                                    </svg>
+                                </button>
+                                
+                                {/* Dropdown Menu */}
+                                {showOptions.value && (
+                                    <div 
+                                        class="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                        role="menu"
+                                    >
+                                        <div class="py-1" role="none">
+                                            <button
+                                                onClick$={() => {
+                                                    if (window) {
+                                                        showOptions.value = false;
+                                                        const dialog = document.getElementById('delete-post-dialog') as HTMLDialogElement;
+                                                        return;
+                                                    }
+                                                }}
+                                                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                                role="menuitem"
+                                            >
+                                                Delete Post
+                                            </button>
+                                            {/* Add more options here */}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Click outside to close dropdown */}
+                                {showOptions.value && (
+                                    <div 
+                                        class="fixed inset-0 z-40"
+                                        onClick$={() => showOptions.value = false}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -185,10 +220,10 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                 </div>
             </div>
             <ConfirmDialog
-                id="delete-blog-dialog"
-                onConfirm$={() => handleDelete(blogId, lang, errorMessage)}
-                title="Delete Blog"
-                message="Are you sure you want to delete this blog? This action cannot be undone."
+                id="delete-post-dialog"
+                onConfirm$={handleDeletePost}
+                title="Delete Post"
+                message="Are you sure you want to delete this post? This action cannot be undone."
             />
             {errorMessage.value && (
                 <div class="mt-2 text-red-500 p-2">

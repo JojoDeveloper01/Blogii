@@ -66,7 +66,7 @@ export const compressImage = async (base64: string): Promise<string> => {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 		img.crossOrigin = 'anonymous';
-		
+
 		img.onload = () => {
 			try {
 				const canvas = document.createElement('canvas');
@@ -162,8 +162,8 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 		const blogData = {
 			id: blogId,
 			collection: "blog",
-			data: { 
-				title: sanitizedTitle, 
+			data: {
+				title: sanitizedTitle,
 				pubDate: new Date(),
 				posts: [firstPost]
 			},
@@ -173,20 +173,20 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 
 		// Add minimal data to cookie
 		if (typeof window !== 'undefined') {
-			const cookieBlogData = { 
-				id: blogId, 
+			const cookieBlogData = {
+				id: blogId,
 				title: sanitizedTitle,
 				posts: [{
 					id: postId,
 					title: postTitle
 				}]
 			};
-			
+
 			cookieUtils.addBlogToCookie(cookieBlogData);
 			window.dispatchEvent(new Event('navigation-update'));
 		}
 
-		return { 
+		return {
 			id: blogId,
 			path: `${blogId}/${postId}`
 		};
@@ -197,13 +197,17 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 	}
 };
 
-// Only use these functions on the client side
 export const cookieUtils = {
 	getCookie(name: string): string | null {
 		if (typeof document === 'undefined') return null;
-		const value = `; ${document.cookie}`;
-		const parts = value.split(`; ${name}=`);
-		if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+		const cookies = document.cookie.split('; ');
+		for (const cookie of cookies) {
+			const index = cookie.indexOf('=');
+			if (index === -1) continue;
+			const key = cookie.substring(0, index);
+			const val = cookie.substring(index + 1);
+			if (key === name) return decodeURIComponent(val);
+		}
 		return null;
 	},
 
@@ -220,8 +224,12 @@ export const cookieUtils = {
 		const cookie = this.getCookie('blogiis');
 		if (!cookie) return [];
 		try {
-			return JSON.parse(decodeURIComponent(cookie));
-		} catch {
+			const decoded = decodeURIComponent(cookie);
+			const parsed = JSON.parse(decoded);
+			if (Array.isArray(parsed)) return parsed;
+			return [];
+		} catch (e) {
+			console.warn('Failed to parse blogiis cookie', e);
 			return [];
 		}
 	},
@@ -339,23 +347,23 @@ export const deleteBlog = async (
 };
 
 export const createBlog = async (entry: BlogData, path: any, fs: any) => {
-    const data = entry.data;
-    const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
+	const data = entry.data;
+	const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
 
-    const frontMatter = {
-        title: data.title,
-        description: data.description || "",
-        image: data.image || "",
-        pubDate: formatDate(data.pubDate),
-    };
+	const frontMatter = {
+		title: data.title,
+		description: data.description || "",
+		image: data.image || "",
+		pubDate: formatDate(data.pubDate),
+	};
 
-    const frontMatterString = Object.entries(frontMatter)
-        .map(([key, value]) => `${key}: "${value}"`)
-        .join('\n');
+	const frontMatterString = Object.entries(frontMatter)
+		.map(([key, value]) => `${key}: "${value}"`)
+		.join('\n');
 
-    const markdownContent = `---\n${frontMatterString}\n---`;
+	const markdownContent = `---\n${frontMatterString}\n---`;
 
-    await fs.writeFile(filePath, markdownContent, "utf8");
-    console.log(`📄 File Created successfully: ${filePath}`);
+	await fs.writeFile(filePath, markdownContent, "utf8");
+	console.log(`📄 File Created successfully: ${filePath}`);
 }
 

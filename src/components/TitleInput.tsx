@@ -44,7 +44,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 
 	return (
 		<div class="w-3/4 grid gap-2 text-left">
-			<label class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl">
+			<div id="label-title" class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl">
 				<TitleInputBase
 					value={title}
 					onInput$={handleInput}
@@ -65,7 +65,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 				>
 					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
 				</button>
-			</label>
+			</div>
 			<div>
 				<ErrorMessage {...{ showError, message: message.value }} />
 				{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
