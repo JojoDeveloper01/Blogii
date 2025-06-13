@@ -60,7 +60,7 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
             onInput$={handleInput}
             onPaste$={handlePaste}
             onKeyDown$={handleKeyDown}
-            class="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-md transition-colors hover:border-gray-300"
+            class="flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors hover:border-gray-300"
             placeholder={placeholder}
         />
     );

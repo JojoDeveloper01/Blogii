@@ -4,19 +4,12 @@ export const AskAuthentication = component$(() => {
     return (
         <span id="errorInput" class="text-red-400">
             <button
-                id="modalLogin"
                 class="link"
-                onClick$={() => (document.getElementById('modalLogin') as HTMLDialogElement)?.showModal()}
+                onClick$={() => (document.getElementById("authModalMoreBlogs") as HTMLDialogElement)?.showModal()}
             >
-                Inicie sessão
-            </button>
-            <span> ou </span>
-            <button
-                id="modalRegister"
-                class="link"
-                onClick$={() => (document.getElementById('modalRegister') as HTMLDialogElement)?.showModal()}
-            >
-                Crie uma conta
+                <span>Inicie sessão</span>
+                <span class="text-red-400"> / </span>
+                <span>Crie uma conta</span>
             </button>
         </span>)
 })

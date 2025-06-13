@@ -5,7 +5,7 @@ import { TitleInputBase } from './shared/TitleInputBase';
 import { startBlog, processInput } from "@lib/utils";
 
 interface TitleInputProps {
-	hasBlogs: boolean,	
+	hasBlogs: boolean,
 	isAuthorized: boolean
 }
 
@@ -14,17 +14,17 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 	const showError = useSignal(false);
 	const message = useSignal("");
 	const disableButton = useSignal(true);
-	const messageToLoginOrCreateAccount = useSignal(false);
+	const loginRegisterMessage = useSignal(false);
 
 	const handleStartBlog = $(async () => {
 		const blogResult = await startBlog(title.value, (show, msg) => {
 			showError.value = show;
 			message.value = msg;
 		});
-		
+
 		if (blogResult && typeof window !== 'undefined') {
-            window.location.href = blogResult.path;
-        }
+			window.location.href = blogResult.path;
+		}
 	});
 
 	const handleProcessInput = $(async (inputValue: string) => {
@@ -32,7 +32,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 		return await processInput(title.value, isAuthorized, hasBlogs, (state) => {
 			showError.value = state.error;
 			message.value = state.msg;
-			messageToLoginOrCreateAccount.value = state.login;
+			loginRegisterMessage.value = state.login;
 			disableButton.value = state.disabled;
 		});
 	});
@@ -68,7 +68,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 			</div>
 			<div>
 				<ErrorMessage {...{ showError, message: message.value }} />
-				{messageToLoginOrCreateAccount.value && (<AskAuthentication />)}
+				{loginRegisterMessage.value && <AskAuthentication />}
 			</div>
 		</div>
 	);

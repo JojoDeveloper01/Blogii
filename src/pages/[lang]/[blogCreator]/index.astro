@@ -3,10 +3,20 @@ import { getLangFromUrl } from "@i18n/utils";
 import type { PostData } from "@lib/types";
 import { BlogTitleEditor } from "@components/Editing/BlogTitleEditor";
 import Dashboard from "@layouts/Dashboard.astro";
+import { supabase } from "@lib/supabase";
+import LoginRegister from "@components/LoginRegister.astro";
+import { generateShortNumericId } from "@lib/utils";
 
+const idLoginModal = generateShortNumericId();  
 const lang = getLangFromUrl(Astro.url);
 
-const blogId = Astro.url.pathname.split("/").find(id => /^\d+$/.test(id)) || "";
+const {
+	data: { user },
+} = await supabase.auth.getUser();
+
+
+const blogId =
+	Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id)) || "";
 
 let blogs = null;
 
@@ -28,19 +38,49 @@ if (!blogData) {
 ---
 
 <Dashboard>
-	<BlogTitleEditor
-		{blogId}
-		initialTitle={blogData.title}
-		client:load
-	/>
+	<div class="flex justify-between items-center mb-4">
+		<BlogTitleEditor {blogId} initialTitle={blogData.title} client:load />
+
+		{ !user ? <LoginRegister id={idLoginModal} message="Sign in to publish your blog"/> : null }
+		<button
+			onclick={!user ? `document.getElementById('${idLoginModal}').showModal()` : null}
+			class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center gap-2"
+		>
+			<svg
+				class="w-5 h-5"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+				></path>
+			</svg>
+			Publish
+		</button>
+	</div>
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 		<a
 			href={`${blogId}/new`}
 			class="block relative overflow-hidden rounded-lg shadow hover:shadow-lg transition-all duration-300 aspect-square hover:scale-[1.02] bg-gray-100 hover:bg-gray-200"
 		>
-			<div class="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-				<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+			<div
+				class="absolute inset-0 flex flex-col items-center justify-center text-gray-600"
+			>
+				<svg
+					class="w-16 h-16"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 4v16m8-8H4"></path>
 				</svg>
 				<span class="mt-2 text-lg font-semibold">New Post</span>
 			</div>

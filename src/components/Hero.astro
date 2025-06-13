@@ -1,6 +1,8 @@
 ---
+import LoginRegister from "./LoginRegister.astro";
 import { TitleInput } from "./TitleInput";
 import { sanitizeString } from "@lib/utils";
+import { signInToCreateMoreBlogs } from "@lib/consts";
 
 const { lang, isAuthorized, blogsData } = Astro.props;
 
@@ -25,6 +27,11 @@ const hasBlogs: boolean = blogsData.length > 0;
         <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
             Qual será o título da sua próxima ideia?
         </h2>
+        {
+            !isAuthorized ? (
+                <LoginRegister id="authModalMoreBlogs" message={signInToCreateMoreBlogs} />
+            ) : null
+        }
         <TitleInput {isAuthorized} {hasBlogs} client:load />
         {
             hasBlogs && (
@@ -36,17 +43,23 @@ const hasBlogs: boolean = blogsData.length > 0;
                         Blogs Criados:
                     </h3>
                     <ul class="space-y-2">
-                        {blogsData.map((blog: { id: string; title: string; posts: { id: string; }[]; }) => (
-                            <li class="flex items-center justify-center space-x-2">
-                                <span class="text-orange-400">&rarr;</span>
-                                <a
-                                    href={`/${lang}/${blog.id}`}
-                                    class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
-                                >
-                                    {sanitizeString(blog.title)}
-                                </a>
-                            </li>
-                        ))}
+                        {blogsData.map(
+                            (blog: {
+                                id: string;
+                                title: string;
+                                posts: { id: string }[];
+                            }) => (
+                                <li class="flex items-center justify-center space-x-2">
+                                    <span class="text-orange-400">&rarr;</span>
+                                    <a
+                                        href={`/${lang}/${blog.id}`}
+                                        class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
+                                    >
+                                        {sanitizeString(blog.title)}
+                                    </a>
+                                </li>
+                            ),
+                        )}
                     </ul>
                 </div>
             )

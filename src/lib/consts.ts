@@ -8,3 +8,4 @@ export const SITE_DESCRIPTION = 'Welcome to my website!';
 export const amountCharactersError = "The title must be at least 3 characters long."
 export const invalidCharactersError = "The title contains invalid characters."
 export const blogAlreadyCreated = "Já tem um blog ativo."
+export const signInToCreateMoreBlogs = "Sign in to create up to 50 blogs."

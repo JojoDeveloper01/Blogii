@@ -154,8 +154,8 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                                                 onClick$={() => {
                                                     if (window) {
                                                         showOptions.value = false;
-                                                        const dialog = document.getElementById('delete-post-dialog') as HTMLDialogElement;
-                                                        return;
+                                                        const dialog = document.getElementById(`delete-post-dialog-${postId}`) as HTMLDialogElement;
+                                                        dialog.showModal();
                                                     }
                                                 }}
                                                 class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -220,7 +220,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ title, lang, edit
                 </div>
             </div>
             <ConfirmDialog
-                id="delete-post-dialog"
+                id={`delete-post-dialog-${postId}`}
                 onConfirm$={handleDeletePost}
                 title="Delete Post"
                 message="Are you sure you want to delete this post? This action cannot be undone."

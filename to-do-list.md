@@ -20,12 +20,16 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 [x] When the blog is created:
     [x] Has to create automatly a Post, "first post"
 
+[x] Add publish button
+[x] Link the "Já tem um blog ativo" and publish button with login modal if the user is not logged in
+[] Improve the organization of the Header 
+
 [X] Add authentication - Supabase (with google, facebook, microsoft)
     [X] Save the User data on the server
     [] Add Local Blog to the DB 
         [] Has to save the temporal blog on the server
-        [] If its logged, get the blog from the DB
         [] Has to delete the temporal blog on the local
+        [] If its logged in, get the blog from the DB
 
 [x] Add dashboard
     [x] Has to show their posts of the their blog to the user
@@ -39,7 +43,7 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 [] Make the publish button
     [] Has to save the blog on the repository, create a .mk on the folder "Content"
 
-[x] Ask to chatGPT how i can make a domian name to link to the blog like `blog-name.myblogii.com`
+[x] Ask to chatGPT how i can make a domain name to link to the blog like `blog-name.myblogii.com`
 
 [] Add Comments on the blog
 [] Add the options to enable the comments on the blog
