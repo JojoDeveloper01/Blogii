@@ -7,8 +7,8 @@ interface ErrorMessageProps {
 
 export const ErrorMessage = component$(({ showError, message }: ErrorMessageProps) => {
     return (
-        <div id="errorMessage" class={`text-red-400 ${showError.value ? "block" : "hidden"}`} aria-label="Erro no input">
+        <span id="errorMessage" class={`text-[--error] ${showError.value ? "inline" : "hidden"}`} aria-label="Erro no input">
             {message}
-        </div>
+        </span>
     );
 });

@@ -43,7 +43,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 	});
 
 	return (
-		<div class="w-3/4 grid gap-2 text-left">
+		<div class="grid gap-1">
 			<div id="label-title" class="relative flex max-phone:flex-col items-center overflow-hidden border rounded-xl">
 				<TitleInputBase
 					value={title}
@@ -59,11 +59,11 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 				<button
 					type="button"
 					id="confirm-title"
-					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 text-[--bg-color] hover:text-[--orange]"
+					class="w-12 h-full absolute max-phone:relative max-phone:w-full max-phone:h-4 flex justify-center items-center p-3 right-0 text-white hover:text-[--orange]"
 					onClick$={() => handleStartBlog()}
 					disabled={disableButton.value}
 				>
-					<img src="/Icons/CheckIcon.svg" alt="Check mark icon" />
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l5 5l10 -10" /></svg>
 				</button>
 			</div>
 			<div>

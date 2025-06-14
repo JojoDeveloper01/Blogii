@@ -18,10 +18,6 @@ export default defineConfig({
         mode: "standalone"
     }),
 
-    experimental: {
-        session: true
-    },
-
     vite: {
         server: {
             watch: {

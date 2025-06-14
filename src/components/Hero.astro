@@ -6,85 +6,286 @@ import { signInToCreateMoreBlogs } from "@lib/consts";
 
 const { lang, isAuthorized, blogsData } = Astro.props;
 
-//console.log(blogsData[0].posts);
-
 const hasBlogs: boolean = blogsData.length > 0;
 ---
 
 <section
-    class="hero h-screen flex justify-center items-center relative overflow-hidden"
+    class="hero min-h-[calc(100dvh-5rem)] flex flex-col justify-center items-center relative overflow-hidden"
 >
-    <div transition:name="panel-before" class="panel panel-before"></div>
-    <div transition:name="panel-after" class="panel panel-after"></div>
-    <div class="panel-top w-screen absolute top-[-30%] h-36"></div>
-    <div
-        id="your-title"
-        class="flex flex-col gap-8 items-center mx-4 text-center z-10"
-    >
-        <h1 class="max-[1000px]:text-[15vw]">
-            Blog<span class="text-[--orange]">ii</span>
+    <!-- Main content container -->
+    <div class={`hero-content relative flex flex-col items-center z-20 w-[26rem] ${!hasBlogs ? "mb-16" : ""}`}>
+        <!-- Hero title with animated gradient -->
+        <h1
+            class="text-7xl sm:text-8xl md:text-8xl lg:text-9xl font-bold mb-6 text-center tracking-tight hero-title text-white text-shadow-dark"
+        >
+            Blog<span class="gradient-text-enhanced">ii</span>
         </h1>
-        <h2 class="max-w-[50vw] max-[900px]:text-[1em]">
-            Qual será o título da sua próxima ideia?
+
+        <!-- Animated subtitle -->
+        <h2
+            class="text-lg sm:text-xl md:text-2xl lg:text-2xl mb-4 text-center fade-in-up text-white text-shadow-sm"
+        >
+            <span class="typing-text-enhanced"
+                >What will be the title of your next idea?</span
+            >
         </h2>
+
+        <!-- Login register component -->
         {
             !isAuthorized ? (
-                <LoginRegister id="authModalMoreBlogs" message={signInToCreateMoreBlogs} />
+                <div class="fade-in-up animation-delay-200">
+                    <LoginRegister
+                        id="authModalMoreBlogs"
+                        message={signInToCreateMoreBlogs}
+                    />
+                </div>
             ) : null
         }
-        <TitleInput {isAuthorized} {hasBlogs} client:load />
-        {
-            hasBlogs && (
-                <div
-                    id="blogsCreated"
-                    class={`w-3/4 p-4 bg-white dark:bg-[var(--gray)] rounded-lg shadow-lg max-h-64 overflow-y-auto`}
-                >
-                    <h3 class="mb-4 text-lg font-bold text-orange-500">
-                        Blogs Criados:
-                    </h3>
-                    <ul class="space-y-2">
-                        {blogsData.map(
-                            (blog: {
-                                id: string;
-                                title: string;
-                                posts: { id: string }[];
-                            }) => (
-                                <li class="flex items-center justify-center space-x-2">
-                                    <span class="text-orange-400">&rarr;</span>
-                                    <a
-                                        href={`/${lang}/${blog.id}`}
-                                        class="text-white dark:text-gray-900 hover:text-orange-300 transition-colors duration-200"
-                                    >
-                                        {sanitizeString(blog.title)}
-                                    </a>
-                                </li>
-                            ),
-                        )}
-                    </ul>
-                </div>
-            )
-        }
+        <div class="w-80 sm:w-full grid gap-4">
+            <TitleInput {isAuthorized} {hasBlogs} />
+            <!-- Blogs list with enhanced styling -->
+            {
+                hasBlogs && (
+                    <div
+                        id="blogsCreated"
+                        class="w-full p-6 bg-white/10 dark:bg-zinc-800/50 backdrop-blur-md rounded-xl shadow-glow border border-white/20 dark:border-zinc-700/50 overflow-y-auto"
+                    >
+                        <h3 class="text-xl font-bold text-gradient mb-6 flex items-center">
+                            <span class="mr-2 text-2xl">✨</span> Blogs Created
+                        </h3>
+
+                        <ul class="space-y-3">
+                            {blogsData.map(
+                                (blog: {
+                                    id: string;
+                                    title: string;
+                                    posts: { id: string }[];
+                                }) => (
+                                    <li class="blog-item">
+                                        <a
+                                            href={`/${lang}/${blog.id}`}
+                                            class="flex items-center p-3 rounded-lg hover:bg-white/10 dark:hover:bg-zinc-700/30 transition-all duration-300 group"
+                                        >
+                                            <span class="text-[primary] text-lg mr-3 group-hover:translate-x-1 transition-transform">
+                                                &rarr;
+                                            </span>
+                                            <span class="blog-title">
+                                                {sanitizeString(blog.title)}
+                                            </span>
+                                            <span class="ml-auto text-xs text-zinc-400">
+                                                {blog.posts.length} posts
+                                            </span>
+                                        </a>
+                                    </li>
+                                )
+                            )}
+                        </ul>
+                    </div>
+                )
+            }
+        </div>
     </div>
 </section>
 
 <style>
+    /* Base styles for hero section */
     .hero {
+        position: relative;
+        overflow: hidden;
+        color: var(--light-text, #ffffff);
+    }
+
+    /* Gradient text effect with improved accessibility */
+    .gradient-text-enhanced {
+        -webkit-background-clip: text;
+        color: var(--secondary);
+        animation: shimmer 2s infinite;
+    }
+
+    .text-gradient {
+        background: var(--secondary);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    /* Text shadow helpers for better contrast */
+    .text-shadow-dark {
+        text-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.5),
+            0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .text-shadow-sm {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Spotlight effect for input */
+    .spotlight-container {
         position: relative;
         overflow: hidden;
     }
 
-    .panel-before {
-        left: -25%;
-        transform: rotate(8deg);
+    .spotlight {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(
+            circle,
+            rgba(var(--secondary), 0.2) 0%,
+            rgba(var(--secondary), 0) 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1;
     }
 
-    .panel-after {
-        right: -25%;
-        transform: rotate(-8deg);
-    }
-
-    #conj-title {
+    .spotlight-container:hover .spotlight {
         opacity: 1;
-        transition: opacity 0.3s cubic-bezier(0.97, 0.77, 0, 0.26);
+        animation: movespotlight 3s infinite alternate ease-in-out;
+    }
+
+    /* Blog item styling */
+    .blog-item {
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+
+    .blog-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .blog-title {
+        position: relative;
+        display: inline-block;
+    }
+
+    .blog-title::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+    }
+
+    .blog-item:hover .blog-title::after {
+        width: 100%;
+    }
+
+    /* Shadow glow effect */
+    .shadow-glow {
+        box-shadow:
+            0 0 20px rgba(var(--secondary), 0.1),
+            0 5px 15px rgba(var(--secondary), 0.1);
+    }
+
+    /* Animações removidas pois já estão no Layout */
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% center;
+        }
+        100% {
+            background-position: 200% center;
+        }
+    }
+
+    @keyframes movespotlight {
+        0% {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        100% {
+            transform: translate(50%, 50%) scale(1.5);
+        }
+    }
+
+    /* Fade in animations */
+    .fade-in-up {
+        animation: fadeInUp 0.8s ease forwards;
+        opacity: 0;
+    }
+
+    .animation-delay-200 {
+        animation-delay: 0.2s;
+    }
+
+    .animation-delay-300 {
+        animation-delay: 0.3s;
+    }
+
+    .animation-delay-400 {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Typing text animation with improved visibility */
+    .typing-text-enhanced {
+        border-right: 3px solid var(--primary);
+        white-space: nowrap;
+        overflow: hidden;
+        display: inline-block;
+        animation:
+            typing 3.5s steps(40, end),
+            blink-caret 0.75s step-end infinite;
+        animation-fill-mode: forwards;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        font-weight: 500;
+    }
+
+    @keyframes typing {
+        from {
+            width: 0;
+        }
+        to {
+            width: 100%;
+        }
+    }
+
+    @keyframes blink-caret {
+        from,
+        to {
+            border-color: transparent;
+        }
+        50% {
+            border-color: var(--primary);
+        }
+    }
+
+    /* Hero title animation with better contrast */
+    .hero-title {
+        animation: textShadowPulse 2s infinite;
+    }
+
+    @keyframes textShadowPulse {
+        0% {
+            text-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        50% {
+            text-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 15px rgba(var(--primary), 0.4);
+        }
+        100% {
+            text-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(0, 0, 0, 0.3);
+        }
     }
 </style>

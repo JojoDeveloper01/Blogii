@@ -6,6 +6,7 @@ import Dashboard from "@layouts/Dashboard.astro";
 import { supabase } from "@lib/supabase";
 import LoginRegister from "@components/LoginRegister.astro";
 import { generateShortNumericId } from "@lib/utils";
+import { signInToPublishBlog } from "@lib/consts";
 
 const idLoginModal = generateShortNumericId();  
 const lang = getLangFromUrl(Astro.url);
@@ -41,7 +42,7 @@ if (!blogData) {
 	<div class="flex justify-between items-center mb-4">
 		<BlogTitleEditor {blogId} initialTitle={blogData.title} client:load />
 
-		{ !user ? <LoginRegister id={idLoginModal} message="Sign in to publish your blog"/> : null }
+		{ !user ? <LoginRegister id={idLoginModal} message={signInToPublishBlog}/> : null }
 		<button
 			onclick={!user ? `document.getElementById('${idLoginModal}').showModal()` : null}
 			class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center gap-2"

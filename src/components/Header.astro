@@ -1,86 +1,156 @@
 ---
-import HeaderLink from "@components/HeaderLink.astro";
-import { SITE_TITLE } from "@lib/consts";
+import HeaderLink from "./HeaderLink.astro";
 import LoginRegister from "./LoginRegister.astro";
 import { supabase } from "@lib/supabase";
 import UserMenu from "./UserMenu.astro";
-import {generateShortNumericId} from "@lib/utils";
+import { generateShortNumericId } from "@lib/utils";
+import { signInToAccessAllFeatures } from "@lib/consts";
 
-const idLoginModal = generateShortNumericId(); 
+const idLoginModal = generateShortNumericId();
 
 const {
 	data: { user },
 } = await supabase.auth.getUser();
-
 const { lang } = Astro.props;
 ---
 
-<header>
-	<nav>
-		<h2><a href={`/${lang}/`}>{SITE_TITLE}</a></h2>
-		<div class="internal-links">
-			<HeaderLink href={`/${lang}/`}>Home</HeaderLink>
-			<HeaderLink href={`/${lang}/blog`}>Blog</HeaderLink>
-			<HeaderLink href={`/${lang}/about`}>About</HeaderLink>
+{
+	!user && (
+		<LoginRegister id={idLoginModal} message={signInToAccessAllFeatures} />
+	)
+}
+
+<header
+	class="relative z-50 w-full flex justify-center py-2"
+>
+	<div
+		class="bg-white/30 dark:bg-zinc-800/20 backdrop-blur-md rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden min-w-fit max-w-[calc(100vw-2rem)]"
+	>
+		<!-- Menu toggle checkbox (hidden) -->
+		<input
+			type="checkbox"
+			id="menu-toggle"
+			class="hidden"
+			aria-label="Toggle mobile menu"
+		/>
+
+		<nav
+			class="flex gap-16 items-center justify-between max-[340px]:justify-center px-4 py-3 w-full text-black dark:text-white"
+		>
+			<!-- Mobile menu toggle -->
+			<label for="menu-toggle" class="min-[340px]:hidden cursor-pointer z-50">
+				<div class="w-6 h-5 flex flex-col justify-between">
+					<span
+						class="w-full h-0.5 bg-gray-800 dark:bg-gray-200 transition-transform origin-left"
+					></span>
+					<span
+						class="w-full h-0.5 bg-gray-800 dark:bg-gray-200 transition-opacity"
+					></span>
+					<span
+						class="w-full h-0.5 bg-gray-800 dark:bg-gray-200 transition-transform origin-left"
+					></span>
+				</div>
+			</label>
+
+			<!-- Desktop navigation -->
+			<div
+				class="hidden min-[340px]:flex items-center gap-16 justify-center"
+			>
+				<div class="flex gap-8">
+					<HeaderLink
+						href={`/${lang}/`}
+						class="hover:text-gray-100 dark:hover:text-gray-600 transition-colors whitespace-nowrap"
+						>Home</HeaderLink
+					>
+					<HeaderLink
+						href={`/${lang}/blogs`}
+						class="hover:text-gray-100 dark:hover:text-gray-600 transition-colors whitespace-nowrap"
+						>Blogs</HeaderLink
+					>
+				</div>
+				<div>
+					{
+						user ? (
+							<UserMenu {user} />
+						) : (
+							<button
+								onclick={`document.getElementById('${idLoginModal}').showModal()`}
+								class="bg-gradient-to-r from-[var(--primary)] to-[#FF7C3A] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[var(--primary)] hover:to-[#cd6430] font-medium whitespace-nowrap"
+							>
+								Get started
+							</button>
+						)
+					}
+				</div>
+			</div>
+		</nav>
+	</div>
+
+	<!-- Mobile navigation dropdown -->
+	<div id="mobile-menu" class="absolute top-full left-0 right-0 z-40 opacity-0 pointer-events-none transform -translate-y-4 duration-100 ease-in-out min-[340px]:hidden">
+		<div class="mx-auto max-w-[calc(100vw-2rem)] bg-white/90 dark:bg-zinc-800/20 backdrop-blur-md rounded-b-xl shadow-lg border border-gray-100/50 dark:border-gray-800/20 overflow-hidden">
+			<div class="py-3 px-4 flex flex-col gap-2 text-white">
+				<HeaderLink
+					href={`/${lang}/`}
+					class="py-1.5 px-2 rounded-md"
+					>Home</HeaderLink
+				>
+				<HeaderLink
+					href={`/${lang}/blogs`}
+					class="py-1.5 px-2 rounded-md"
+					>Blogs</HeaderLink
+				>
+				<div class="mt-2 pt-2 border-t border-gray-200/30 dark:border-gray-700/30">
+					{
+						user ? (
+							<UserMenu {user} />
+						) : (
+							<button
+								onclick={`document.getElementById('${idLoginModal}').showModal()`}
+								class="w-full bg-gradient-to-r from-[--primary] to-[--secondary] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[var(--primary)] hover:to-[#cd6430] transition-all duration-300 font-medium"
+							>
+								Get started
+							</button>
+						)
+					}
+				</div>
+			</div>
 		</div>
-		<div>
-			{
-				user ? (
-					<UserMenu {user} />
-				) : (
-					<>
-						<LoginRegister id={idLoginModal} message="Sign in to access all features"/>
-						<button
-							onclick={`document.getElementById('${idLoginModal}').showModal()`}
-							class="px-4 py-2 text-sm font-medium text-zinc-800 dark:text-white bg-white dark:bg-zinc-800 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 transition-all"
-						>
-							Login / Register
-						</button>
-					</>
-				)
-			}
-		</div>
-	</nav>
+	</div>
 </header>
 
 <style>
-	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
-	}
-	h2 {
-		margin: 0;
-		font-size: 1em;
+	/* Mobile menu toggle animation */
+	#menu-toggle:checked ~ nav label span:first-child {
+		transform: rotate(45deg);
 	}
 
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
+	#menu-toggle:checked ~ nav label span:nth-child(2) {
+		opacity: 0;
 	}
-	nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-		border-bottom: 4px solid transparent;
-		text-decoration: none;
-	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--primary);
-	}
-	.social-links,
-	.social-links a {
-		display: flex;
-	}
-	@media (max-width: 720px) {
-		.social-links {
-			display: none;
-		}
+
+	#menu-toggle:checked ~ nav label span:last-child {
+		transform: rotate(-45deg);
 	}
 </style>
+
+<script>
+	const menuToggle = document.getElementById('menu-toggle') as HTMLInputElement;
+	const mobileMenu = document.getElementById('mobile-menu');
+
+	if (menuToggle && mobileMenu) {
+		menuToggle.addEventListener('change', function() {
+			if (this.checked) {
+				// Mostrar menu
+				mobileMenu.style.opacity = '1';
+				mobileMenu.style.transform = 'translateY(0)';
+				mobileMenu.style.pointerEvents = 'auto';
+			} else {
+				// Esconder menu
+				mobileMenu.style.opacity = '0';
+				mobileMenu.style.transform = 'translateY(-1rem)';
+				mobileMenu.style.pointerEvents = 'none';
+			}
+		});
+	}
+</script>
