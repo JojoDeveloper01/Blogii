@@ -117,11 +117,11 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
     });
 
     return (
-        <div class="relative min-h-[500px] bg-white rounded-lg shadow-lg">
+        <div class="relative min-h-[500px]">
             <div
                 ref={editorHolder}
                 id="editor-holder"
-                class="prose max-w-none p-6"
+                class="prose dark:prose-invert max-w-none p-6 text-gray-800 dark:text-gray-200"
             />
             {showToast.value && (
                 <Toast

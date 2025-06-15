@@ -115,8 +115,6 @@ export const server = {
                                             console.error('Error saving blog:', blogError);
                                             throw blogError;
                                         }
-
-                                        console.log('Temporary blog saved to database');
                                         
                                         // Clear the cookie after successful save
                                         document.cookie = 'blogiis=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';

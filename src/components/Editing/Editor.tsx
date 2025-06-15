@@ -13,8 +13,8 @@ interface EditorProps {
     lang: string;
 }
 
-export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang}) => {
-    
+export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang }) => {
+
     const editor = useSignal<EditorJS | null>(null);
     const isPreviewMode = useSignal<boolean>(editing === 'false');
     const showSaveSuccess = useSignal(false);
@@ -73,30 +73,60 @@ export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang}
 
     return (
         <div class="flex flex-col gap-4">
-            <EditorToolbar
-                blogId={String(blog.id)}
-                postId={String(blog.data.posts?.[0]?.id)}
-                title={useSignal(blog.data.posts?.[0]?.title ?? '')}
-                lang={lang}
-                editor={editor}
-                isPreviewMode={isPreviewMode}
-                onTogglePreview$={togglePreviewMode}
-            />
-            <div class="flex gap-4">
-                <div class="flex-1">
-                    <EditorContent
-                        blog={blog}
-                        isPreviewMode={isPreviewMode}
-                        onSave={handleSave}
-                    />
-                </div>
-                <PostNavigator 
+            {/* Barra de ferramentas do editor com estilo moderno */}
+            <div class="bg-white/30 dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden p-3">
+                <EditorToolbar
                     blogId={String(blog.id)}
                     postId={String(blog.data.posts?.[0]?.id)}
+                    title={useSignal(blog.data.posts?.[0]?.title ?? '')}
                     lang={lang}
-                    blogPosts={blogPosts}
+                    editor={editor}
                     isPreviewMode={isPreviewMode}
+                    onTogglePreview$={togglePreviewMode}
                 />
+            </div>
+
+            {/* Área de conteúdo principal */}
+            <div class="flex flex-col gap-4">
+                {/* Mobile layout - PostNavigator acima do editor */}
+                <div class="block md:hidden mb-4">
+                    <PostNavigator
+                        blogId={String(blog.id)}
+                        postId={String(blog.data.posts?.[0]?.id)}
+                        lang={lang}
+                        blogPosts={blogPosts}
+                        isPreviewMode={isPreviewMode}
+                        isMobile={true}
+                    />
+                </div>
+                
+                {/* Desktop layout - Editor e PostNavigator lado a lado */}
+                <div class="flex gap-4 flex-col md:flex-row">
+                    {/* Editor principal */}
+                    <div class="flex-1">
+                        <div class="bg-[--blanc-core] dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden p-4">
+                            <EditorContent
+                                blog={blog}
+                                isPreviewMode={isPreviewMode}
+                                onSave={handleSave}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Navegador de posts lateral (apenas desktop) */}
+                    <div class="w-auto hidden md:block">
+                        <div class="sticky top-4">
+                            <PostNavigator
+                                blogId={String(blog.id)}
+                                postId={String(blog.data.posts?.[0]?.id)}
+                                lang={lang}
+                                blogPosts={blogPosts}
+                                isPreviewMode={isPreviewMode}
+                                isMobile={false}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

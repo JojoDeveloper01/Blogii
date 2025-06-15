@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal, useStylesScoped$ } from "@builder.io/qwik";
 import type { Signal } from "@builder.io/qwik";
 import type { BlogCookieItem } from "@lib/types";
 
@@ -8,57 +8,164 @@ interface PostNavigatorProps {
     lang: string;
     blogPosts: BlogCookieItem[];
     isPreviewMode: Signal<boolean>;
+    isMobile?: boolean;
 }
 
-export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, lang, blogPosts, isPreviewMode }) => {
-    return (
-        <div class={`relative ${isPreviewMode.value ? 'hidden' : ''}`}>
-            {/* Hidden checkbox for toggle */}
-            <input type="checkbox" id="sidebar-toggle" class="hidden peer" />
-            
-            {/* Toggle button */}
-            <label 
-                for="sidebar-toggle"
-                class="absolute -left-3 top-0 w-6 h-6 bg-white shadow rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-50 peer-checked:rotate-180 transition-transform duration-300"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </label>
+export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, lang, blogPosts, isPreviewMode, isMobile = false }) => {
+    // CSS styles for the component
+    useStylesScoped$(`
+        /* Styles for regular posts */
+        .post-title {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .post-title::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+        
+        .post-link:hover .post-title::after {
+            width: 100%;
+        }
+        
+        .post-link:hover {
+            transform: translateY(-2px);
+            transition: transform 0.3s ease;
+        }
+        
+        /* Styles for current post */
+        .current-post-title {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .current-post-title::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .current-post-link::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0.7;
+        }
+        
+        .current-post-link:hover {
+            transform: translateY(-2px);
+            transition: transform 0.3s ease;
+        }
+    `);
+    const isOpen = useSignal(false);
 
-            {/* Sidebar content */}
-            <aside class="w-64 bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 peer-checked:w-8 peer-checked:opacity-0">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-medium text-gray-900">Posts</h3>
-                        <a 
+    // Determine if we should auto-open the navigator on mobile
+    if (isMobile && !isOpen.value) {
+        isOpen.value = true;
+    }
+
+    return (
+        <div class={`relative ${isPreviewMode.value ? 'hidden' : ''} ${isMobile ? 'w-full' : ''}`}>
+            {/* Hidden checkbox for toggle - only shown on desktop */}
+            {!isMobile && (
+                <input
+                    type="checkbox"
+                    id="sidebar-toggle"
+                    class="hidden"
+                    checked={isOpen.value}
+                    onChange$={(e) => isOpen.value = (e.target as HTMLInputElement).checked}
+                />
+            )}
+
+            {/* Toggle button - only shown on desktop */}
+            {!isMobile && (
+                <label
+                    for="sidebar-toggle"
+                    class="absolute -left-3 top-0 w-7 h-7 bg-white/80 dark:bg-zinc-800/80 shadow-md border border-gray-100/50 dark:border-gray-200/30 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-50/90 dark:hover:bg-gray-700/50 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 z-10 text-gray-700 dark:text-gray-300"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class={`transition-transform duration-300 ${isOpen.value ? 'rotate-180' : ''}`}
+                    >
+                        <polyline points="9 6 15 12 9 18"></polyline>
+                    </svg>
+                </label>
+            )}
+
+            {/* Sidebar/Header content - different styling for mobile vs desktop */}
+            <aside class={`
+                overflow-hidden transition-all duration-300 rounded-lg shadow-md 
+                ${isMobile
+                    ? 'w-full opacity-100 border border-gray-100/50 dark:border-gray-800/50 bg-[--blanc-core] dark:bg-[--noir-core]'
+                    : isOpen.value
+                        ? 'w-64 opacity-100 border border-gray-100/50 dark:border-gray-800/50 bg-[--blanc-core] dark:bg-[--noir-core]'
+                        : 'w-0 opacity-0 border-0'
+                }
+            `}>
+                <div class={`p-4 transition-opacity duration-300 ${isOpen.value || isMobile ? 'opacity-100 delay-100' : 'opacity-0'}`}>
+                    <div class="flex items-center justify-between ml-3 my-3">
+                        <h3 class="text-2xl font-bold text-white m-0">Posts</h3>
+                        <a
                             href={`/${lang}/${blogId}/new`}
-                            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                            title="Create new post"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white rounded-md border border-gray-100/20 dark:border-white/10 hover:bg-[--primary] font-medium"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                             <span>New</span>
                         </a>
                     </div>
-                    <div class="space-y-1 border-t pt-3">
+                    <div class="space-y-1 border-t border-gray-200/30 dark:border-gray-200/30 pt-3">
+                        {/* Current post - displayed first and highlighted */}
                         {blogPosts.flatMap((blogPost: { posts: { id: string; title: string }[] }) => blogPost.posts)
-                            .sort((a, b) => {
-                                if (a.id === postId) return -1;
-                                if (b.id === postId) return 1;
-                                return 0;
-                            })
+                            .filter(post => post.id === postId)
                             .map((post: { id: string; title: string }) => (
-                                <a 
+                                <a
                                     key={post.id}
                                     href={`/${lang}/${blogId}/${post.id}`}
-                                    class={`block px-3 py-2 text-sm rounded-md hover:bg-gray-100 ${
-                                        post.id === postId ? 'bg-gray-200 font-medium' : ''
-                                    }`}
+                                    class="block px-3 py-2 text-sm bg-primary-500/20 dark:bg-primary-700/30 text-primary-800 dark:text-gray-300 font-medium shadow-sm transition-colors relative group"
                                 >
-                                    {post.title || 'Untitled Post'}
+                                    <div class="flex items-center">
+                                        <span class="current-post-title mr-2">{post.title || 'Untitled Post'}</span>
+                                    </div>
+                                </a>
+                            ))
+                        }
+
+                        {/* Other posts */}
+                        {blogPosts.flatMap((blogPost: { posts: { id: string; title: string }[] }) => blogPost.posts)
+                            .filter(post => post.id !== postId)
+                            .map((post: { id: string; title: string }) => (
+                                <a
+                                    key={post.id}
+                                    href={`/${lang}/${blogId}/${post.id}`}
+                                    class="block px-3 py-2 text-sm text-gray-300 relative post-link group"
+                                >
+                                    <span class="post-title">{post.title || 'Untitled Post'}</span>
                                 </a>
                             ))
                         }

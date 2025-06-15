@@ -62,8 +62,7 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
             onKeyDown$={handleKeyDown}
             class={
                 'flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors' +
-                ' dark:bg-zinc-700 dark:text-white dark:hover:border-gray-600' +
-                ' hover:border-gray-300'
+                ' dark:bg-zinc-700 dark:text-white hover:border-[--sub-primary]'
             }
             placeholder={placeholder}
         />

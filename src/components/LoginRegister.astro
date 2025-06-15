@@ -6,19 +6,19 @@ const { id, message } = Astro.props;
 
 <dialog
     id={id}
-    class="rounded-lg shadow-xl p-6 backdrop:bg-zinc-950/50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 max-w-md w-full"
+    class="rounded-xl shadow-xl p-6 backdrop:bg-[--noir-core]/70 bg-gradient-to-br from-[--noir-core] to-[--bg-color2] border border-[--primary]/20 backdrop-blur-md max-w-md w-full"
 >
     <div class="flex justify-between items-start">
         <div
-            class="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30"
+            class="w-full p-4 bg-gradient-to-r from-[--primary]/20 to-[--secondary]/20 rounded-lg border border-[--primary]/30 shadow-[0_0_15px_rgba(86,26,167,0.15)]"
         >
-            <span class="text-center text-blue-800 dark:text-blue-300 font-medium">
+            <span class="text-center text-[--blanc-core] font-medium block">
                 {message}
             </span>
         </div>
         <button
             onclick={`document.getElementById('${id}').close()`}
-            class="pl-6 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+            class="pl-6 text-[--blanc-core]/70 hover:text-[--secondary] transition-all duration-300 hover:scale-110"
         >
             <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                 <path
@@ -33,13 +33,13 @@ const { id, message } = Astro.props;
         <div class="relative">
             <div class="absolute inset-0 flex items-center">
                 <div
-                    class="w-full border-t border-zinc-300 dark:border-zinc-600"
+                    class="w-full border-t border-[--primary]/30"
                 >
                 </div>
             </div>
-            <div class="relative flex justify-center text-sm">
+            <div class="relative flex justify-center">
                 <span
-                    class="px-2 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900"
+                    class="px-3 py-1 text-[--blanc-core] bg-gradient-to-r from-[--primary]/30 to-[--secondary]/30 backdrop-blur-sm rounded-full text-sm font-medium"
                     >Continue with</span
                 >
             </div>
@@ -61,17 +61,19 @@ const { id, message } = Astro.props;
     }
 
     dialog::backdrop {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
+        background: linear-gradient(135deg, var(--noir-core) 0%, var(--bg-color2) 100%);
+        opacity: 0.85;
+        backdrop-filter: blur(8px);
     }
 
     dialog[open] {
-        animation: zoom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: zoom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 0 30px rgba(86, 26, 167, 0.2), 0 0 15px rgba(255, 124, 58, 0.15);
     }
 
     @keyframes zoom {
         from {
-            transform: translate(-50%, -50%) scale(0.95);
+            transform: translate(-50%, -50%) scale(0.92);
             opacity: 0;
         }
         to {

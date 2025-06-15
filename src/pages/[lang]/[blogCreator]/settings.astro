@@ -3,6 +3,7 @@ import Dashboard from "@layouts/Dashboard.astro";
 import type { PostData } from "@lib/types";
 import { getLangFromUrl } from "@i18n/utils";
 import { DeleteBlog } from "@components/Settings/DeleteBlog";
+import { sanitizeString } from "@lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
@@ -31,37 +32,79 @@ if (!blogData) {
 ---
 
 <Dashboard>
-	<ul class="space-y-2 text-sm">
-		<li class="flex items-center space-x-2">
-			<span class="font-bold">Domain</span>
-			<span class="text-gray-500 dark:text-gray-400">coming soon</span>
-		</li>
-		<li class="flex items-center space-x-2">
-			<span class="font-bold">Themes</span>
-			<span class="text-gray-500 dark:text-gray-400">coming soon</span>
-		</li>
-		<li>
-			<div class="mt-8 border-t pt-8">
-				<h2 class="text-lg font-semibold text-red-600 mb-4">
+	<div class="max-w-3xl mx-auto px-4">
+		<h1 class="text-2xl font-bold mb-8 text-[--blanc-core] border-b border-[--primary] pb-4">Blog Settings</h1>
+		
+		<div class="space-y-8">
+			<!-- Configurações gerais -->
+			<section class="bg-[--noir-core] backdrop-blur-sm rounded-xl p-6 border border-[--blanc-core] shadow-lg">
+				<h2 class="text-lg font-semibold text-[--blanc-core] flex items-center gap-2">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[--primary]">
+						<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+						<circle cx="12" cy="12" r="3"/>
+					</svg>
+					General Settings
+				</h2>
+				<ul class="space-y-4">
+					<li class="flex items-center justify-between p-3 bg-[--noir-core]">
+						<div class="flex items-center gap-2 w-3/4">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[--secondary]">
+								<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+								<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+							</svg>
+							<input 
+								type="text" 
+								placeholder="Custom Domain" 
+								class="bg-[--noir-core] border border-zinc-600 rounded-lg px-3 py-1.5 text-[--blanc-core] placeholder:text-[--blanc-core] focus:outline-none hover:border-[--primary] hover:ring-1 hover:ring-[--primary] w-full max-w-xs transition-all duration-300 cursor-not-allowed"
+								value={`${sanitizeString(blogData.title, 1)}.myblogii.com`}
+								readonly
+							>
+						</div>
+						<div class="flex items-center">
+							<span class="text-[--noir-core] dark:text-[--blanc-core] text-sm bg-gradient-to-r from-[--primary] to-[--secondary] backdrop-blur-sm px-3 py-1 rounded-full border border-[--primary] shadow-sm">Coming Soon</span>
+						</div>
+					</li>
+				</ul>
+			</section>
+
+			<!-- Danger Zone -->
+			<section class="bg-gradient-to-br from-[#300718] to-[#200415] rounded-xl p-6 border border-red-900/30 shadow-lg">
+				<h2 class="text-lg font-semibold mb-4 text-red-400 flex items-center gap-2">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+						<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+						<line x1="12" y1="9" x2="12" y2="13"/>
+						<line x1="12" y1="17" x2="12.01" y2="17"/>
+					</svg>
 					Danger Zone
 				</h2>
-				<div class="bg-red-50 border border-red-200 rounded-lg p-4">
-					<h3 class="text-base font-medium text-red-800 mb-2">
+				<div class="p-4 rounded-lg bg-red-950/20 border border-red-900/20">
+					<h3 class="text-base font-medium text-red-300 mb-2 flex items-center gap-2">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M3 6h18"/>
+							<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+							<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+							<line x1="10" y1="11" x2="10" y2="17"/>
+							<line x1="14" y1="11" x2="14" y2="17"/>
+						</svg>
 						Delete Blog
 					</h3>
-					<p class="text-sm text-red-600 mb-4">
-						Once you delete a blog, there is no going back. Please
-						be certain.
+					<p class="text-sm text-red-200/70 mb-4">
+						Once you delete a blog, there is no going back. Please be certain.
 					</p>
 					<button
 						onclick="document.getElementById('delete-blog-dialog').showModal()"
-						class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+						class="bg-gradient-to-r from-red-700 to-red-600 text-white px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-red-700/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-2"
 					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M3 6h18"/>
+							<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+							<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+						</svg>
 						Delete Blog
 					</button>
 					<DeleteBlog {blogId} {lang} client:idle />
 				</div>
-			</div>
-		</li>
-	</ul>
+			</section>
+		</div>
+	</div>
 </Dashboard>

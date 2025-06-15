@@ -25,103 +25,6 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
 </html>
 
 <style is:global>
-    /* Base styles with improved background contrast */
-    .app-body {
-        position: relative;
-        overflow-x: hidden;
-
-        color: var(--light-text, #ffffff);
-    }
-
-    /* Add a semi-transparent overlay to improve text contrast */
-    .app-body::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0.4) 0%,
-            rgba(0, 0, 0, 0.2) 50%,
-            rgba(0, 0, 0, 0.4) 100%
-        );
-        z-index: 1;
-        pointer-events: none;
-    }
-
-    /* Fixed background to prevent scrolling issues */
-    .fixed-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    /* Animated floating shapes */
-    .floating-shape {
-        position: absolute;
-        border-radius: 50%;
-        opacity: 0.3;
-        filter: blur(60px);
-    }
-
-    .shape1 {
-        width: 40vw;
-        height: 40vw;
-        background: linear-gradient(45deg, var(--primary), var(--primary));
-        top: -10%;
-        left: -10%;
-        animation: float1 20s ease-in-out infinite alternate;
-    }
-
-    .shape2 {
-        width: 30vw;
-        height: 30vw;
-        background: linear-gradient(45deg, var(--primary), var(--primary));
-        bottom: -15%;
-        right: -5%;
-        animation: float2 15s ease-in-out infinite alternate;
-    }
-
-    .shape3 {
-        width: 25vw;
-        height: 25vw;
-        background: linear-gradient(45deg, var(--primary), var(--primary));
-        top: 40%;
-        right: 20%;
-        animation: float3 18s ease-in-out infinite alternate;
-    }
-
-    /* Animation keyframes */
-    @keyframes float1 {
-        0% {
-            transform: translate(0, 0) rotate(0deg);
-        }
-        100% {
-            transform: translate(5%, 5%) rotate(5deg);
-        }
-    }
-
-    @keyframes float2 {
-        0% {
-            transform: translate(0, 0) rotate(0deg);
-        }
-        100% {
-            transform: translate(-5%, -3%) rotate(-5deg);
-        }
-    }
-
-    @keyframes float3 {
-        0% {
-            transform: translate(0, 0) rotate(0deg);
-        }
-        50% {
-            transform: translate(3%, -2%) rotate(3deg);
-        }
-        100% {
-            transform: translate(-3%, 2%) rotate(-3deg);
-        }
-    }
     @font-face {
         font-family: "Atkinson";
         src: url("/fonts/atkinson-regular.woff") format("woff");
@@ -144,25 +47,18 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
         --bg-color: #2c2c2c;
         --bg-color2: #010024;
 
-        --text-color: #333b3c;
-        --text-color2: #ededed;
-
+        --noir-core: #262626;
+        --blanc-core: #ededed;
+        
         --orange-blue: #010024;
         --gray: #1c1c1c;
-
+        
         --primary: #561aa7;
-        --secondary: #FF7C3A;
-        --error: #FF7575;
-        --helper: #FFC107;
+        --sub-primary: #2e0861;
+        --secondary: #ff7c3a;
+        --error: #ff7575;
+        --helper: #ffc107;
 
-        --black: 15, 18, 25;
-        --gray: 96, 115, 159;
-        --gray-light: 229, 233, 240;
-        --gray-dark: 34, 41, 57;
-        --gray-gradient: rgba(var(--gray-light), 50%), #fff;
-        --box-shadow: 0 2px 6px rgba(var(--gray), 25%),
-            0 8px 24px rgba(var(--gray), 33%),
-            0 16px 32px rgba(var(--gray), 33%);
     }
 
     html {
@@ -203,10 +99,10 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
         margin: 0;
         padding: 0;
         text-align: left;
-        background: url('/background.svg') no-repeat center/cover;
+        background: url("/background.svg") no-repeat center/cover;
         word-wrap: break-word;
         overflow-wrap: break-word;
-        color: rgb(var(--gray-dark));
+        color: var(--noir-core);
         font-size: 20px;
         line-height: 1.7;
         -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
@@ -219,7 +115,7 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
     h5,
     h6 {
         margin: 0 0 0.5rem 0;
-        color: rgb(var(--black));
+        color: var(--noir-core);
         line-height: 1.2;
     }
     h1 {
