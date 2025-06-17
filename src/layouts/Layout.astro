@@ -215,4 +215,52 @@ const { title, description, hideHeaderFooter, lang } = Astro.props;
         /* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
         white-space: nowrap;
     }
+    
+    /* Classes reutilizáveis para efeitos de hover e transições */
+    .interactive-link {
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+    
+    .interactive-link:hover {
+        transform: translateY(-2px);
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+    
+    .gradient-underline-text {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .gradient-underline-text::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+    }
+    
+    .interactive-link:hover .gradient-underline-text::after,
+    .gradient-underline-text.active::after {
+        width: 100%;
+    }
+    
+    .gradient-underline-active {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .gradient-underline-active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
 </style>

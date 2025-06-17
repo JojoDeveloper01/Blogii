@@ -15,8 +15,16 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
     const errorMessage = useSignal("");
 
     const handleInput = $((newValue: string) => {
-        createAutoSave(newValue, originalTitle.value, async (value) => {
-            await updateBlogTitle(value, blogId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle);
+        createAutoSave(newValue, originalTitle.value, async (titleValue) => {
+            await updateBlogTitle({
+                titleValue,
+                blogId,
+                showSaveSuccess,
+                hasChanges,
+                isSaving,
+                errorMessage,
+                originalTitle
+            });
         });
     });
 
@@ -25,7 +33,15 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
             <TitleInputBase
                 value={title}
                 onInput$={handleInput}
-                onEnter$={() => updateBlogTitle(title.value, blogId, showSaveSuccess, hasChanges, isSaving, errorMessage, originalTitle)}
+                onEnter$={() => updateBlogTitle({
+                    titleValue: title.value,
+                    blogId,
+                    showSaveSuccess,
+                    hasChanges,
+                    isSaving,
+                    errorMessage,
+                    originalTitle
+                })}
                 placeholder="Blog Title"
             />
             {isSaving.value && !showSaveSuccess.value && (

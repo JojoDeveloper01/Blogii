@@ -1,7 +1,7 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { createBlog } from "@lib/utils";
-import * as path from 'path';
+/* import { createBlog } from "@lib/utils";
+ */import * as path from 'path';
 import * as fs from 'fs/promises';
 import { supabase } from "@lib/supabase";
 import type { Provider } from '@supabase/supabase-js';
@@ -28,129 +28,65 @@ export const server = {
     auth: {
         signInWithOAuth: defineAction({
             input: z.object({
-                provider: z.enum(['google', 'facebook', 'azure']) as z.ZodType<Provider>
+                provider: z.enum(['google', 'facebook', 'azure']) as z.ZodType<Provider>,
+                tempBlogs: z.string().nullable().optional()
             }),
-            handler: async ({ provider }) => {
+            handler: async ({ provider, tempBlogs }, { cookies }) => {
                 try {
+                    console.log('[ACTION] Iniciando login OAuth com', provider);
+                    console.log('[ACTION] Blogs temporários recebidos:', tempBlogs ? 'Sim' : 'Não');
+                    
+                    // Se temos blogs temporários, armazená-los em um cookie
+                    if (tempBlogs) {
+                        console.log('[ACTION] Armazenando blogs temporários em cookie para migração após login');
+                        
+                        // Armazenar os blogs temporários em um cookie que será enviado com a requisição
+                        // Este cookie será lido pelo callback após a autenticação bem-sucedida
+                        cookies.set('temp-blogs-data', tempBlogs, {
+                            path: '/',
+                            httpOnly: true,  // Apenas o servidor pode acessar
+                            secure: import.meta.env.PROD, // Secure em produção
+                            maxAge: 60 * 5, // 5 minutos
+                            sameSite: 'lax'
+                        });
+                    }
+                    
+                    // Iniciar o fluxo de autenticação OAuth
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider,
                         options: {
-                            redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback`
+                            redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback`,
                         }
                     });
                     
-                    if (error) throw error;
-
-                    // After successful OAuth, get the user session
-                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                    if (sessionError) throw sessionError;
-
-                    if (session?.user) {
-                        console.log('User session:', session.user);
-                        
-                        // Check if user already exists in our users table
-                        const { data: existingUser, error: checkError } = await supabase
-                            .from('users')
-                            .select('id')
-                            .eq('email', session.user.email)
-                            .single();
-
-                        if (checkError && checkError.code !== 'PGRST116') {
-                            console.error('Error checking existing user:', checkError);
-                            throw checkError;
-                        }
-
-                        if (!existingUser) {
-                            const userData = {
-                                id: session.user.id,
-                                email: session.user.email,
-                                name: session.user.user_metadata?.name || 
-                                      session.user.user_metadata?.full_name || 
-                                      session.user.user_metadata?.given_name || 
-                                      session.user.email?.split('@')[0]
-                            };
-                            console.log('Inserting user data:', userData);
-
-                            // Insert new user into our users table
-                            const { error: insertError } = await supabase
-                                .from('users')
-                                .insert(userData);
-
-                            if (insertError) {
-                                console.error('Error inserting user:', insertError);
-                                throw insertError;
-                            }
-                            console.log('User inserted successfully');
-                        }
-
-                        // Get temporary blog from cookies
-                        const cookies = document.cookie.split(';');
-                        const blogCookie = cookies.find(cookie => cookie.trim().startsWith('blogiis='));
-                        
-                        if (blogCookie) {
-                            try {
-                                const tempBlogData = JSON.parse(decodeURIComponent(blogCookie.split('=')[1]));
-                                
-                                if (tempBlogData && tempBlogData.length > 0) {
-                                    // Check if user already has a blog
-                                    const { data: existingBlog } = await supabase
-                                        .from('blogs')
-                                        .select('id')
-                                        .eq('user_id', session.user.id)
-                                        .single();
-
-                                    if (!existingBlog) {
-                                        // Save temporary blog to database
-                                        const blogData = {
-                                            user_id: session.user.id,
-                                            title: tempBlogData[0].data.title,
-                                            description: tempBlogData[0].data.description || ''
-                                        };
-
-                                        const { error: blogError } = await supabase
-                                            .from('blogs')
-                                            .insert(blogData);
-
-                                        if (blogError) {
-                                            console.error('Error saving blog:', blogError);
-                                            throw blogError;
-                                        }
-                                        
-                                        // Clear the cookie after successful save
-                                        document.cookie = 'blogiis=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-                                    } else {
-                                        console.log('User already has a blog');
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error processing temporary blog:', error);
-                            }
-                        }
-                    } else {
-                        console.log('No user session found');
+                    if (error) {
+                        console.error('[ACTION] Erro no login OAuth:', error);
+                        throw error;
                     }
-
+                    
+                    console.log('[ACTION] URL de redirecionamento OAuth gerada com sucesso');
                     return { success: true, url: data.url };
-                } catch (error) {
-                    console.error('Failed to login:', error);
-                    throw new Error('Failed to login');
+                } catch (error: any) {
+                    console.error('[ACTION] Falha no login:', error);
+                    throw new ActionError(`Falha no login: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
                 }
             }
         }),
+
         signOut: defineAction({
             handler: async () => {                                                                          
                 try {
                     const { error } = await supabase.auth.signOut();
                     if (error) throw error;
                     return { success: true, redirectTo: '/' };
-                } catch (error) {
+                } catch (error: any) {
                     console.error('Failed to sign out:', error);
                     throw new ActionError('Failed to sign out');
                 }
             }
         })
     },
-    sendBlogData: defineAction({
+   /*  sendBlogData: defineAction({
         input: baseBlogData,
         handler: async (input) => {
             try {
@@ -164,7 +100,7 @@ export const server = {
             }
         }
     }),
-
+ */
     cleanCache: defineAction({
         input: z.object({
             collection: z.literal("blog").optional()

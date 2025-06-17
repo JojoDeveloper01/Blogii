@@ -1,32 +1,11 @@
 ---
 import Dashboard from "@layouts/Dashboard.astro";
-import type { PostData } from "@lib/types";
-import { getLangFromUrl } from "@i18n/utils";
+import { getDashboardContext } from "@lib/utilsDB";
 
-const lang = getLangFromUrl(Astro.url);
-const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
+const ctx = await getDashboardContext(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
-if (!blogId) {
-	return Astro.redirect(`/${lang}`);
-}
-
-let blogs = null;
-
-const cookie = Astro.cookies.get("blogiis");
-try {
-	blogs = cookie ? JSON.parse(cookie.value) : [];
-} catch (error) {
-	console.error("Erro ao ler o cookie 'blogiis'", error);
-}
-
-const blogData = blogs.find(
-	(blog: { id: string; title: string; posts: PostData[] }) =>
-		blog.id === blogId,
-);
-
-if (!blogData) {
-	return Astro.redirect(`/${lang}`);
-}
+const { lang, blogId, blogData, user } = ctx;
 ---
 
 <Dashboard>

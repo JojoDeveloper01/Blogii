@@ -12,12 +12,12 @@ export async function GET(context) {
 		description: "Your ideas, your blog",
 		site: context.site,
 		items: blogs
-			.filter((blog) => blog.data.title) // Filtra apenas blogs com título
+			.filter((blog) => blog.title) // Filtra apenas blogs com título
 			.map((blog) => ({
-				title: blog.data.title,
-				description: blog.data.description || "No description available",
-				pubDate: blog.data.pubDate || new Date(),
-				link: `/${lang}/blog/${sanitizeString(blog.data.title, 1)}/`,
+				title: blog.title,
+				description: blog.description || "No description available",
+				pubDate: blog.pubDate || new Date(),
+				link: `/${lang}/blog/${sanitizeString(blog.title, 1)}/`,
 				content: blog.body || "",
 			})),
 		customData: `

@@ -86,6 +86,7 @@ const { id, message } = Astro.props;
 <script>
     import { actions } from "astro:actions";
     import type { Provider } from "@supabase/supabase-js";
+    import type { BlogData } from "@lib/types";
 
     declare global {
         interface Window {
@@ -93,16 +94,54 @@ const { id, message } = Astro.props;
         }
     }
 
+    // Função para obter blogs do IndexedDB
+    async function getBlogsFromIndexedDB(): Promise<BlogData[]> {
+        try {
+            // Importação dinâmica para garantir que o código só execute no cliente
+            const { localBlogDB } = await import('@services/indexedDB');
+            await localBlogDB.init();
+            const blogs = await localBlogDB.getAllBlogs();
+            console.log('[LOGIN] Blogs encontrados no IndexedDB:', blogs.length);
+            return blogs;
+        } catch (error) {
+            console.error('[LOGIN] Erro ao obter blogs do IndexedDB:', error);
+            return [];
+        }
+    }
+
     window.login = async (provider: Provider) => {
         try {
-            const response = await actions.auth.signInWithOAuth({ provider });
+            console.log('[LOGIN] Iniciando processo de login com', provider);
+            
+            let tempBlogsData = null;
+            try {
+                // Obter blogs do IndexedDB antes do login
+                const tempBlogs = await getBlogsFromIndexedDB();
+                console.log('[LOGIN] Blogs temporários obtidos:', tempBlogs.length);
+                
+                if (tempBlogs.length > 0) {
+                    tempBlogsData = JSON.stringify(tempBlogs);
+                }
+            } catch (e) {
+                console.error('[LOGIN] Erro ao processar blogs temporários:', e);
+                // Continue com o login mesmo se houver erro ao obter blogs
+            }
+            
+            // Enviar blogs junto com a requisição de login
+            const loginParams: any = { provider };
+            if (tempBlogsData) {
+                loginParams.tempBlogs = tempBlogsData;
+            }
+            
+            const response = await actions.auth.signInWithOAuth(loginParams);
 
             if (response.data?.success) {
+                console.log('[LOGIN] Login bem-sucedido, redirecionando...');
                 window.location.href = response.data.url;
             }
         } catch (error) {
-            console.error("Failed to login:", error);
-            alert("Failed to login. Please try again.");
+            console.error("[LOGIN] Falha no login:", error);
+            alert("Falha no login. Por favor, tente novamente.");
         }
     };
 </script>

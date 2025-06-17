@@ -4,11 +4,10 @@ import Hero from "@components/Hero.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@lib/consts";
 import { getLangFromUrl } from "@i18n/utils";
 import type { BlogData } from "@lib/types";
-import { supabase } from "@lib/supabase";
+import { getUserBlogsWithPosts, getUser } from "@lib/utilsDB";
 
-const {
-  data: { user },
-} = await supabase.auth.getUser();
+// Try to get the user, if AuthSessionMissingError occurs, getUser will handle it and return null
+const user = await getUser();
 
 const lang = getLangFromUrl(Astro.url);
 const isAuthorized = Boolean(user);
@@ -16,8 +15,20 @@ const isAuthorized = Boolean(user);
 // Inicializar blogsData como array vazio
 let blogsData: BlogData[] = [];
 
-if (isAuthorized) {
-} else {
+if (isAuthorized && user) {
+  try {
+    const blogs = await getUserBlogsWithPosts(user.id);
+    if (blogs) {
+      blogsData = blogs;
+    }
+  } catch (error) {
+    console.error("Erro ao buscar blogs do usuário:", error);
+    // If there's an error fetching blogs, we'll fall back to cookies
+  }
+}
+
+// Se não estiver autorizado ou se houve erro ao buscar blogs, tenta buscar do cookie
+if (!isAuthorized || blogsData.length === 0) {
   const cookie = Astro.cookies.get("blogiis");
   try {
     blogsData = cookie ? JSON.parse(cookie.value) : [];

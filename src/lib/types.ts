@@ -1,23 +1,25 @@
+import type { Signal } from "@builder.io/qwik";
+
 export interface PostData {
     id: string;
     title: string;
     content?: string;
-    created_at: Date;
+    created_at?: Date;
     updated_at?: Date;
 }
 
 export interface BlogData {
-    id?: string;
+    collection?: string;
+    id: string;
+    user_id?: string;
+    title: string;
+    description?: string;
     body?: string;
-    collection: string;
-    data: {
-        title: string;
-        pubDate: Date;
-        updatedDate?: Date,
-        description?: string;
-        image?: string;
-        posts?: PostData[];
-    };
+    image?: string;
+    posts?: PostData[];
+    pubDate: Date;
+    created_at?: Date;
+    updatedDate?: Date;
 }
 
 export interface BlogCookieItem {
@@ -27,4 +29,25 @@ export interface BlogCookieItem {
 		id: string;
 		title: string;
 	}>;
+}
+
+export interface UpdateBlogTitleParams {
+    titleValue: string;
+    blogId: string;
+    showSaveSuccess: Signal<boolean>;
+    hasChanges: Signal<boolean>;
+    isSaving: Signal<boolean>;
+    errorMessage: Signal<string>;
+    originalTitle: Signal<string>;
+}
+
+export interface UpdatePostTitleParams {
+    blogId: string;
+    postId: string;
+    titleValue: string;
+    showSaveSuccess: Signal<boolean>;
+    hasChanges: Signal<boolean>;
+    isSaving: Signal<boolean>;
+    errorMessage: Signal<string>;
+    originalTitle?: Signal<string>;
 }

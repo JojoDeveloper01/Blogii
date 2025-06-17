@@ -161,12 +161,9 @@ export const startBlog = async (title: string, showError: (show: boolean, msg: s
 
 		const blogData = {
 			id: blogId,
-			collection: "blog",
-			data: {
-				title: sanitizedTitle,
-				pubDate: new Date(),
-				posts: [firstPost]
-			},
+			title: sanitizedTitle,
+			pubDate: new Date(),
+			posts: [firstPost]
 		};
 
 		await localBlogDB.saveBlog(blogData);
@@ -346,7 +343,7 @@ export const deleteBlog = async (
 	}
 };
 
-export const createBlog = async (entry: BlogData, path: any, fs: any) => {
+/* export const createBlog = async (entry: BlogData, path: any, fs: any) => {
 	const data = entry.data;
 	const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
 
@@ -366,4 +363,4 @@ export const createBlog = async (entry: BlogData, path: any, fs: any) => {
 	await fs.writeFile(filePath, markdownContent, "utf8");
 	console.log(`📄 File Created successfully: ${filePath}`);
 }
-
+ */

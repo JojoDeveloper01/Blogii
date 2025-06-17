@@ -22,7 +22,7 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [x] Add publish button
 [x] Link the "Já tem um blog ativo" and publish button with login modal if the user is not logged in
-[] Improve the organization of the Header 
+[x] Improve the organization of the Header 
 
 [X] Add authentication - Supabase (with google, facebook, microsoft)
     [X] Save the User data on the server
@@ -30,6 +30,19 @@ The user can administrate his blog posts on the dashboard and see analytics abou
         [] Has to save the temporal blog on the server
         [] Has to delete the temporal blog on the local
         [] If its logged in, get the blog from the DB
+
+[] The local logic has to be synchronized with the DB:
+    [] Has to update the title of the blog in the DB
+    [] Has to create the posts on the DB
+    [] has to work the when open the post
+    [] Has update the the title of teh post on the DB
+    [] Has update the the content of the post on the DB
+    [] Has to Create Blogs on the DB
+
+[] Add A Blogs visualizer
+    [] Has to show the blogs of the user on the dashboard
+
+[] Add description to the blog on the dashboard
 
 [x] Add dashboard
     [x] Has to show their posts of the their blog to the user

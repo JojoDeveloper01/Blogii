@@ -5,22 +5,31 @@ import { EditorContent } from "./EditorContent";
 import { PostNavigator } from "./PostNavigator";
 import { createNewPost } from "./editorConfig";
 import type { BlogData, BlogCookieItem } from "@lib/types";
+import { localBlogDB } from "@services/indexedDB";
 
 interface EditorProps {
+    isNewPost: boolean;
     blog: BlogData;
     blogPosts: BlogCookieItem[];
     editing: string;
     lang: string;
 }
 
-export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang }) => {
+export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, editing, lang }) => {
 
     const editor = useSignal<EditorJS | null>(null);
     const isPreviewMode = useSignal<boolean>(editing === 'false');
     const showSaveSuccess = useSignal(false);
-    const isNewPost = useSignal(blog.data.posts?.[0]?.content === undefined);
+    const post = blog.posts?.[0];
 
-    // Set editor to readonly if in preview mode
+    console.log("blog", blog)
+    const fetchBlogIndexedDB = $(async () => {
+        const blogData = await localBlogDB.getBlog(blog.id);
+        console.log("blogData", blogData)
+        if (!blogData) throw new Error("Blog não encontrado");
+        return blogData;
+    });
+
     useVisibleTask$(() => {
         if (isPreviewMode.value && editor.value?.isReady) {
             editor.value.readOnly.toggle();
@@ -47,13 +56,12 @@ export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang 
 
     useVisibleTask$(async () => {
         // If this is a new post, initialize it in IndexedDB
-        if (isNewPost.value && blog.id && blog.data.posts?.[0]?.id) {
+        if (isNewPost && blog.id && post?.id) {
             await createNewPost(
-                String(blog.id),
-                String(blog.data.posts[0].id),
-                blog.data.posts[0].title
+                blog.id,
+                post.id,
+                post.title
             );
-            isNewPost.value = false;
         }
     });
 
@@ -73,40 +81,41 @@ export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang 
 
     return (
         <div class="flex flex-col gap-4">
-            {/* Barra de ferramentas do editor com estilo moderno */}
-            <div class="bg-white/30 dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden p-3">
-                <EditorToolbar
-                    blogId={String(blog.id)}
-                    postId={String(blog.data.posts?.[0]?.id)}
-                    title={useSignal(blog.data.posts?.[0]?.title ?? '')}
-                    lang={lang}
-                    editor={editor}
-                    isPreviewMode={isPreviewMode}
-                    onTogglePreview$={togglePreviewMode}
-                />
-            </div>
+
+            <EditorToolbar
+                editor={editor}
+                blogId={blog?.id}
+                postId={post?.id ?? ''}
+                title={useSignal(post?.title ?? '')}
+                blogTitle={blog?.title ?? ''}
+                lang={lang}
+                isPreviewMode={isPreviewMode}
+                togglePreviewMode={togglePreviewMode}
+                fetchBlogIndexedDB={fetchBlogIndexedDB}
+            />
 
             {/* Área de conteúdo principal */}
             <div class="flex flex-col gap-4">
                 {/* Mobile layout - PostNavigator acima do editor */}
                 <div class="block md:hidden mb-4">
                     <PostNavigator
-                        blogId={String(blog.id)}
-                        postId={String(blog.data.posts?.[0]?.id)}
+                        blogId={blog?.id}
+                        postId={String(post?.id)}
                         lang={lang}
                         blogPosts={blogPosts}
                         isPreviewMode={isPreviewMode}
                         isMobile={true}
                     />
                 </div>
-                
+
                 {/* Desktop layout - Editor e PostNavigator lado a lado */}
                 <div class="flex gap-4 flex-col md:flex-row">
                     {/* Editor principal */}
                     <div class="flex-1">
-                        <div class="bg-[--blanc-core] dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden p-4">
+                        <div class="bg-[--blanc-core] dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 p-4">
                             <EditorContent
                                 blog={blog}
+                                fetchBlogIndexedDB={fetchBlogIndexedDB}
                                 isPreviewMode={isPreviewMode}
                                 onSave={handleSave}
                             />
@@ -117,8 +126,8 @@ export const Editor = component$<EditorProps>(({ blog, blogPosts, editing, lang 
                     <div class="w-auto hidden md:block">
                         <div class="sticky top-4">
                             <PostNavigator
-                                blogId={String(blog.id)}
-                                postId={String(blog.data.posts?.[0]?.id)}
+                                blogId={blog.id}
+                                postId={String(post?.id)}
                                 lang={lang}
                                 blogPosts={blogPosts}
                                 isPreviewMode={isPreviewMode}

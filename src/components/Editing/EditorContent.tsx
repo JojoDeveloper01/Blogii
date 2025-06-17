@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$, type Signal, type QRL } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, useStylesScoped$, type Signal, type QRL } from '@builder.io/qwik';
 import { Toast } from '@components/shared/Toast';
 import { localBlogDB } from '@services/indexedDB';
 import type EditorJS from '@editorjs/editorjs';
@@ -7,11 +7,100 @@ import type { BlogData } from '@lib/types';
 
 interface EditorContentProps {
     blog: BlogData;
+    fetchBlogIndexedDB: QRL<() => Promise<BlogData>>;
     isPreviewMode: Signal<boolean>;
     onSave?: QRL<() => void> | undefined;
 }
 
-export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMode, onSave }) => {
+export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlogIndexedDB, isPreviewMode, onSave }) => {
+    // Add custom styles for EditorJS to improve visibility in dark mode
+    useStylesScoped$(`        
+        /* EditorJS toolbar styles */
+        :global(.ce-toolbar__plus),
+        :global(.ce-toolbar__settings-btn) {
+            background-color: #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+        
+        :global(.dark) :global(.ce-toolbar__plus),
+        :global(.dark) :global(.ce-toolbar__settings-btn) {
+            background-color: #475569 !important;
+            color: #f8fafc !important;
+        }
+        
+        /* EditorJS block tunes menu */
+        :global(.ce-popover) {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        
+        :global(.dark) :global(.ce-popover) {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+        }
+        
+        :global(.ce-popover__item) {
+            color: #1e293b !important;
+        }
+        
+        :global(.dark) :global(.ce-popover__item) {
+            color: #f1f5f9 !important;
+        }
+        
+        :global(.ce-popover__item:hover) {
+            background-color: #e2e8f0 !important;
+        }
+        
+        :global(.dark) :global(.ce-popover__item:hover) {
+            background-color: #475569 !important;
+        }
+        
+        /* EditorJS inline toolbar */
+        :global(.ce-inline-toolbar) {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        
+        :global(.dark) :global(.ce-inline-toolbar) {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+        }
+        
+        :global(.ce-inline-toolbar__buttons) {
+            color: #1e293b !important;
+        }
+        
+        :global(.dark) :global(.ce-inline-toolbar__buttons) {
+            color: #f1f5f9 !important;
+        }
+        
+        /* EditorJS conversion toolbar */
+        :global(.ce-conversion-toolbar) {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        
+        :global(.dark) :global(.ce-conversion-toolbar) {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+        }
+        
+        :global(.ce-conversion-tool) {
+            color: #1e293b !important;
+        }
+        
+        :global(.dark) :global(.ce-conversion-tool) {
+            color: #f1f5f9 !important;
+        }
+        
+        :global(.ce-conversion-tool:hover) {
+            background-color: #e2e8f0 !important;
+        }
+        
+        :global(.dark) :global(.ce-conversion-tool:hover) {
+            background-color: #475569 !important;
+        }
+    `);
     const editor = useSignal<EditorJS | null>(null);
     const isSaving = useSignal(false);
     const showToast = useSignal(false);
@@ -21,19 +110,18 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
 
     // Initialize editor when component mounts
     useVisibleTask$(async ({ cleanup }) => {
-        const blogId = String(blog.id);
-        const postId = String(blog.data.posts?.[0]?.id);
+        const postId = String(blog.posts?.[0]?.id);
 
         try {
             // Get the post content and parse it if it's a string
             let content;
             try {
                 // First try to get the content from IndexedDB
-                const savedBlog = await localBlogDB.getBlog(blogId);
+                const savedBlog = await fetchBlogIndexedDB();
 
                 // Find the specific post by ID
-                const savedPost = savedBlog?.data?.posts?.find(p => p.id === postId);
-                const currentPost = blog.data.posts?.find(p => p.id === postId);
+                const savedPost = savedBlog?.posts?.find(p => p.id === postId);
+                const currentPost = blog.posts?.find(p => p.id === postId);
                 
                 const rawContent = savedPost?.content || currentPost?.content;
 
@@ -61,12 +149,12 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
                         const savedData = await editor.value.save();                        
                         const sanitizedData = sanitizeEditorData(savedData);                        
                         // Get current blog data
-                        const currentBlog = await localBlogDB.getBlog(blogId);
+                        const currentBlog = await fetchBlogIndexedDB();
                         
                         if (!currentBlog) throw new Error("Blog not found");
 
                         // Find and update the post
-                        const posts = currentBlog.data.posts || [];
+                        const posts = currentBlog.posts || [];
                         const postIndex = posts.findIndex(p => p.id === postId);                        
                         if (postIndex === -1) throw new Error("Post not found");
 
@@ -75,7 +163,7 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
                         // Make sure we preserve all post data
                         posts[postIndex] = {
                             id: postId,
-                            title: posts[postIndex]?.title ?? blog.data.posts?.[0]?.title ?? 'Untitled Post',
+                            title: posts[postIndex]?.title ?? blog.posts?.[0]?.title ?? 'Untitled Post',
                             content: stringifiedContent,
                             created_at: posts[postIndex]?.created_at || new Date(),
                             updated_at: new Date()
@@ -83,10 +171,7 @@ export const EditorContent = component$<EditorContentProps>(({ blog, isPreviewMo
 
                         const updatedBlog = {
                             ...currentBlog,
-                            data: {
-                                ...currentBlog.data,
-                                posts
-                            }
+                            posts
                         };                        
                         // Save updated blog
                         await localBlogDB.saveBlog(updatedBlog);                        

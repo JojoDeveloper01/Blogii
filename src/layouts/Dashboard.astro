@@ -1,42 +1,17 @@
 ---
 import Layout from "./Layout.astro";
 import { SITE_TITLE, SITE_DESCRIPTION, signInToPublishBlog } from "@lib/consts";
-import { getLangFromUrl } from "@i18n/utils";
-import { supabase } from "@lib/supabase";
-import type { PostData } from "@lib/types";
 import LoginRegister from "@components/LoginRegister.astro";
 import { BlogTitleEditor } from "@components/Editing/BlogTitleEditor";
 import { generateShortNumericId } from "@lib/utils";
+import { getDashboardContext } from "@lib/utilsDB";
 
 const idLoginModal = generateShortNumericId();
-const lang = getLangFromUrl(Astro.url);
-const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
 
-if (!blogId) {
-	return Astro.redirect(`/${lang}`);
-}
+const ctx = await getDashboardContext(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
-let blogs = null;
-
-const cookie = Astro.cookies.get("blogiis");
-try {
-	blogs = cookie ? JSON.parse(cookie.value) : [];
-} catch (error) {
-	console.error("Erro ao ler o cookie 'blogiis'", error);
-}
-
-const blogData = blogs.find(
-	(blog: { id: string; title: string; posts: PostData[] }) =>
-		blog.id === blogId,
-);
-
-if (!blogData) {
-	return Astro.redirect(`/${lang}`);
-}
-
-const {
-	data: { user },
-} = await supabase.auth.getUser();
+const { lang, blogId, blogData, user } = ctx;
 ---
 
 <style>
@@ -100,10 +75,11 @@ const {
 		}
 	}
 </style>
+
 <Layout
 	title={SITE_TITLE}
 	description={SITE_DESCRIPTION}
-	{lang}
+	lang={String(lang)}
 	hideHeaderFooter={true}
 >
 	<!-- Hidden checkbox for toggle functionality -->
@@ -167,7 +143,7 @@ const {
 						<h2
 							class="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate"
 						>
-							{blogData.title}
+							{blogData?.title || "Sem título"}
 						</h2>
 						<p
 							class="text-xs text-gray-500 dark:text-gray-400 mt-1"
@@ -349,48 +325,49 @@ const {
 				</div>
 			</aside>
 
-			
 			<!-- Conteúdo principal -->
 			<div
-			class="flex-1 flex flex-col gap-6 transition-all duration-300 ease-in-out"
+				class="flex-1 flex flex-col gap-6 transition-all duration-300 ease-in-out"
 			>
-			<div class="flex flex-wrap gap-4 justify-between items-center mt-4 bg-white/30 dark:bg-zinc-700/20 backdrop-blur-md rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 p-4">
-				<BlogTitleEditor
-					{blogId}
-					initialTitle={blogData.title}
-					client:load
-				/>
-
-				{
-					!user ? (
-						<LoginRegister
-							id={idLoginModal}
-							message={signInToPublishBlog}
-						/>
-					) : null
-				}
-				<button
-					onclick={!user
-						? `document.getElementById('${idLoginModal}').showModal()`
-						: null}
-					class="px-5 py-1.5 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+				<div
+					class="flex flex-wrap gap-4 justify-between items-center mt-4 bg-white/30 dark:bg-zinc-700/20 backdrop-blur-md rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 p-4"
 				>
-					<svg
-						class="w-5 h-5"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
+					<BlogTitleEditor
+						{blogId}
+						initialTitle={blogData?.title || ""}
+						client:load
+					/>
+
+					{
+						!user ? (
+							<LoginRegister
+								id={idLoginModal}
+								message={signInToPublishBlog}
+							/>
+						) : null
+					}
+					<button
+						onclick={!user
+							? `document.getElementById('${idLoginModal}').showModal()`
+							: null}
+						class="px-5 py-1.5 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-						></path>
-					</svg>
-					Publish
-				</button>
-			</div>	
+						<svg
+							class="w-5 h-5"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+							></path>
+						</svg>
+						Publish
+					</button>
+				</div>
 				<div
 					class="bg-white/30 dark:bg-zinc-700/20 backdrop-blur-md rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 overflow-hidden p-6"
 				>

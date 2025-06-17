@@ -1,4 +1,4 @@
-import { component$, useSignal, useStylesScoped$ } from "@builder.io/qwik";
+import { component$, useSignal, useTask$ } from "@builder.io/qwik";
 import type { Signal } from "@builder.io/qwik";
 import type { BlogCookieItem } from "@lib/types";
 
@@ -12,72 +12,15 @@ interface PostNavigatorProps {
 }
 
 export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, lang, blogPosts, isPreviewMode, isMobile = false }) => {
-    // CSS styles for the component
-    useStylesScoped$(`
-        /* Styles for regular posts */
-        .post-title {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .post-title::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -2px;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.3s ease;
-        }
-        
-        .post-link:hover .post-title::after {
-            width: 100%;
-        }
-        
-        .post-link:hover {
-            transform: translateY(-2px);
-            transition: transform 0.3s ease;
-        }
-        
-        /* Styles for current post */
-        .current-post-title {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .current-post-title::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -2px;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-        }
-        
-        .current-post-link::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            opacity: 0.7;
-        }
-        
-        .current-post-link:hover {
-            transform: translateY(-2px);
-            transition: transform 0.3s ease;
-        }
-    `);
     const isOpen = useSignal(false);
 
-    // Determine if we should auto-open the navigator on mobile
-    if (isMobile && !isOpen.value) {
-        isOpen.value = true;
-    }
+    // Use useTask$ to set the initial state based on isMobile
+    useTask$(({ track }) => {
+        track(() => isMobile);
+        if (isMobile) {
+            isOpen.value = true;
+        }
+    });
 
     return (
         <div class={`relative ${isPreviewMode.value ? 'hidden' : ''} ${isMobile ? 'w-full' : ''}`}>
@@ -147,10 +90,10 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                                 <a
                                     key={post.id}
                                     href={`/${lang}/${blogId}/${post.id}`}
-                                    class="block px-3 py-2 text-sm bg-primary-500/20 dark:bg-primary-700/30 text-primary-800 dark:text-gray-300 font-medium shadow-sm transition-colors relative group"
+                                    class="interactive-link block px-3 py-2 text-sm bg-primary-500/20 dark:bg-primary-700/30 text-primary-800 dark:text-gray-300 font-medium shadow-sm transition-colors relative group"
                                 >
                                     <div class="flex items-center">
-                                        <span class="current-post-title mr-2">{post.title || 'Untitled Post'}</span>
+                                        <span class="gradient-underline-active mr-2">{post.title || 'Untitled Post'}</span>
                                     </div>
                                 </a>
                             ))
@@ -163,9 +106,9 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                                 <a
                                     key={post.id}
                                     href={`/${lang}/${blogId}/${post.id}`}
-                                    class="block px-3 py-2 text-sm text-gray-300 relative post-link group"
+                                    class="interactive-link block px-3 py-2 text-sm text-gray-300 relative group"
                                 >
-                                    <span class="post-title">{post.title || 'Untitled Post'}</span>
+                                    <span class="gradient-underline-text">{post.title || 'Untitled Post'}</span>
                                 </a>
                             ))
                         }

@@ -2,14 +2,13 @@
 import { getLangFromUrl } from "@i18n/utils";
 import BlogPost from "@layouts/BlogPost.astro";
 import { Editor } from "@components/Editing/Editor";
-import { render } from "astro:content";
-import type { CollectionEntry } from "astro:content";
+import type { BlogData } from "@lib/types";
 import { generateShortNumericId } from "@lib/utils";
 
 const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
 const postId = Astro.url.pathname.split("/").slice(-1)[0];
 const editing = Astro.url.searchParams.get("editing");
-const isNew = Astro.url.pathname.endsWith("/new");
+const thisPostIsNew = Astro.url.pathname.endsWith("/new");
 
 const lang = getLangFromUrl(Astro.url);
 
@@ -22,6 +21,7 @@ const blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
 const blogData = blogPosts.find(
     (blog: { id: string; title: string }) => blog.id === blogId,
 );
+
 const postData = blogData?.posts.find(
     (post: { id: string }) => post.id === postId,
 );
@@ -29,11 +29,11 @@ const postData = blogData?.posts.find(
 // Validate required parameters
 if (!blogData) {
     return Astro.redirect(`/${lang}`);
-} else if (!postData && isNew) {
+} else if (!postData && thisPostIsNew) {
     const newPostId = generateShortNumericId();
-    blogData.posts = [...blogData.posts, { id: newPostId, title: "New Post" }];
+    blogData.posts = [...blogData.posts, { id: newPostId, title: "New Post", thisPostIsNew }];
     Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
-        path: "/", 
+        path: "/",
         maxAge: 60 * 60 * 24 * 30,
     });
 
@@ -41,8 +41,6 @@ if (!blogData) {
 } else if (!postData) {
     return Astro.redirect(`/${lang}/${blogId}`);
 }
-
-const blogTitle = blogData?.title;
 
 // Set editing mode
 if (editing !== "true" && editing !== "false") {
@@ -52,33 +50,22 @@ if (editing !== "true" && editing !== "false") {
     return Astro.redirect(url.toString());
 }
 
+const isNewPost = postData.thisPostIsNew;
+
 needsClientData = true;
 blog = {
     id: blogId,
-    collection: "blog" as const,
-    data: {
-        posts: [postData],
-        title: blogTitle,
-        pubDate: new Date(),
-        isPreview: editing === "false",
-    },
-} as CollectionEntry<"blog">;
-
-const { Content } =
-    blog && !needsClientData ? await render(blog) : { Content: null };
+    title: blogData?.title,
+    posts: [postData],
+    pubDate: new Date(),
+} as BlogData;
 ---
 
 {
-    needsClientData && blog ? (
-        <BlogPost {...blog.data}>
-            <Editor {blog} {blogPosts} {editing} {lang} client:load />
-        </BlogPost>
-    ) : blog ? (
-        <BlogPost {...blog.data}>
+    blog ? (
+        <BlogPost {...blog}>
             {editing ? (
-                <Editor {blog} {blogPosts} {editing} {lang} client:load />
-            ) : Content ? (
-                <Content />
+                <Editor {isNewPost} {blog} {blogPosts} {editing} {lang} client:load />
             ) : null}
         </BlogPost>
     ) : null

@@ -1,46 +1,19 @@
 ---
-import { getLangFromUrl } from "@i18n/utils";
 import type { PostData } from "@lib/types";
-import { BlogTitleEditor } from "@components/Editing/BlogTitleEditor";
 import Dashboard from "@layouts/Dashboard.astro";
-import { supabase } from "@lib/supabase";
-import LoginRegister from "@components/LoginRegister.astro";
-import { generateShortNumericId } from "@lib/utils";
-import { signInToPublishBlog } from "@lib/consts";
+import { getDashboardContext } from "@lib/utilsDB";
 
-const idLoginModal = generateShortNumericId();  
-const lang = getLangFromUrl(Astro.url);
+const ctx = await getDashboardContext(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
-const {
-	data: { user },
-} = await supabase.auth.getUser();
-
-
-const blogId =
-	Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id)) || "";
-
-let blogs = null;
-
-const cookie = Astro.cookies.get("blogiis");
-try {
-	blogs = cookie ? JSON.parse(cookie.value) : [];
-} catch (error) {
-	console.error("Erro ao ler o cookie 'blogiis'", error);
-}
-
-const blogData = blogs.find(
-	(blog: { id: string; title: string; posts: PostData[] }) =>
-		blog.id === blogId,
-);
-
-if (!blogData) {
-	return Astro.redirect(`/${lang}`);
-}
+const { lang, blogId, blogData, user } = ctx;
 ---
 
 <Dashboard>
 	<div class="flex flex-wrap justify-between items-center mb-6">
-		<h2 class="text-2xl font-bold text-gray-800 dark:text-white">Your Posts</h2>
+		<h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+			Your Posts
+		</h2>
 		<a
 			href={`${blogId}/new`}
 			class="flex items-center gap-2 px-5 py-3 bg-white/10 dark:bg-noir-core/30 backdrop-blur-sm border border-[--blanc-core]/10 text-[--blanc-core] font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.03] hover:border-[--secondary]/50 group"
@@ -65,21 +38,25 @@ if (!blogData) {
 			blogData?.posts?.map((post: PostData) => (
 				<a
 					href={`${blogId}/${post.id}`}
-					class="flex relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 aspect-square hover:scale-[1.02] group w-full max-w-[17rem]">
+					class="flex relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 aspect-square hover:scale-[1.02] group w-full max-w-[17rem]"
+				>
 					{/* Gradient overlay with animation */}
 					<div class="absolute inset-0 bg-gradient-to-br from-[--primary] via-[--secondary] to-[--helper] opacity-90 group-hover:opacity-100 transition-opacity duration-300 z-10" />
-					
+
 					{/* Animated pattern overlay */}
 					<div class="absolute inset-0 bg-[url('/images/noise.png')] opacity-20 mix-blend-overlay z-20" />
-					
+
 					{/* Content with glow effect */}
 					<div class="absolute bottom-0 left-0 right-0 p-5 text-white z-30 transform transition-transform duration-300 group-hover:translate-y-[-5px]">
-						<h2 class="text-xl font-bold mb-2 line-clamp-2 drop-shadow-md" title={post.title}>
-							{post.title || 'Untitled Post'}
+						<h2
+							class="text-xl font-bold mb-2 line-clamp-2 drop-shadow-md"
+							title={post.title}
+						>
+							{post.title || "Untitled Post"}
 						</h2>
-						<div class="w-16 h-1 bg-white/70 rounded-full transform origin-left transition-all duration-300 group-hover:w-24 group-hover:bg-white"></div>
+						<div class="w-16 h-1 bg-white/70 rounded-full transform origin-left transition-all duration-300 group-hover:w-24 group-hover:bg-white" />
 					</div>
-					
+
 					{/* Background color with slight animation */}
 					<div class="absolute inset-0 bg-gradient-to-tr from-[--primary]/80 to-[--secondary]/80 z-0 transform transition-transform duration-700 group-hover:scale-110">
 						{/* Background animation container */}
