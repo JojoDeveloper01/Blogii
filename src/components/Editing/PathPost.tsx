@@ -1,10 +1,10 @@
 import { component$, useSignal, $, useVisibleTask$, type Signal, type QRL } from '@builder.io/qwik';
-import type { BlogData } from "@lib/types";
+import type { BlogData } from "@/lib/types";
 import { useAutoSave, updatePostTitleWithParams, deletePost } from "./editorConfig";
-import { validateTitle } from "@lib/utils";
-import { TitleInputBase } from "@components/shared/TitleInputBase";
+import { validateTitle } from "@/lib/utils";
+import { TitleInputBase } from "@/components/shared/TitleInputBase";
 import { icons } from './icons';
-import { ConfirmDialog } from '@components/shared/ConfirmDialog';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface PathPostProps {
     blogId: string;
@@ -14,10 +14,11 @@ interface PathPostProps {
     lang: string;
     isPreviewMode: Signal<boolean>;
     onTogglePreview$: QRL<() => void>;
-    fetchBlogIndexedDB: QRL<() => Promise<BlogData>>;
+    fetchBlog: QRL<() => Promise<BlogData>>;
+    isAuthorized: boolean;
 }
 
-export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isPreviewMode, onTogglePreview$, fetchBlogIndexedDB }: PathPostProps) => {
+export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isPreviewMode, onTogglePreview$, fetchBlog, isAuthorized }: PathPostProps) => {
     const showOptions = useSignal(false);
     const showSaveSuccess = useSignal(false);
     const errorMessage = useSignal("");
@@ -41,10 +42,9 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
     // Check if we can show delete button (more than one post)
     useVisibleTask$(async () => {
         try {
-            const blog = await fetchBlogIndexedDB();
+            const blog = await fetchBlog();
             const posts = blog?.posts || [];
             indexedBlogs.value = blog;
-            console.log("indexedBlogs", indexedBlogs.value)
             if (posts.length >= 1) {
                 canDelete.value = true;
             }
@@ -63,6 +63,7 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
         title.value = validation.sanitized;
         createAutoSave(validation.sanitized, originalTitle.value, async (titleValue) => {
             await updatePostTitleWithParams({
+                isAuthorized,
                 blogId,
                 postId,
                 titleValue,
@@ -90,7 +91,7 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
 
     const handleDeletePost = $(async () => {
         try {
-            await deletePost(blogId, postId, lang);
+            await deletePost(blogId, postId, lang, isAuthorized);
         } catch (error) {
             errorMessage.value = error instanceof Error ? error.message : 'Error deleting post';
         }
@@ -120,6 +121,7 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
                         value={useSignal(title.value)}
                         onInput$={handleAutoSave}
                         onEnter$={() => updatePostTitleWithParams({
+                            isAuthorized,
                             blogId,
                             postId,
                             titleValue: title.value,

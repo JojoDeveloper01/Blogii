@@ -1,6 +1,7 @@
-import { localBlogDB } from "@services/indexedDB";
-import type { BlogCookieItem, BlogData } from "@lib/types";
-import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@lib/consts";
+import { localBlogDB } from "@/services/indexedDB";
+import { actions } from "astro:actions";
+import type { BlogCookieItem, BlogData } from "@/lib/types";
+import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@/lib/consts";
 
 // string para remover os traços e acentos e acrescentar false para deixar os traços e deixar os acentos
 export const sanitizeString = (string: string, option = 0) => {
@@ -322,24 +323,37 @@ export const executeEditorCommand = (editor: any, command: string, params?: any)
 
 export const deleteBlog = async (
 	blogId: string,
-	callbacks: {
-		onSuccess: () => void;
-		onError: (error: any) => void;
-	}
-) => {
+    userId: string,
+    isAuthorized: boolean,
+    lang: string,
+): Promise<boolean> => {
 	try {
-		// Delete from IndexedDB
+		if (isAuthorized) {
+			try {
+				const { data, error } = await actions.blog.delete({ blogId, userId });
+				if (!error && data?.success) {
+					if (typeof window !== 'undefined') {
+						window.location.href = `/${lang}/`;
+					}
+					return true;
+				}
+			} catch (dbError) {
+				console.warn('Erro ao apagar blog no banco de dados:', dbError);
+			}
+		}
+
+		// Apagar blog do armazenamento local (IndexedDB)
 		await localBlogDB.deleteBlog(blogId);
 
-		// Delete from cookie on client side
+		// Remover blog dos cookies do navegador
 		if (typeof window !== 'undefined') {
 			cookieUtils.removeBlogFromCookie(blogId);
 		}
 
-		callbacks.onSuccess();
+		return true;
 	} catch (error) {
-		console.error('Error deleting blog:', error);
-		callbacks.onError(error);
+		console.error('Erro ao apagar blog:', error);
+		return false;
 	}
 };
 
@@ -364,3 +378,7 @@ export const deleteBlog = async (
 	console.log(`📄 File Created successfully: ${filePath}`);
 }
  */
+
+export function redirectToBlog(Astro: any, lang: string, blogId: string) {
+	return Astro.redirect(`/${lang}/${blogId}`);
+}

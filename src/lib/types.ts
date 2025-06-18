@@ -17,7 +17,7 @@ export interface BlogData {
     body?: string;
     image?: string;
     posts?: PostData[];
-    pubDate: Date;
+    pubDate?: Date;
     created_at?: Date;
     updatedDate?: Date;
 }
@@ -32,6 +32,7 @@ export interface BlogCookieItem {
 }
 
 export interface UpdateBlogTitleParams {
+    isAuthorized: boolean;
     titleValue: string;
     blogId: string;
     showSaveSuccess: Signal<boolean>;
@@ -42,6 +43,7 @@ export interface UpdateBlogTitleParams {
 }
 
 export interface UpdatePostTitleParams {
+    isAuthorized: boolean;
     blogId: string;
     postId: string;
     titleValue: string;

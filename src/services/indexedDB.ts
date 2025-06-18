@@ -1,4 +1,4 @@
-import type { BlogData } from "@lib/types";
+import type { BlogData } from "@/lib/types";
 
 const DB_NAME = 'blogiiDB';
 const DB_VERSION = 2;

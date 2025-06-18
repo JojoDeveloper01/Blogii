@@ -1,18 +1,21 @@
-import { component$, useSignal, useVisibleTask$, useStylesScoped$, type Signal, type QRL } from '@builder.io/qwik';
-import { Toast } from '@components/shared/Toast';
-import { localBlogDB } from '@services/indexedDB';
+import { component$, useSignal, useStylesScoped$, $, useVisibleTask$ } from "@builder.io/qwik";
+import type { QRL, Signal } from "@builder.io/qwik";
+import { actions } from "astro:actions";
+import { Toast } from '@/components/shared/Toast';
+import { localBlogDB } from '@/services/indexedDB';
 import type EditorJS from '@editorjs/editorjs';
-import { createEditor, sanitizeEditorData } from '@services/editorService';
-import type { BlogData } from '@lib/types';
+import { createEditor, sanitizeEditorData } from '@/services/editorService';
+import type { BlogData } from '@/lib/types';
 
 interface EditorContentProps {
     blog: BlogData;
-    fetchBlogIndexedDB: QRL<() => Promise<BlogData>>;
+    fetchBlog: QRL<() => Promise<BlogData>>;
     isPreviewMode: Signal<boolean>;
     onSave?: QRL<() => void> | undefined;
+    isAuthorized: boolean;
 }
 
-export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlogIndexedDB, isPreviewMode, onSave }) => {
+export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, isPreviewMode, onSave, isAuthorized }) => {
     // Add custom styles for EditorJS to improve visibility in dark mode
     useStylesScoped$(`        
         /* EditorJS toolbar styles */
@@ -117,12 +120,12 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlogIn
             let content;
             try {
                 // First try to get the content from IndexedDB
-                const savedBlog = await fetchBlogIndexedDB();
+                const savedBlog = await fetchBlog();
 
                 // Find the specific post by ID
                 const savedPost = savedBlog?.posts?.find(p => p.id === postId);
                 const currentPost = blog.posts?.find(p => p.id === postId);
-                
+
                 const rawContent = savedPost?.content || currentPost?.content;
 
                 if (typeof rawContent === 'string') {
@@ -144,18 +147,18 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlogIn
                 onChange: async () => {
                     if (!editor.value || isSaving.value) return;
 
-                    try {                        
+                    try {
                         // Get saved data from editor
-                        const savedData = await editor.value.save();                        
-                        const sanitizedData = sanitizeEditorData(savedData);                        
+                        const savedData = await editor.value.save();
+                        const sanitizedData = sanitizeEditorData(savedData);
                         // Get current blog data
-                        const currentBlog = await fetchBlogIndexedDB();
-                        
+                        const currentBlog = await fetchBlog();
+
                         if (!currentBlog) throw new Error("Blog not found");
 
                         // Find and update the post
                         const posts = currentBlog.posts || [];
-                        const postIndex = posts.findIndex(p => p.id === postId);                        
+                        const postIndex = posts.findIndex(p => p.id === postId);
                         if (postIndex === -1) throw new Error("Post not found");
 
                         const stringifiedContent = JSON.stringify(sanitizedData);
@@ -172,15 +175,32 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlogIn
                         const updatedBlog = {
                             ...currentBlog,
                             posts
-                        };                        
-                        // Save updated blog
-                        await localBlogDB.saveBlog(updatedBlog);                        
+                        };
+                        // If authorized, save to DB first
+                        if (isAuthorized && postId) {
+                            try {
+                                const { error } = await actions.post.updateContent({
+                                    blogId: blog.id,
+                                    postId,
+                                    content: JSON.stringify(savedData)
+                                });
+                                if (error) throw error;
+                            } catch (err) {
+                                console.warn('Falha ao salvar no DB:', err);
+                                // Continue with local save if DB fails
+                            }
+                        }
+                        if (!isAuthorized) {
+                            // Save to local storage
+                            await localBlogDB.saveBlog(updatedBlog);
+                        }
+
                         toastMessage.value = 'Saved';
                         toastType.value = 'success';
                         showToast.value = true;
 
                         await onSave?.();
-                    } catch (error) {                        
+                    } catch (error) {
                         toastMessage.value = 'Error saving content';
                         toastType.value = 'error';
                         showToast.value = true;

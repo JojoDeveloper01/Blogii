@@ -1,6 +1,6 @@
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { localBlogDB } from '@services/indexedDB';
-import type { BlogData } from '@lib/types';
+import { localBlogDB } from '@/services/indexedDB';
+import type { BlogData } from '@/lib/types';
 
 interface BlogGridProps {
     lang: string;

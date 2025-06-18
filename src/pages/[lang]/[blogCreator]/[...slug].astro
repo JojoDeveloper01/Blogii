@@ -1,9 +1,10 @@
 ---
-import { getLangFromUrl } from "@i18n/utils";
-import BlogPost from "@layouts/BlogPost.astro";
-import { Editor } from "@components/Editing/Editor";
-import type { BlogData } from "@lib/types";
-import { generateShortNumericId } from "@lib/utils";
+import { getLangFromUrl } from "@/i18n/utils";
+import BlogPost from "@/layouts/BlogPost.astro";
+import { Editor } from "@/components/Editing/Editor";
+import type { BlogData } from "@/lib/types";
+import { generateShortNumericId, redirectToBlog } from "@/lib/utils";
+import { getUser, getBlogWithPosts, createNewPost } from "@/lib/utilsDB";
 
 const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
 const postId = Astro.url.pathname.split("/").slice(-1)[0];
@@ -11,35 +12,79 @@ const editing = Astro.url.searchParams.get("editing");
 const thisPostIsNew = Astro.url.pathname.endsWith("/new");
 
 const lang = getLangFromUrl(Astro.url);
+const user = await getUser();
 
 let blog = null;
 let needsClientData = false;
+let blogData = null;
+let postData = null;
+let blogPosts = [];
 
-const cookie = Astro.cookies.get("blogiis");
-const blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+if (user) {
+    blogPosts = await getBlogWithPosts(String(blogId));
 
-const blogData = blogPosts.find(
-    (blog: { id: string; title: string }) => blog.id === blogId,
-);
+    blogData = blogPosts;
+    //console.log("blogData: ", blogData);
 
-const postData = blogData?.posts.find(
-    (post: { id: string }) => post.id === postId,
-);
+    blogPosts = [blogPosts];
+    //console.log("blogPosts: ", blogPosts);
 
-// Validate required parameters
-if (!blogData) {
-    return Astro.redirect(`/${lang}`);
-} else if (!postData && thisPostIsNew) {
-    const newPostId = generateShortNumericId();
-    blogData.posts = [...blogData.posts, { id: newPostId, title: "New Post", thisPostIsNew }];
-    Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
-    });
+    postData = blogData?.posts.find(
+        (post: { id: string }) => post.id === postId,
+    );
 
-    return Astro.redirect(`/${lang}/${blogId}/${newPostId}`);
-} else if (!postData) {
-    return Astro.redirect(`/${lang}/${blogId}`);
+    //console.log("postData: ", postData);
+
+    if (!blogData) {
+        return redirectToBlog(Astro, lang, String(blogId));
+    } else if (!postData && thisPostIsNew) {
+        const newPostId = generateShortNumericId();
+
+        blogData.posts = [
+            ...blogData.posts,
+            { id: newPostId, title: "New Post" },
+        ];
+        try {
+            await createNewPost(String(blogId), String(newPostId), "New Post");
+            
+            return Astro.redirect(`/${lang}/${blogId}/${newPostId}`);
+        } catch (err) {
+            console.error("Erro ao criar post:", err);
+            return redirectToBlog(Astro, lang, String(blogId));
+        }
+    } else if (!postData) {
+        return redirectToBlog(Astro, lang, String(blogId));
+    }
+} else {
+    const cookie = Astro.cookies.get("blogiis");
+    blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+
+    blogData = blogPosts.find(
+        (blog: { id: string; title: string }) => blog.id === blogId,
+    );
+
+    postData = blogData?.posts.find(
+        (post: { id: string }) => post.id === postId,
+    );
+
+    // Validate required parameters
+    if (!blogData) {
+        return redirectToBlog(Astro, lang, String(blogId));
+    } else if (!postData && thisPostIsNew) {
+        const newPostId = generateShortNumericId();
+        blogData.posts = [
+            ...blogData.posts,
+            { id: newPostId, title: "New Post", thisPostIsNew },
+        ];
+        Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30,
+        });
+
+        return Astro.redirect(`/${lang}/${blogId}/${newPostId}`);
+    } else if (!postData) {
+        return redirectToBlog(Astro, lang, String(blogId));
+    }
 }
 
 // Set editing mode
@@ -50,7 +95,8 @@ if (editing !== "true" && editing !== "false") {
     return Astro.redirect(url.toString());
 }
 
-const isNewPost = postData.thisPostIsNew;
+// Check if postData exists before accessing its properties
+const isNewPost = postData?.thisPostIsNew || false;
 
 needsClientData = true;
 blog = {
@@ -65,7 +111,15 @@ blog = {
     blog ? (
         <BlogPost {...blog}>
             {editing ? (
-                <Editor {isNewPost} {blog} {blogPosts} {editing} {lang} client:load />
+                <Editor
+                    {isNewPost}
+                    {blog}
+                    {blogPosts}
+                    {editing}
+                    {lang}
+                    isAuthorized={!!user}
+                    client:load
+                />
             ) : null}
         </BlogPost>
     ) : null

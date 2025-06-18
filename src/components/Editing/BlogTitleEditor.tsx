@@ -1,13 +1,14 @@
 import { component$, $, useSignal } from '@builder.io/qwik';
-import { TitleInputBase } from '@components/shared/TitleInputBase';
+import { TitleInputBase } from '@/components/shared/TitleInputBase';
 import { updateBlogTitle, useAutoSave } from './editorConfig';
 
 interface BlogTitleEditorProps {
     blogId: string;
     initialTitle: string;
+    isAuthorized: boolean;
 }
 
-export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle, blogId }) => {
+export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle, blogId, isAuthorized }) => {
     const title = useSignal(initialTitle);
     const originalTitle = useSignal(title.value);
     const { hasChanges, isSaving, createAutoSave } = useAutoSave();
@@ -17,13 +18,14 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
     const handleInput = $((newValue: string) => {
         createAutoSave(newValue, originalTitle.value, async (titleValue) => {
             await updateBlogTitle({
+                isAuthorized,
                 titleValue,
                 blogId,
                 showSaveSuccess,
                 hasChanges,
                 isSaving,
                 errorMessage,
-                originalTitle
+                originalTitle,
             });
         });
     });
@@ -34,6 +36,7 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
                 value={title}
                 onInput$={handleInput}
                 onEnter$={() => updateBlogTitle({
+                    isAuthorized,
                     titleValue: title.value,
                     blogId,
                     showSaveSuccess,

@@ -1,13 +1,15 @@
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { component$, $, useSignal } from "@builder.io/qwik";
-import { deleteBlog } from "@lib/utils";
+import { deleteBlog } from "@/lib/utils";
 
 interface DeleteBlogProps {
     blogId: string;
+    isAuthorized: boolean;
     lang: string;
+    userId: string;
 }
 
-export const DeleteBlog = component$(({blogId, lang}: DeleteBlogProps) => {
+export const DeleteBlog = component$(({blogId, isAuthorized, lang, userId}: DeleteBlogProps) => {
     const errorMessage = useSignal("");
     const isDeleting = useSignal(false);
 
@@ -19,17 +21,7 @@ export const DeleteBlog = component$(({blogId, lang}: DeleteBlogProps) => {
         
         try {
             isDeleting.value = true;
-            await deleteBlog(blogId, {
-                onSuccess: () => {
-                    if (typeof window !== 'undefined') {
-                        window.location.href = `/${lang}/`;
-                    }
-                },
-                onError: (error) => {
-                    errorMessage.value = error;
-                    isDeleting.value = false;
-                }
-            });
+            await deleteBlog(blogId, userId, isAuthorized, lang);
         } catch (error) {
             errorMessage.value = "An unexpected error occurred";
             isDeleting.value = false;

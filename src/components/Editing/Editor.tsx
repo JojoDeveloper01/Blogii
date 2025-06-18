@@ -1,31 +1,40 @@
-import { component$, $, useSignal, useVisibleTask$, useOnDocument } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$, $, useTask$, useOnDocument } from "@builder.io/qwik";
 import EditorJS from "@editorjs/editorjs";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorContent } from "./EditorContent";
 import { PostNavigator } from "./PostNavigator";
 import { createNewPost } from "./editorConfig";
-import type { BlogData, BlogCookieItem } from "@lib/types";
-import { localBlogDB } from "@services/indexedDB";
+import type { BlogData } from "@/lib/types";
+import { localBlogDB } from "@/services/indexedDB";
+import { actions } from "astro:actions";
 
 interface EditorProps {
     isNewPost: boolean;
     blog: BlogData;
-    blogPosts: BlogCookieItem[];
+    blogPosts: BlogData[];
     editing: string;
     lang: string;
+    isAuthorized: boolean;
 }
 
-export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, editing, lang }) => {
+export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, editing, lang, isAuthorized }) => {
 
     const editor = useSignal<EditorJS | null>(null);
     const isPreviewMode = useSignal<boolean>(editing === 'false');
     const showSaveSuccess = useSignal(false);
     const post = blog.posts?.[0];
 
-    console.log("blog", blog)
-    const fetchBlogIndexedDB = $(async () => {
+    // Create a fetch function that knows which blog to fetch
+    const fetchBlog = $(async () => {
+        if (isAuthorized) {
+            try {
+                const { data } = await actions.blog.get({ blogId: blog.id });
+                if (data) return data;
+            } catch (error) {
+                console.warn('Falha ao buscar do DB:', error);
+            }
+        }
         const blogData = await localBlogDB.getBlog(blog.id);
-        console.log("blogData", blogData)
         if (!blogData) throw new Error("Blog não encontrado");
         return blogData;
     });
@@ -91,7 +100,8 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                 lang={lang}
                 isPreviewMode={isPreviewMode}
                 togglePreviewMode={togglePreviewMode}
-                fetchBlogIndexedDB={fetchBlogIndexedDB}
+                fetchBlog={fetchBlog}
+                isAuthorized
             />
 
             {/* Área de conteúdo principal */}
@@ -115,9 +125,10 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                         <div class="bg-[--blanc-core] dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 p-4">
                             <EditorContent
                                 blog={blog}
-                                fetchBlogIndexedDB={fetchBlogIndexedDB}
+                                fetchBlog={fetchBlog}
                                 isPreviewMode={isPreviewMode}
                                 onSave={handleSave}
+                                isAuthorized={isAuthorized}
                             />
                         </div>
                     </div>

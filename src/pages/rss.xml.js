@@ -1,7 +1,7 @@
 import rss from "@astrojs/rss";
-import { localBlogDB } from "@services/indexedDB";
-import { getLangFromUrl } from "@i18n/utils";
-import { sanitizeString } from "@lib/utils";
+import { localBlogDB } from "@/services/indexedDB";
+import { getLangFromUrl } from "@/i18n/utils";
+import { sanitizeString } from "@/lib/utils";
 
 export async function GET(context) {
 	const lang = getLangFromUrl(context.url);

@@ -2,7 +2,7 @@ import { component$, $, useSignal } from "@builder.io/qwik";
 import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
 import { TitleInputBase } from './shared/TitleInputBase';
-import { startBlog, processInput } from "@lib/utils";
+import { startBlog, processInput } from "@/lib/utils";
 
 interface TitleInputProps {
 	hasBlogs: boolean,

@@ -32,11 +32,11 @@ The user can administrate his blog posts on the dashboard and see analytics abou
         [] If its logged in, get the blog from the DB
 
 [] The local logic has to be synchronized with the DB:
-    [] Has to update the title of the blog in the DB
-    [] Has to create the posts on the DB
-    [] has to work the when open the post
-    [] Has update the the title of teh post on the DB
-    [] Has update the the content of the post on the DB
+    [x] Has to update the title of the blog in the DB
+    [x] Has to create the posts on the DB
+    [x] Has to work the when open the post
+    [x] Has update the the title of teh post on the DB
+    [X] Has update the the content of the post on the DB
     [] Has to Create Blogs on the DB
 
 [] Add A Blogs visualizer

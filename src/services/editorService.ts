@@ -1,5 +1,5 @@
 import type { ToolSettings, BlockToolConstructable } from "@editorjs/editorjs";
-import { compressImage } from "@lib/utils";
+import { compressImage } from "@/lib/utils";
 
 export interface EditorConfig {
     holder: string;

@@ -86,7 +86,7 @@ const { id, message } = Astro.props;
 <script>
     import { actions } from "astro:actions";
     import type { Provider } from "@supabase/supabase-js";
-    import type { BlogData } from "@lib/types";
+    import type { BlogData } from "@/lib/types";
 
     declare global {
         interface Window {
@@ -98,7 +98,7 @@ const { id, message } = Astro.props;
     async function getBlogsFromIndexedDB(): Promise<BlogData[]> {
         try {
             // Importação dinâmica para garantir que o código só execute no cliente
-            const { localBlogDB } = await import('@services/indexedDB');
+            const { localBlogDB } = await import('@/services/indexedDB');
             await localBlogDB.init();
             const blogs = await localBlogDB.getAllBlogs();
             console.log('[LOGIN] Blogs encontrados no IndexedDB:', blogs.length);

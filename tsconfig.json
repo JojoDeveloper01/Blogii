@@ -16,30 +16,9 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@components/*": [
-        "src/components/*"
+      "@/*": [
+        "src/*"
       ],
-      "@layouts/*": [
-        "src/layouts/*"
-      ],
-      "@content/*": [
-        "src/content/*"
-      ],
-      "@i18n/*": [
-        "src/i18n/*"
-      ],
-      "@lib/*": [
-        "src/lib/*"
-      ],
-      "@pages/*": [
-        "src/pages/*"
-      ],
-      "@services/*": [
-        "src/services/*"
-      ],
-      "@hooks/*": [
-        "src/hooks/*"
-      ]
     },
   }
 }

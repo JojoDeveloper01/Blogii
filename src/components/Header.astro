@@ -2,9 +2,9 @@
 import HeaderLink from "./HeaderLink.astro";
 import LoginRegister from "./LoginRegister.astro";
 import UserMenu from "./UserMenu.astro";
-import { generateShortNumericId } from "@lib/utils";
-import { signInToAccessAllFeatures } from "@lib/consts";
-import { getUser } from "@lib/utilsDB";
+import { generateShortNumericId } from "@/lib/utils";
+import { signInToAccessAllFeatures } from "@/lib/consts";
+import { getUser } from "@/lib/utilsDB";
 
 const idLoginModal = generateShortNumericId();
 

@@ -1,5 +1,5 @@
 import { component$, type Signal, $ } from '@builder.io/qwik';
-import { TITLE_REGEX, validateTitle } from '@lib/utils';
+import { TITLE_REGEX, validateTitle } from '@/lib/utils';
 
 interface TitleInputBaseProps {
     value: Signal<string>;

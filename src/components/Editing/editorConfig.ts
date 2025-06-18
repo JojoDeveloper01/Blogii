@@ -1,7 +1,8 @@
-import { $, useSignal, type Signal } from "@builder.io/qwik";
-import { BlogDatabase, localBlogDB } from "@services/indexedDB";
-import { validateTitle, cookieUtils } from "@lib/utils";
-import type { BlogData, UpdateBlogTitleParams, UpdatePostTitleParams } from "@lib/types";
+import { $, useSignal } from "@builder.io/qwik";
+import { localBlogDB } from "@/services/indexedDB";
+import { validateTitle, cookieUtils } from "@/lib/utils";
+import type { UpdateBlogTitleParams, UpdatePostTitleParams } from "@/lib/types";
+import { actions } from "astro:actions";
 
 export function useAutoSave() {
     const saveTimeout = useSignal<number | null>(null);
@@ -43,128 +44,122 @@ export function useAutoSave() {
 }
 
 export const updateBlogTitle = $(async (params: UpdateBlogTitleParams) => {
-    try {
-        const { isValid, sanitized } = validateTitle(params.titleValue);
-        if (!isValid) {
-            throw new Error('Title validation failed');
-        }
+    const { blogId, titleValue, isAuthorized } = params;
 
-        // Get the current blogs from cookie
-        const cookie = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('blogiis='));
+    const { isValid, sanitized } = validateTitle(titleValue);
+    if (!isValid) {
+        params.errorMessage.value = 'Title validation failed';
+        return false;
+    }
 
-        if (!cookie) {
-            throw new Error('No blogs found');
-        }
+    params.isSaving.value = true;
+    params.hasChanges.value = false;
 
-        const storedBlogs = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-
-        // Find and update the blog title
-        const blogIndex = storedBlogs.findIndex((blog: any) => blog.id === params.blogId);
-        if (blogIndex === -1) {
-            throw new Error('Blog not found');
-        }
-
-        params.isSaving.value = true;
-        params.hasChanges.value = false;
-
-        // Update in IndexedDB
-        const blog = await localBlogDB.getBlog(params.blogId);
-        if (!blog) throw new Error('Blog not found');
-
-        await localBlogDB.saveBlog({
-            ...blog,
-            title: sanitized
-        });
-
-        // Update in cookies
-        cookieUtils.updateBlogInCookie(params.blogId, sanitized);
-
+    const updateUI = () => {
         params.showSaveSuccess.value = true;
-        setTimeout(() => {
-            params.showSaveSuccess.value = false;
-        }, 2000);
-
+        setTimeout(() => (params.showSaveSuccess.value = false), 1000);
         params.originalTitle.value = sanitized;
-        params.hasChanges.value = false;
+        params.isSaving.value = false;
+    };
 
+    try {
+        if (isAuthorized) {
+            const { data, error } = await actions.blog.updateTitle({ blogId, title: sanitized });
+            if (!error && data?.success) {
+                updateUI();
+                return true;
+            }
+        }
+
+        // Fallback: IndexedDB
+        const blog = await localBlogDB.getBlog(blogId);
+        if (!blog) throw new Error('Blog not found');
+        await localBlogDB.saveBlog({ ...blog, title: sanitized });
+
+        // Fallback: Cookie
+        cookieUtils.updateBlogInCookie(blogId, sanitized);
+
+        updateUI();
         return true;
+
     } catch (error) {
         params.errorMessage.value = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error updating blog title:', error);
-
-        params.isSaving.value = false;
         return false;
-    }
-});
 
-export const updatePostTitleWithParams = $(async (params: UpdatePostTitleParams) => {
-    try {
-        const { blogId, postId, titleValue, showSaveSuccess, hasChanges, isSaving, originalTitle } = params;
-
-        if (!blogId || !postId) {
-            throw new Error('Blog ID and Post ID are required');
-        }
-
-        const blog = await localBlogDB.getBlog(blogId);
-
-        isSaving.value = true;
-        hasChanges.value = false;
-
-        console.log("blog.value", blog)
-
-        // Atualiza o título do post no objeto blog
-        if (blog?.posts && blog.posts.length > 0) {
-            // Encontra o post pelo ID em vez de sempre usar o primeiro
-            const postIndex = blog.posts.findIndex(p => p.id === postId);
-            console.log("postIndex", postIndex)
-            console.log("blog.value.posts", blog.posts)
-            console.log("postId", postId)
-            if (postIndex !== -1) {
-                blog.posts[postIndex].title = titleValue;
-            } else {
-                console.error(`Post com ID ${postId} não encontrado no blog`);
-            }
-        }
-
-        // Salva no IndexedDB
-        if (!blog) {
-            throw new Error('Blog not found');
-        }
-        await localBlogDB.saveBlog(blog);
-        
-        // Atualiza nos cookies
-        const blogs = cookieUtils.getStoredBlogs();
-        if (blogs) {
-            const blogIndex = blogs.findIndex((b) => b.id === blogId);
-            if (blogIndex !== -1) {
-                const postIndex = blogs[blogIndex].posts?.findIndex((p) => p.id === postId);
-                if (postIndex !== -1) {
-                    blogs[blogIndex].posts[postIndex].title = titleValue;
-                    cookieUtils.setCookie('blogiis', JSON.stringify(blogs), 30); // 30 dias
-                }
-            }
-        }
-
-        showSaveSuccess.value = true;
-        setTimeout(() => {
-            showSaveSuccess.value = false;
-        }, 2000);
-
-        if (originalTitle) {
-            originalTitle.value = titleValue;
-        }
-        hasChanges.value = false;
-
-        return true;
-    } catch (error) {
-        params.errorMessage.value = error instanceof Error ? error.message : 'Error updating post title';
-        return false;
     } finally {
         params.isSaving.value = false;
     }
 });
+
+
+export const updatePostTitleWithParams = $(async (params: UpdatePostTitleParams) => {
+    const {
+        blogId, postId, titleValue, showSaveSuccess,
+        hasChanges, isSaving, originalTitle, isAuthorized,
+        errorMessage
+    } = params;
+
+    if (!blogId || !postId) {
+        errorMessage.value = 'Blog ID and Post ID are required';
+        return false;
+    }
+
+    isSaving.value = true;
+    hasChanges.value = false;
+
+    // 🔁 Tenta atualizar no servidor
+    if (isAuthorized) {
+        try {
+            const { data, error } = await actions.post.updateTitle({ blogId, postId, title: titleValue });
+
+            if (!error && data?.success) {
+                updateUIStates();
+                return true;
+            }
+        } catch (err) {
+            console.warn('Erro ao atualizar no servidor:', err);
+            // Continua com local fallback
+        }
+    }
+
+    // 💾 Fallback para IndexedDB
+    const blog = await localBlogDB.getBlog(blogId);
+    if (!blog) {
+        errorMessage.value = 'Blog not found';
+        return false;
+    }
+
+    const post = blog.posts?.find(p => p.id === postId);
+    if (!post) {
+        errorMessage.value = `Post ${postId} não encontrado`;
+        return false;
+    }
+
+    post.title = titleValue;
+    await localBlogDB.saveBlog(blog);
+
+    // 🍪 Atualiza cookie
+    const blogs = cookieUtils.getStoredBlogs();
+    const cookieBlog = blogs?.find(b => b.id === blogId);
+    const cookiePost = cookieBlog?.posts?.find(p => p.id === postId);
+    if (cookiePost) {
+        cookiePost.title = titleValue;
+        cookieUtils.setCookie('blogiis', JSON.stringify(blogs), 30);
+    }
+
+    updateUIStates();
+    return true;
+
+    function updateUIStates() {
+        showSaveSuccess.value = true;
+        setTimeout(() => (showSaveSuccess.value = false), 1000);
+        if (originalTitle) originalTitle.value = titleValue;
+        hasChanges.value = false;
+        isSaving.value = false;
+    }
+});
+
 
 /* export const createNewPost = $(async (blogId: string, postId: string, title: string = 'New Post') => {
     try {
@@ -174,7 +169,6 @@ export const updatePostTitleWithParams = $(async (params: UpdatePostTitleParams)
 
         // Check if post already exists in IndexedDB
         const posts = blog.posts || [];
-        console.log("posts111111: ", posts)
         const existingPost = posts.find(p => p.id === postId);
         if (existingPost) {
             return true;
@@ -264,8 +258,23 @@ export const createNewPost = $(async (
     }
 });
 
-export const deletePost = $(async (blogId: string, postId: string, lang: string) => {
+export const deletePost = $(async (blogId: string, postId: string, lang: string, isAuthorized: boolean = false) => {
     try {
+        // If authorized, try to delete from DB first
+        if (isAuthorized) {
+            try {
+              const { data, error } = await actions.post.delete({ blogId, postId });
+              if (!error && data?.success) {
+                if (typeof window !== 'undefined') {
+                  window.location.href = `/${lang}/${blogId}`;
+                }
+                return true;
+              }
+            } catch (err) {
+              console.warn('Falha ao apagar post do DB:', err);
+            }
+          }          
+
         // Get blog from IndexedDB
         const blog = await localBlogDB.getBlog(blogId);
         if (!blog) throw new Error('Blog not found');

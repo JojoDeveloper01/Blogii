@@ -1,13 +1,15 @@
 ---
-import { DeleteBlog } from "@components/Settings/DeleteBlog";
-import Dashboard from "@layouts/Dashboard.astro";
-import { sanitizeString } from "@lib/utils";
-import { getDashboardContext } from "@lib/utilsDB";
+import { DeleteBlog } from "@/components/Settings/DeleteBlog";
+import Dashboard from "@/layouts/Dashboard.astro";
+import { sanitizeString } from "@/lib/utils";
+import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
 
-const ctx = await getDashboardContext(Astro);
+const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
 const { lang, blogId, blogData, user } = ctx;
+
+const userId = user?.id;
 ---
 
 <Dashboard>
@@ -81,7 +83,7 @@ const { lang, blogId, blogData, user } = ctx;
 						</svg>
 						Delete Blog
 					</button>
-					<DeleteBlog {blogId} lang={String(lang)} client:idle />
+					<DeleteBlog {blogId} lang={String(lang)} userId={String(userId)} isAuthorized={!!userId} client:idle />
 				</div>
 			</section>
 		</div>

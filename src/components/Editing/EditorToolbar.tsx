@@ -1,9 +1,9 @@
 import { component$, useSignal, $, useVisibleTask$, type Signal, type QRL } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
-import { executeEditorCommand } from "@lib/utils";
+import { executeEditorCommand } from "@/lib/utils";
 import { PathPost } from './PathPost';
-import type { BlogData } from "@lib/types";
+import type { BlogData } from "@/lib/types";
 
 interface EditorToolbarProps {
     editor: Signal<EditorJS | null>;
@@ -14,10 +14,11 @@ interface EditorToolbarProps {
     lang: string;
     isPreviewMode: Signal<boolean>;
     togglePreviewMode: QRL<() => void>;
-    fetchBlogIndexedDB: QRL<() => Promise<BlogData>>;
+    fetchBlog: QRL<() => Promise<BlogData>>;
+    isAuthorized: boolean;
 }
 
-export const EditorToolbar = component$<EditorToolbarProps>(({ editor, blogId, postId, title, blogTitle, lang, isPreviewMode, togglePreviewMode, fetchBlogIndexedDB }) => {
+export const EditorToolbar = component$<EditorToolbarProps>(({ editor, blogId, postId, title, blogTitle, lang, isPreviewMode, togglePreviewMode, fetchBlog, isAuthorized }) => {
 
     const executeCommand = $((command: string, params?: any) => {
         executeEditorCommand(editor.value, command, params);
@@ -34,7 +35,8 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ editor, blogId, p
                 lang={lang}
                 isPreviewMode={isPreviewMode}
                 onTogglePreview$={togglePreviewMode}
-                fetchBlogIndexedDB={fetchBlogIndexedDB}
+                fetchBlog={fetchBlog}
+                isAuthorized={isAuthorized}
             />
 
             <hr class="h-[0.9px] w-11/12 m-auto bg-[--noir-core] dark:bg-[--blanc-core] opacity-10 border-0" />

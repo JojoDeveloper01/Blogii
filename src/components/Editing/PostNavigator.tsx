@@ -1,19 +1,19 @@
 import { component$, useSignal, useTask$ } from "@builder.io/qwik";
 import type { Signal } from "@builder.io/qwik";
-import type { BlogCookieItem } from "@lib/types";
+import type { BlogData, PostData } from "@/lib/types";
 
 interface PostNavigatorProps {
     blogId: string;
     postId: string;
     lang: string;
-    blogPosts: BlogCookieItem[];
+    blogPosts: BlogData[];
     isPreviewMode: Signal<boolean>;
     isMobile?: boolean;
 }
 
 export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, lang, blogPosts, isPreviewMode, isMobile = false }) => {
     const isOpen = useSignal(false);
-
+    
     // Use useTask$ to set the initial state based on isMobile
     useTask$(({ track }) => {
         track(() => isMobile);
@@ -84,31 +84,33 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                     </div>
                     <div class="space-y-1 border-t border-gray-200/30 dark:border-gray-200/30 pt-3">
                         {/* Current post - displayed first and highlighted */}
-                        {blogPosts.flatMap((blogPost: { posts: { id: string; title: string }[] }) => blogPost.posts)
-                            .filter(post => post.id === postId)
-                            .map((post: { id: string; title: string }) => (
+                        {blogPosts
+                            .flatMap((blogPost: BlogData) => blogPost?.posts || [])
+                            .filter((post): post is PostData => post !== null && post !== undefined && post.id === postId)
+                            .map((post: PostData) => (
                                 <a
-                                    key={post.id}
-                                    href={`/${lang}/${blogId}/${post.id}`}
+                                    key={post?.id}
+                                    href={`/${lang}/${blogId}/${post?.id}`}
                                     class="interactive-link block px-3 py-2 text-sm bg-primary-500/20 dark:bg-primary-700/30 text-primary-800 dark:text-gray-300 font-medium shadow-sm transition-colors relative group"
                                 >
                                     <div class="flex items-center">
-                                        <span class="gradient-underline-active mr-2">{post.title || 'Untitled Post'}</span>
+                                        <span class="gradient-underline-active mr-2">{post?.title || 'Untitled Post'}</span>
                                     </div>
                                 </a>
                             ))
                         }
 
                         {/* Other posts */}
-                        {blogPosts.flatMap((blogPost: { posts: { id: string; title: string }[] }) => blogPost.posts)
-                            .filter(post => post.id !== postId)
-                            .map((post: { id: string; title: string }) => (
+                        {blogPosts
+                            .flatMap((blogPost: BlogData) => blogPost?.posts || [])
+                            .filter((post): post is PostData => post !== null && post !== undefined && post.id !== postId)
+                            .map((post: PostData) => (
                                 <a
-                                    key={post.id}
-                                    href={`/${lang}/${blogId}/${post.id}`}
+                                    key={post?.id}
+                                    href={`/${lang}/${blogId}/${post?.id}`}
                                     class="interactive-link block px-3 py-2 text-sm text-gray-300 relative group"
                                 >
-                                    <span class="gradient-underline-text">{post.title || 'Untitled Post'}</span>
+                                    <span class="gradient-underline-text">{post?.title || 'Untitled Post'}</span>
                                 </a>
                             ))
                         }
