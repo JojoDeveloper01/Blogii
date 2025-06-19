@@ -1,0 +1,76 @@
+---
+interface Plan {
+    name: string;
+    price: number;
+    recommended?: boolean;
+    slots?: number;
+}
+
+interface Props {
+    plans: Plan[];
+    features: string[];
+}
+
+const { plans, features } = Astro.props;
+---
+
+<style>
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
+</style>
+
+<div class="rounded-xl relative pt-6 bg-gradient-to-br from-[--noir-core] to-[--bg-color2] shadow-xl overflow-x-auto">
+    <div class="relative">
+    <table class="w-full relative">
+        <colgroup>
+            {[...Array(plans.length + 1)].map(() => (
+                <col class={`w-1/${plans.length + 1}`} />
+            ))}
+        </colgroup>
+        <thead>
+            <tr class="text-left">
+                <th class="py-4 pl-6 text-[--blanc-core] sticky-col from-[--noir-core] to-[--bg-color2]">Features</th>
+                {plans.map((plan) => {
+                    const isRecommended = plan.recommended;
+                    return (
+                        <th class={`py-4 px-6 text-center text-[--blanc-core] relative ${isRecommended ? 'bg-primary/70 shadow-primary shadow-opacity-20 border-[1.5px] border-[--primary]' : ''}`}>
+                            {isRecommended && (
+                                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-primary to-secondary text-[--blanc-core] rounded-full shadow-lg z-20 whitespace-nowrap">
+                                    Recommended
+                                </div>
+                            )}
+                            <div>{plan.name}</div>
+                            <div class="text-2xl font-bold">€{plan.price}</div>
+                            {plan.slots && (
+                                <div class="text-sm text-[--blanc-core]">
+                                    {plan.slots} slots remaining
+                                </div>
+                            )}
+                        </th>
+                    );
+                })}
+            </tr>
+        </thead>
+        <tbody>
+            {features.map((feature) => {
+                const recommendedPlan = plans.find(p => p.recommended);
+                return (
+                    <tr class="hover:bg-primary/10 hover:bg-opacity-10">
+                        <td class="py-4 pl-6 text-[--blanc-core] sticky-col]">{feature}</td>
+                        {plans.map((plan) => (
+                            <td class={`py-4 px-6 text-center ${plan === recommendedPlan ? 'bg-primary/10 shadow-primary shadow-opacity-20' : ''}`}>
+                                <span class="p-4 inline-flex items-center justify-center size-6 rounded-full bg-primary/50 text-[--blanc-core]">
+                                    ✓
+                                </span>
+                            </td>
+                        ))}
+                    </tr>
+                );
+            })}
+        </tbody>
+    </table>
+    </div>
+</div>

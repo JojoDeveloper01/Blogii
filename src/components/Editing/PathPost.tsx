@@ -45,7 +45,7 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
             const blog = await fetchBlog();
             const posts = blog?.posts || [];
             indexedBlogs.value = blog;
-            if (posts.length >= 1) {
+            if (posts.length > 1) {
                 canDelete.value = true;
             }
         } catch (error) {
@@ -101,7 +101,7 @@ export const PathPost = component$(({blogId, postId, title, blogTitle, lang, isP
         <div class="flex flex-wrap gap-4 justify-between px-4 py-3 text-sm">
             <div class="flex-1 flex flex-wrap gap-2">
                 <a
-                    href={`/${lang}/${blogId}`}
+                    href={`/${lang}/dashboard/${blogId}`}
                     class="flex items-center px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-[--secondary] shadow-sm hover:shadow group transition-all duration-200"
                 >
                     <span class="flex items-center justify-center w-5 h-5 mr-2 rounded bg-[--primary] text-white group-hover:scale-110 transition-all duration-200">

@@ -101,7 +101,7 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                 isPreviewMode={isPreviewMode}
                 togglePreviewMode={togglePreviewMode}
                 fetchBlog={fetchBlog}
-                isAuthorized
+                isAuthorized={isAuthorized}
             />
 
             {/* Área de conteúdo principal */}

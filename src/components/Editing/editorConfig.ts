@@ -108,7 +108,6 @@ export const updatePostTitleWithParams = $(async (params: UpdatePostTitleParams)
     isSaving.value = true;
     hasChanges.value = false;
 
-    // 🔁 Tenta atualizar no servidor
     if (isAuthorized) {
         try {
             const { data, error } = await actions.post.updateTitle({ blogId, postId, title: titleValue });
@@ -231,6 +230,7 @@ export const createNewPost = $(async (
 
         blog.posts.push({
             id: postId,
+            blog_id: blogId,
             title,
             content: '',
             created_at: new Date(),
@@ -266,7 +266,7 @@ export const deletePost = $(async (blogId: string, postId: string, lang: string,
               const { data, error } = await actions.post.delete({ blogId, postId });
               if (!error && data?.success) {
                 if (typeof window !== 'undefined') {
-                  window.location.href = `/${lang}/${blogId}`;
+                  window.location.href = `/${lang}/dashboard/${blogId}`;
                 }
                 return true;
               }
@@ -304,7 +304,7 @@ export const deletePost = $(async (blogId: string, postId: string, lang: string,
 
         // Redirect to the first remaining post
         if (typeof window !== 'undefined') {
-            window.location.href = `/${lang}/${blogId}`;
+            window.location.href = `/${lang}/dashboard/${blogId}`;
         }
 
         return true;

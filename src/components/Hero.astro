@@ -4,7 +4,7 @@ import { TitleInput } from "./TitleInput";
 import { sanitizeString } from "@/lib/utils";
 import { signInToCreateMoreBlogs } from "@/lib/consts";
 
-const { lang, isAuthorized, blogsData } = Astro.props;
+const { lang, isAuthorized, blogsData, userId } = Astro.props;
 
 const hasBlogs: boolean = blogsData.length > 0;
 ---
@@ -42,7 +42,7 @@ const hasBlogs: boolean = blogsData.length > 0;
             ) : null
         }
         <div class="w-80 sm:w-full grid gap-4">
-            <TitleInput {isAuthorized} {hasBlogs} />
+            <TitleInput {isAuthorized} {hasBlogs} {userId} {lang} client:load />
             <!-- Blogs list with enhanced styling -->
             {
                 hasBlogs && (
@@ -63,7 +63,7 @@ const hasBlogs: boolean = blogsData.length > 0;
                                 }) => (
                                     <li>
                                         <a
-                                            href={`/${lang}/${blog.id}`}
+                                            href={`/${lang}/dashboard/${blog.id}`}
                                             class="interactive-link flex items-center p-3 rounded-lg group"
                                         >
                                             <span class="text-[primary] text-lg mr-3 group-hover:translate-x-1 transition-transform">

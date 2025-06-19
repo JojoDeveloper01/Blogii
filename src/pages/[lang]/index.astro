@@ -25,5 +25,5 @@ try {
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-  <Hero {lang} isAuthorized={Boolean(user)} {blogsData} />
+  <Hero {lang} isAuthorized={Boolean(user)} userId={user?.id} {blogsData} />
 </Layout>

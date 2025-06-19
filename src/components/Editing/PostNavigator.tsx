@@ -72,7 +72,7 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                     <div class="flex items-center justify-between ml-3 my-3">
                         <h3 class="text-2xl font-bold text-white m-0">Posts</h3>
                         <a
-                            href={`/${lang}/${blogId}/new`}
+                            href={`/${lang}/dashboard/${blogId}/new`}
                             class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white rounded-md border border-gray-100/20 dark:border-white/10 hover:bg-[--primary] font-medium"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -90,7 +90,7 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                             .map((post: PostData) => (
                                 <a
                                     key={post?.id}
-                                    href={`/${lang}/${blogId}/${post?.id}`}
+                                    href={`/${lang}/dashboard/${blogId}/${post?.id}`}
                                     class="interactive-link block px-3 py-2 text-sm bg-primary-500/20 dark:bg-primary-700/30 text-primary-800 dark:text-gray-300 font-medium shadow-sm transition-colors relative group"
                                 >
                                     <div class="flex items-center">
@@ -107,7 +107,7 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
                             .map((post: PostData) => (
                                 <a
                                     key={post?.id}
-                                    href={`/${lang}/${blogId}/${post?.id}`}
+                                    href={`/${lang}/dashboard/${blogId}/${post?.id}`}
                                     class="interactive-link block px-3 py-2 text-sm text-gray-300 relative group"
                                 >
                                     <span class="gradient-underline-text">{post?.title || 'Untitled Post'}</span>

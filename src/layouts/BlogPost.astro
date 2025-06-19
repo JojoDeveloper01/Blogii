@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import FormattedDate from "@/components/FormattedDate.astro";
 import Layout from "./Layout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
@@ -16,7 +15,7 @@ const { title, description, pubDate, updatedDate, image } = Astro.props;
 ---
 
 <Layout {title} {description} {hideHeaderFooter} {lang}>
-	<main class="blog-post-main">
+	<div class="blog-post-main">
 		<article>
 			{
 				!editing && (
@@ -56,16 +55,13 @@ const { title, description, pubDate, updatedDate, image } = Astro.props;
 				</div>
 			</div>
 		</article>
-	</main>
+	</div>
 </Layout>
 
 <style>
 	.blog-post-main {
-		max-width: 100% !important;
-	}
-	main {
 		width: 100%;
-		max-width: 1000px;
+		max-width: 100% !important;
 		margin: 0;
 	}
 	.hero-image {

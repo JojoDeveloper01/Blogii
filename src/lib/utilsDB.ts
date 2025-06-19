@@ -157,6 +157,59 @@ export async function getDashboardContextOfTheBlog(Astro: any) {
 
 //Create:
 
+export async function createBlog(blogData: BlogData) {
+  if (!blogData.posts?.length) {
+    return { success: false, error: 'No posts provided' };
+  }
+
+  try {
+    // Start a transaction by using RLS policies
+    const { data: blogResult, error: blogError } = await supabase
+      .from('blogs')
+      .insert({
+        id: blogData.id,
+        user_id: blogData.user_id,
+        title: blogData.title,
+        created_at: blogData.created_at,
+      })
+      .select()
+      .single();
+
+    if (blogError) {
+      console.error('[createBlog] Erro ao criar blog:', blogError);
+      return { success: false, error: blogError };
+    }
+
+    // Create initial post
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .insert(blogData.posts.map(post => ({
+        ...post,
+        blog_id: blogData.id,
+        content: post.content || '',
+      })))
+      .select();
+
+    if (postsError) {
+      console.error('[createBlog] Erro ao criar posts:', postsError);
+      // Try to rollback by deleting the blog
+      await supabase.from('blogs').delete().eq('id', blogData.id);
+      return { success: false, error: postsError };
+    }
+
+    return { 
+      success: true, 
+      data: { 
+        blog: blogResult,
+        posts: postsData
+      }
+    };
+  } catch (error) {
+    console.error('[createBlog] Erro inesperado:', error);
+    return { success: false, error };
+  }
+}
+
 export async function createNewPost(blogId: string, postId: string, title: string) {
   const { data, error } = await supabase
     .from('posts')

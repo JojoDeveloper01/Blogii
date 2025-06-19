@@ -3,9 +3,10 @@ import type { Signal } from "@builder.io/qwik";
 export interface PostData {
     id: string;
     title: string;
+    blog_id: string;
     content?: string;
-    created_at?: Date;
-    updated_at?: Date;
+    created_at?: Date | string;
+    updated_at?: Date | string;
 }
 
 export interface BlogData {
@@ -18,7 +19,7 @@ export interface BlogData {
     image?: string;
     posts?: PostData[];
     pubDate?: Date;
-    created_at?: Date;
+    created_at?: Date | string;
     updatedDate?: Date;
 }
 

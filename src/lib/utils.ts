@@ -1,6 +1,6 @@
 import { localBlogDB } from "@/services/indexedDB";
 import { actions } from "astro:actions";
-import type { BlogCookieItem, BlogData } from "@/lib/types";
+import type { BlogCookieItem } from "@/lib/types";
 import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@/lib/consts";
 
 // string para remover os traços e acentos e acrescentar false para deixar os traços e deixar os acentos
@@ -138,60 +138,64 @@ export const compressImage = async (base64: string): Promise<string> => {
 	return markdown.trim();
 } */
 
-export const startBlog = async (title: string, showError: (show: boolean, msg: string) => void): Promise<{ id: string; path: string } | undefined> => {
+export const startBlog = async (
+	title: string,
+	userId: string,
+	isAuthorized: boolean,
+	lang: string,
+	showError: (show: boolean, msg: string) => void
+): Promise<{ id: string; path: string } | undefined> => {
 	const { isValid, sanitized } = validateTitle(title);
-	const sanitizedTitle = sanitized
 
 	if (!isValid) {
-		showError(true, sanitizedTitle.length < 3 ? amountCharactersError : invalidCharactersError);
+		const msg = sanitized.length < 3 ? amountCharactersError : invalidCharactersError;
+		showError(true, msg);
 		return;
 	}
 
+	const blogId = generateLongNumericId();
+	const postId = generateShortNumericId();
+	const postTitle = 'This is your first post';
+
+	const now = new Date();
+
+	const firstPost = {
+		id: postId,
+		blog_id: blogId,
+		title: postTitle,
+		content: '',
+		created_at: now.toISOString(),
+	};
+
+	const blogData = {
+		id: blogId,
+		title: sanitized,
+		posts: [firstPost],
+		pubDate: now,
+		created_at: now.toISOString(),
+		user_id: isAuthorized ? userId : '',
+	};
+
 	try {
-		const blogId = generateLongNumericId();
-		const postId = generateShortNumericId();
-		const postTitle = 'This is your first post';
-
-		// Create initial post with full data for IndexedDB
-		const firstPost = {
-			id: postId,
-			title: postTitle,
-			content: '',
-			created_at: new Date()
-		};
-
-		const blogData = {
-			id: blogId,
-			title: sanitizedTitle,
-			pubDate: new Date(),
-			posts: [firstPost]
-		};
-
-		await localBlogDB.saveBlog(blogData);
-
-		// Add minimal data to cookie
-		if (typeof window !== 'undefined') {
-			const cookieBlogData = {
+		if (isAuthorized) {
+			console.log(blogData);
+			const { error } = await actions.blog.create({ blogData });
+			if (error) throw error;
+		} else if (typeof window !== 'undefined') {
+			await localBlogDB.saveBlog(blogData);
+			cookieUtils.addBlogToCookie({
 				id: blogId,
-				title: sanitizedTitle,
-				posts: [{
-					id: postId,
-					title: postTitle
-				}]
-			};
-
-			cookieUtils.addBlogToCookie(cookieBlogData);
+				title: sanitized,
+				posts: [{ id: postId, title: postTitle }],
+			});
 			window.dispatchEvent(new Event('navigation-update'));
 		}
 
-		return {
-			id: blogId,
-			path: `${blogId}/${postId}`
-		};
-	} catch (error) {
-		console.error("Erro ao salvar blog:", error);
+		return { id: blogId, path: `/${lang}/dashboard/${blogId}/${postId}` };
+	} catch (err) {
+		console.error("Erro ao salvar blog:", err);
 		showError(true, "Erro ao criar blog. Tente novamente");
-		return undefined;
+		return;
 	}
 };
 
@@ -323,31 +327,27 @@ export const executeEditorCommand = (editor: any, command: string, params?: any)
 
 export const deleteBlog = async (
 	blogId: string,
-    userId: string,
-    isAuthorized: boolean,
-    lang: string,
+	userId: string,
+	isAuthorized: boolean,
+	lang: string
 ): Promise<boolean> => {
 	try {
 		if (isAuthorized) {
-			try {
-				const { data, error } = await actions.blog.delete({ blogId, userId });
-				if (!error && data?.success) {
-					if (typeof window !== 'undefined') {
-						window.location.href = `/${lang}/`;
-					}
-					return true;
+			const { data, error } = await actions.blog.delete({ blogId, userId });
+			if (!error && data?.success) {
+				if (typeof window !== 'undefined') {
+					window.location.href = `/${lang}/dashboard`;
 				}
-			} catch (dbError) {
-				console.warn('Erro ao apagar blog no banco de dados:', dbError);
+				return true;
 			}
+			console.warn('Erro ao apagar blog no banco de dados:', error);
 		}
 
-		// Apagar blog do armazenamento local (IndexedDB)
 		await localBlogDB.deleteBlog(blogId);
 
-		// Remover blog dos cookies do navegador
 		if (typeof window !== 'undefined') {
 			cookieUtils.removeBlogFromCookie(blogId);
+			window.location.href = `/${lang}/dashboard`;
 		}
 
 		return true;
@@ -380,5 +380,5 @@ export const deleteBlog = async (
  */
 
 export function redirectToBlog(Astro: any, lang: string, blogId: string) {
-	return Astro.redirect(`/${lang}/${blogId}`);
+	return Astro.redirect(`/${lang}/dashboard/${blogId}`);
 }

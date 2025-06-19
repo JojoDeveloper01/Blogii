@@ -1,0 +1,140 @@
+---
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
+import Layout from "@/layouts/Layout.astro";
+import { getLangFromUrl } from "@/i18n/utils";
+import PricingTable from "@/components/PricingTable.astro";
+import PricingCard from "@/components/PricingCard.astro";
+
+const lang = getLangFromUrl(Astro.url);
+
+const plans = [
+    {
+        name: "Monthly",
+        price: 4.5,
+        period: "month",
+        discount: "-50% discount",
+        subtitle: "Recurring monthly payment",
+        features: [
+            "Access to all courses",
+            "Challenges and Practical Projects",
+            "Community + Discord Support",
+        ],
+        buttonText: "Start now",
+    },
+    {
+        name: "Annual",
+        price: 45,
+        period: "year",
+        discount: "-50% discount",
+        popular: true,
+        subtitle: "Save $54!",
+        features: [
+            "Everything in the quarterly plan",
+            "Priority access to new content",
+            "Monthly group mentoring",
+        ],
+        buttonText: "Start now",
+    },
+    {
+        name: "Lifetime",
+        price: 249,
+        period: "one-time",
+        discount: "One-time payment",
+        subtitle: "Only 125 slots left!",
+        features: [
+            "Everything in the annual plan",
+            "Early access to new content",
+            "Private community for lifetime members",
+        ],
+        buttonText: "Get lifetime access",
+    },
+];
+---
+
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
+    <section
+        id="pricing"
+        class="min-h-screen bg-gradient-to-b py-16 px-4 sm:px-6 lg:px-8"
+    >
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center">
+                <h2
+                    class="text-3xl font-extrabold text-[--blanc-core] sm:text-4xl"
+                >
+                    Plans & Pricing
+                </h2>
+                <p class="mt-4 text-xl text-[--blanc-core]">
+                    Choose the plan that best fits your needs
+                </p>
+            </div>
+
+            <div class="mt-16 relative">
+                <div class="absolute inset-0 h-1/2"></div>
+                <div
+                    class="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8"
+                >
+                    <div
+                        class="max-w-md mx-auto space-y-10 lg:max-w-5xl lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0"
+                    >
+                        {plans.map((plan) => <PricingCard {...plan} />)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section id="comparison" class="pt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2
+                class="text-3xl font-extrabold text-center text-[--blanc-core] mb-2"
+            >
+                Compare Plans
+            </h2>
+            <p class="text-xl text-center text-[--blanc-core] mb-12">
+                Discover the plan that best suits your needs
+            </p>
+
+            <PricingTable
+                plans={[
+                    { name: "Monthly", price: 4.5 },
+                    { name: "Quarterly", price: 15 },
+                    { name: "Annual", price: 45, recommended: true },
+                    { name: "Lifetime", price: 249, slots: 135 },
+                ]}
+                features={[
+                    "Access to current courses",
+                    "Practical projects",
+                    "Discord support",
+                    "Priority support",
+                    "Exclusive giveaways",
+                    "Group mentoring",
+                    "Priority access to new courses",
+                    "Exclusive community",
+                    "Lifetime access",
+                ]}
+            />
+        </div>
+    </section>
+
+    <div class="mt-10 mb-16 text-center">
+        <a
+            href="#pricing"
+            class="inline-flex items-center gap-2 text-[--secondary] hover:underline"
+        >
+            <span>Go back to the Plans</span>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg
+            >
+        </a>
+    </div>
+</Layout>

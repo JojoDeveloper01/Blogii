@@ -29,22 +29,22 @@ The user can administrate his blog posts on the dashboard and see analytics abou
     [] Add Local Blog to the DB 
         [] Has to save the temporal blog on the server
         [] Has to delete the temporal blog on the local
-        [] If its logged in, get the blog from the DB
+        [x] If its logged in, get the blog from the DB
 
-[] The local logic has to be synchronized with the DB:
+[x] The local logic has to be synchronized with the DB:
     [x] Has to update the title of the blog in the DB
     [x] Has to create the posts on the DB
     [x] Has to work the when open the post
     [x] Has update the the title of teh post on the DB
     [X] Has update the the content of the post on the DB
-    [] Has to Create Blogs on the DB
+    [X] Has to Create Blogs on the DB
 
-[] Add A Blogs visualizer
-    [] Has to show the blogs of the user on the dashboard
+
 
 [] Add description to the blog on the dashboard
 
 [x] Add dashboard
+    [] Has to show the blogs of the user on the dashboard
     [x] Has to show their posts of the their blog to the user
     [] Has to show the analytics of the blogs of the user (if its logged in)
         [] Create a table to save the analaitics of the blogs of the user
@@ -60,6 +60,12 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [] Add Comments on the blog
 [] Add the options to enable the comments on the blog
+
+[] Add the Dashboard page 
+[] Add the public Blogs page, blogs created on blogii  
+[] Add the pricing page, free, monthly payment (with n% discount), annual payment (with n% discount) and unique payment (with n% discount)
+    [] has to show the advanced features of this plan
+
 
 [] Improve the blog editor 2
     [] Should have various templates from the DB

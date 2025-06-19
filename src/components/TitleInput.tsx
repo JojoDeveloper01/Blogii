@@ -6,10 +6,12 @@ import { startBlog, processInput } from "@/lib/utils";
 
 interface TitleInputProps {
 	hasBlogs: boolean,
-	isAuthorized: boolean
+	isAuthorized: boolean,
+	userId: string,
+	lang: string
 }
 
-export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProps) => {
+export const TitleInput = component$(({ hasBlogs, isAuthorized, userId, lang }: TitleInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const message = useSignal("");
@@ -17,7 +19,7 @@ export const TitleInput = component$(({ hasBlogs, isAuthorized }: TitleInputProp
 	const loginRegisterMessage = useSignal(false);
 
 	const handleStartBlog = $(async () => {
-		const blogResult = await startBlog(title.value, (show, msg) => {
+		const blogResult = await startBlog(title.value, userId, isAuthorized, lang, (show, msg) => {
 			showError.value = show;
 			message.value = msg;
 		});

@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 */
 import { supabase } from "@/lib/supabase";
-import { updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB } from "@/lib/utilsDB";
+import { updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog } from "@/lib/utilsDB";
 import type { Provider } from '@supabase/supabase-js';
 
 class ActionError extends Error {
@@ -16,6 +16,23 @@ class ActionError extends Error {
 
 export const server = {
     post: {
+        updateTitle: defineAction({
+            input: z.object({
+                blogId: z.string(),
+                postId: z.string(),
+                title: z.string(),
+            }),
+            handler: async ({ blogId, postId, title }) => {
+                const result = await updatePostTitleInDB(blogId, postId, title);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao atualizar título: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+                return result;
+            },
+        }),
         updateContent: defineAction({
             input: z.object({
                 blogId: z.string(),
@@ -50,66 +67,45 @@ export const server = {
                 return result;
             },
         }),
-        updateTitle: defineAction({
-            input: z.object({
-                blogId: z.string(),
-                postId: z.string(),
-                title: z.string(),
-            }),
-            handler: async ({ blogId, postId, title }) => {
-                const result = await updatePostTitleInDB(blogId, postId, title);
-                if (!result.success) {
-                    throw new ActionError(
-                        `Falha ao atualizar título: ${result.error || 'Erro desconhecido'}`,
-                        'DATABASE_ERROR'
-                    );
-                }
-                return result;
-            },
-        }),
     },
 
     blog: {
-        delete: defineAction({
+        create: defineAction({
             input: z.object({
-                blogId: z.string(),
-                userId: z.string(),
+                blogData: z.object({
+                    id: z.string(),
+                    title: z.string(),
+                    user_id: z.string(),
+                    created_at: z.string().transform((str) => new Date(str)),
+                    posts: z.array(z.object({
+                        id: z.string(),
+                        title: z.string(),
+                        blog_id: z.string(),
+                        content: z.string(),
+                        created_at: z.string().transform((str) => new Date(str))
+                    }))
+                })
             }),
-            handler: async ({ blogId, userId }) => {
-                console.log(blogId, userId);
-                const result = await deleteBlogByUserId(blogId, userId);
-                console.log(result);
-                if (!result.success) {
-                    throw new ActionError(
-                        `Falha ao apagar blog: ${result.error || 'Erro desconhecido'}`,
-                        'DATABASE_ERROR'
-                    );
-                }
-                return result;
-            },
-        }),
-        get: defineAction({
-            input: z.object({
-                blogId: z.string(),
-            }),
-            handler: async ({ blogId }) => {
+            handler: async ({ blogData }) => {
                 try {
-                    const data = await getBlogWithPosts(blogId);
-                    
-                    if (!data) {
-                        throw new ActionError('Blog não encontrado', 'DATABASE_ERROR');
+                    console.log(blogData);
+                    const result = await createBlog(blogData);
+                    console.log(result);
+                    if (!result.success) {
+                        throw new ActionError(
+                            `Falha ao criar blog: ${result.error || 'Erro desconhecido'}`,
+                            'DATABASE_ERROR'
+                        );
                     }
-
-                    return data;
-                } catch (error: any) {
-                    throw new ActionError(
-                        error instanceof Error ? error.message : 'Erro desconhecido ao buscar blog',
-                        'INTERNAL_SERVER_ERROR'
-                    );
+                    return { success: true, data: result.data };
+                } catch (error) {
+                    if (error instanceof z.ZodError) {
+                        throw new ActionError(error.errors[0].message, "BAD_REQUEST");
+                    }
+                    throw new ActionError(error instanceof Error ? error.message : "Unknown error occurred", "INTERNAL_SERVER_ERROR");
                 }
             }
         }),
-
         updateTitle: defineAction({
             input: z.object({
                 blogId: z.string(),
@@ -134,6 +130,45 @@ export const server = {
                     );
                 }
             }
+        }),
+        get: defineAction({
+            input: z.object({
+                blogId: z.string(),
+            }),
+            handler: async ({ blogId }) => {
+                try {
+                    const data = await getBlogWithPosts(blogId);
+
+                    if (!data) {
+                        throw new ActionError('Blog não encontrado', 'DATABASE_ERROR');
+                    }
+
+                    return data;
+                } catch (error: any) {
+                    throw new ActionError(
+                        error instanceof Error ? error.message : 'Erro desconhecido ao buscar blog',
+                        'INTERNAL_SERVER_ERROR'
+                    );
+                }
+            }
+        }),
+        delete: defineAction({
+            input: z.object({
+                blogId: z.string(),
+                userId: z.string(),
+            }),
+            handler: async ({ blogId, userId }) => {
+                console.log(blogId, userId);
+                const result = await deleteBlogByUserId(blogId, userId);
+                console.log(result);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao apagar blog: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+                return result;
+            },
         }),
     },
 

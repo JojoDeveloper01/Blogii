@@ -32,12 +32,12 @@ const { lang } = Astro.props;
 		/>
 
 		<nav
-			class="flex gap-16 items-center justify-between max-[340px]:justify-center px-4 py-3 w-full text-black dark:text-white"
+			class="flex gap-16 items-center justify-between px-8 py-3 w-full text-black dark:text-white"
 		>
 			<!-- Mobile menu toggle -->
 			<label
 				for="menu-toggle"
-				class="min-[340px]:hidden cursor-pointer z-50"
+				class="min-[600px]:hidden cursor-pointer z-50"
 			>
 				<div class="w-6 h-5 flex flex-col justify-between">
 					<span
@@ -54,13 +54,18 @@ const { lang } = Astro.props;
 
 			<!-- Desktop navigation -->
 			<div
-				class="hidden min-[340px]:flex items-center gap-16 justify-center"
+				class="hidden min-[600px]:flex items-center gap-12 justify-center"
 			>
-				<div class="flex gap-8">
+				<div class="flex flex-wrap gap-x-8 gap-y-2">
 					<HeaderLink
 						href={`/${lang}/`}
 						class="hover:text-gray-100 dark:hover:text-gray-200 transition-colors whitespace-nowrap"
 						>Home</HeaderLink
+					>
+					<HeaderLink
+						href={`/${lang}/dashboard`}
+						class="hover:text-gray-100 dark:hover:text-gray-200 transition-colors whitespace-nowrap"
+						>Dashboard</HeaderLink
 					>
 					<HeaderLink
 						href={`/${lang}/blogs`}
@@ -94,23 +99,17 @@ const { lang } = Astro.props;
 	<!-- Mobile navigation dropdown -->
 	<div
 		id="mobile-menu"
-		class="absolute top-full left-0 right-0 z-40 opacity-0 pointer-events-none transform -translate-y-4 duration-100 ease-in-out min-[340px]:hidden"
+		class="absolute top-full left-0 right-0 z-40 opacity-0 pointer-events-none transform -translate-y-4 duration-100 ease-in-out min-[600px]:hidden"
 	>
 		<div
-			class="mx-auto max-w-[calc(100vw-2rem)] bg-white/90 dark:bg-zinc-800/20 backdrop-blur-md rounded-b-xl shadow-lg border border-gray-100/50 dark:border-gray-800/20 overflow-hidden"
+			class="mx-auto max-w-[calc(50vw+2rem)] bg-white/90 dark:bg-zinc-800/20 backdrop-blur-md rounded-b-xl shadow-lg border border-gray-100/50 dark:border-gray-800/20 overflow-hidden"
 		>
-			<div class="py-3 px-4 flex flex-col gap-2 text-white">
-				<HeaderLink href={`/${lang}/`} class="py-1.5 px-2 rounded-md"
-					>Home</HeaderLink
-				>
-				<HeaderLink
-					href={`/${lang}/blogs`}
-					class="py-1.5 px-2 rounded-md">Blogs</HeaderLink
-				>
-				<HeaderLink
-					href={`/${lang}/pricing`}
-					class="py-1.5 px-2 rounded-md">Pricing</HeaderLink
-				>
+			<div
+				class="py-3 px-4 flex flex-col gap-2 text-white *:m-auto *:py-1.5 *:px-2 *:rounded-md"
+			>
+				<HeaderLink href={`/${lang}/`}>Home</HeaderLink>
+				<HeaderLink href={`/${lang}/blogs`}>Blogs</HeaderLink>
+				<HeaderLink href={`/${lang}/pricing`}>Pricing</HeaderLink>
 				<div
 					class="mt-2 pt-2 border-t border-gray-200/30 dark:border-gray-700/30"
 				>

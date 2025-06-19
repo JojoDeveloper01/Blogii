@@ -47,7 +47,7 @@ if (user) {
         try {
             await createNewPost(String(blogId), String(newPostId), "New Post");
             
-            return Astro.redirect(`/${lang}/${blogId}/${newPostId}`);
+            return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
         } catch (err) {
             console.error("Erro ao criar post:", err);
             return redirectToBlog(Astro, lang, String(blogId));
@@ -81,7 +81,7 @@ if (user) {
             maxAge: 60 * 60 * 24 * 30,
         });
 
-        return Astro.redirect(`/${lang}/${blogId}/${newPostId}`);
+        return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
     } else if (!postData) {
         return redirectToBlog(Astro, lang, String(blogId));
     }
