@@ -1,73 +1,97 @@
 ---
 interface Props {
-  name: string;
-  price: number;
-  period: string;
+  name?: string;
+  price?: number;
+  period?: string;
   discount?: string;
-  popular?: boolean;
-  subtitle: string;
-  features: string[];
-  buttonText: string;
+  recommended?: boolean;
+  subtitle?: string;
+  features?: string[];
+  buttonText?: string;
 }
 
-const { 
-  name, 
-  price, 
-  period, 
-  discount, 
-  popular = false,
+const {
+  name,
+  price,
+  period,
+  discount,
+  recommended = false,
   subtitle,
   features,
-  buttonText
+  buttonText,
 } = Astro.props;
 ---
 
-<div class="flex flex-col rounded-lg shadow-lg bg-gradient-to-br from-[--noir-core] to-[--bg-color2] border transition-all duration-300 hover:-translate-y-1 via-box/50 to-box border-transparent hover:border-[--secondary] hover:shadow-[--secondary] relative">
-  {popular && (
-    <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gradient-to-r from-[--primary] to-[--secondary] rounded-full shadow-lg z-10">
-      <span class="text-sm font-bold text-[--blanc-core] whitespace-nowrap flex items-center gap-1">
-        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0115 2a1 1 0 01.707 1.707L15 4.414l.707.707A1 1 0 0115 7a1 1 0 01-.707-.293L13.586 6l-.707.707A1 1 0 0112 7a1 1 0 01-.707-1.707l.707-.707-.707-.707A1 1 0 0112 2z" clip-rule="evenodd" />
-        </svg>
-        Recommended
-      </span>
-    </div>
-  )}
-  
-  <div class="px-6 pt-8">
+<div
+  class="flex flex-col rounded-lg shadow-lg bg-gradient-to-br from-[--noir-core] to-[--bg-color2] border hover:-translate-y-1 via-box/50 to-box border-transparent hover:border-[--secondary] hover:shadow-[--secondary] relative"
+>
+  {
+    recommended && (
+      <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gradient-to-r from-[--primary] to-[--secondary] rounded-full shadow-lg z-10">
+        <span class="text-sm font-bold text-[--blanc-core] whitespace-nowrap flex items-center gap-1">
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0115 2a1 1 0 01.707 1.707L15 4.414l.707.707A1 1 0 0115 7a1 1 0 01-.707-.293L13.586 6l-.707.707A1 1 0 0112 7a1 1 0 01-.707-1.707l.707-.707-.707-.707A1 1 0 0112 2z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Recommended
+        </span>
+      </div>
+    )
+  }
+
+  <div class="px-6 pt-10">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2">
         <h3 class="m-0 text-2xl font-semibold text-[--blanc-core]">{name}</h3>
       </div>
-      {discount && (
-        <span class="px-3 py-1 text-sm text-[--blanc-core] bg-[--primary] rounded-full whitespace-nowrap">
-          {discount}
-        </span>
-      )}
+      {
+        discount && (
+          <span class="px-3 py-1 text-sm text-[--blanc-core] bg-[--primary] rounded-full whitespace-nowrap">
+            {discount}
+          </span>
+        )
+      }
     </div>
     <div class="mt-4 flex items-baseline">
       <span class="text-5xl font-extrabold text-[--blanc-core]">{price}€</span>
       <span class="ml-1 text-xl text-[--blanc-core]">/{period}</span>
     </div>
-    <p class="mt-5 text-lg text-[--blanc-core]">{subtitle}</p>
+    <p class="my-2 text-lg text-secondary/80">{subtitle}</p>
   </div>
-  
-  <div class="flex-1 px-6 pt-6 pb-8">
+
+  <div class="flex-1 px-6 pt-5 pb-8">
     <div class="h-full flex flex-col justify-between">
       <div class="grid gap-4">
-        {features.map((feature) => (
-          <div class="flex gap-2 items-start">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-[--primary]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
+        {
+          features?.map((feature) => (
+            <div class="flex gap-2 items-center">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-5 w-5 text-[--primary]"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  {" "}
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />{" "}
+                </svg>
+              </div>
+              <p class="m-0 text-base text-[--blanc-core]">{feature}</p>
             </div>
-            <p class="m-0 text-base text-[--blanc-core]">{feature}</p>
-          </div>
-        ))}
+          ))
+        }
       </div>
       <div class="mt-8">
-        <a href="#" class="block w-full px-6 py-3 text-center font-medium text-[--blanc-core] bg-gradient-to-r from-[--primary] to-[--secondary] rounded-md hover:opacity-90 transition-opacity">
+        <a
+          href="#"
+          class="block w-full px-6 py-3 text-center font-medium text-[--blanc-core] bg-gradient-to-r from-[--primary] to-[--secondary] rounded-md hover:opacity-90 transition-opacity"
+        >
           {buttonText}
         </a>
       </div>

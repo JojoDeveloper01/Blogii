@@ -1,0 +1,92 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
+import { getLangFromUrl } from "@/i18n/utils";
+import { getUser } from "@/lib/utilsDB";
+import { checkUserHasBlogs } from "@/lib/utilsDB";
+
+const lang = getLangFromUrl(Astro.url);
+
+const user = await getUser();
+
+if (!user?.id) {
+    return Astro.redirect(`/${lang}`);
+}
+if (await checkUserHasBlogs(user.id)) {
+    return Astro.redirect(`/${lang}/dashboard`);
+}
+const blogs = Astro.cookies.get("blogiis")?.value;
+if (!blogs || blogs === "[]") {
+    return Astro.redirect(`/${lang}`);
+}
+---
+
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
+    <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div class="loader"></div>
+    </div>
+</Layout>
+
+<style>
+    .loader {
+        width: 5rem;
+        height: 5rem;
+        border: 5px solid #f3f3f3;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<script>
+    import type { BlogData } from "@/lib/types";
+    import { cookieUtils } from "@/lib/utils";
+    import { actions } from "astro:actions";
+    import { localBlogDB } from "@/services/indexedDB";
+
+    const blog: BlogData[] = await localBlogDB.getAllBlogs();
+    const userId = cookieUtils.getCookie("user-id");
+
+    const blogData = {
+        id: blog[0].id,
+        title: blog[0].title,
+        posts: (blog[0].posts || []).map((post) => ({
+            id: post.id,
+            title: post.title,
+            blog_id: blog[0].id,
+            content: post.content || "",
+            created_at:
+                (typeof post.created_at === "string"
+                    ? post.created_at
+                    : post.created_at?.toISOString()) ||
+                new Date().toISOString(),
+        })),
+        created_at: (typeof blog[0].created_at === "string"
+            ? new Date(blog[0].created_at)
+            : blog[0].created_at || new Date()
+        ).toISOString(),
+        user_id: userId || undefined,
+    };
+
+    if (blogData) {
+        const { error } = await actions.blog.create({ blogData });
+
+        if (!error) {
+            localBlogDB.deleteBlog(blog[0].id);
+            cookieUtils.removeCookie("blogiis");
+            cookieUtils.removeCookie("user-id");
+            window.location.href = "/";
+        }
+    }
+</script>

@@ -4,6 +4,17 @@
 export const SITE_TITLE = 'Blogii';
 export const SITE_DESCRIPTION = 'Your ideas, your blog';
 
+//Prices
+export const MONTHLY_PRICE = 3;
+export const ANNUAL_PRICE = 25;
+export const LIFETIME_PRICE = 40;
+
+//Limits
+export const BLOGS_LIMIT_MONTHLY = 10;
+export const POSTS_LIMIT_MONTHLY = 20;
+export const BLOGS_LIMIT_ANNUAL = 30;
+export const POSTS_LIMIT_ANNUAL = 50;
+
 //Errors
 export const amountCharactersError = "The title must be at least 3 characters long."
 export const invalidCharactersError = "The title contains invalid characters."

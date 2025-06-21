@@ -250,6 +250,11 @@ export const cookieUtils = {
 		this.setCookie('blogiis', JSON.stringify(filteredBlogs), 30);
 	},
 
+	removeCookie(name: string) {
+		if (typeof document === 'undefined') return;
+		document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+	},
+
 	updateBlogInCookie(blogId: string, title: string) {
 		if (typeof document === 'undefined') return;
 		const blogs = this.getStoredBlogs();

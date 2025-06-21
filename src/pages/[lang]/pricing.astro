@@ -1,5 +1,15 @@
 ---
-import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
+import {
+    SITE_TITLE,
+    SITE_DESCRIPTION,
+    MONTHLY_PRICE,
+    ANNUAL_PRICE,
+    LIFETIME_PRICE,
+    BLOGS_LIMIT_MONTHLY,
+    POSTS_LIMIT_MONTHLY,
+    BLOGS_LIMIT_ANNUAL,
+    POSTS_LIMIT_ANNUAL,
+} from "@/lib/consts";
 import Layout from "@/layouts/Layout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
 import PricingTable from "@/components/PricingTable.astro";
@@ -7,45 +17,60 @@ import PricingCard from "@/components/PricingCard.astro";
 
 const lang = getLangFromUrl(Astro.url);
 
+const planFeatures = {
+    monthly: [
+        `Create up to ${BLOGS_LIMIT_MONTHLY} blogs and ${POSTS_LIMIT_MONTHLY} posts per blog`,
+        "Basic analytics dashboard",
+        "Community support",
+        "Basic post editor tools",
+    ],
+    annual: [
+        `Create up to ${BLOGS_LIMIT_ANNUAL} blogs and ${POSTS_LIMIT_ANNUAL} posts per blog`,
+        "Advanced analytics dashboard",
+        "Advanced editor with media tools",
+        "SEO optimization tools",
+    ],
+    lifetime: [
+        "All Annual plan features",
+        "Unlimited blogs and posts",
+        "Premium analytics with insights",
+        "Early access to new features",
+    ],
+};
+
+const mergedFeatures = Array.from(
+    new Set([
+        ...planFeatures.monthly,
+        ...planFeatures.annual,
+        ...planFeatures.lifetime,
+    ]),
+);
+
 const plans = [
     {
         name: "Monthly",
-        price: 4.5,
+        price: MONTHLY_PRICE,
         period: "month",
-        discount: "-50% discount",
-        subtitle: "Recurring monthly payment",
-        features: [
-            "Access to all courses",
-            "Challenges and Practical Projects",
-            "Community + Discord Support",
-        ],
+        subtitle: "Recurring monthly charge",
+        features: planFeatures.monthly,
         buttonText: "Start now",
     },
     {
         name: "Annual",
-        price: 45,
+        price: ANNUAL_PRICE,
         period: "year",
-        discount: "-50% discount",
-        popular: true,
-        subtitle: "Save $54!",
-        features: [
-            "Everything in the quarterly plan",
-            "Priority access to new content",
-            "Monthly group mentoring",
-        ],
+        discount: "-30% discount",
+        recommended: true,
+        subtitle: "Save € 11!",
+        features: planFeatures.annual,
         buttonText: "Start now",
     },
     {
         name: "Lifetime",
-        price: 249,
+        price: LIFETIME_PRICE,
         period: "one-time",
         discount: "One-time payment",
-        subtitle: "Only 125 slots left!",
-        features: [
-            "Everything in the annual plan",
-            "Early access to new content",
-            "Private community for lifetime members",
-        ],
+        features: planFeatures.lifetime,
         buttonText: "Get lifetime access",
     },
 ];
@@ -53,7 +78,7 @@ const plans = [
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
     <section
-        id="pricing"
+        id="pricing-plans"
         class="min-h-screen bg-gradient-to-b py-16 px-4 sm:px-6 lg:px-8"
     >
         <div class="max-w-7xl mx-auto">
@@ -97,29 +122,18 @@ const plans = [
 
             <PricingTable
                 plans={[
-                    { name: "Monthly", price: 4.5 },
-                    { name: "Quarterly", price: 15 },
-                    { name: "Annual", price: 45, recommended: true },
-                    { name: "Lifetime", price: 249, slots: 135 },
+                    { name: "Monthly", price: MONTHLY_PRICE },
+                    { name: "Annual", price: ANNUAL_PRICE, recommended: true },
+                    { name: "Lifetime", price: LIFETIME_PRICE },
                 ]}
-                features={[
-                    "Access to current courses",
-                    "Practical projects",
-                    "Discord support",
-                    "Priority support",
-                    "Exclusive giveaways",
-                    "Group mentoring",
-                    "Priority access to new courses",
-                    "Exclusive community",
-                    "Lifetime access",
-                ]}
+                {planFeatures}
             />
         </div>
     </section>
 
     <div class="mt-10 mb-16 text-center">
         <a
-            href="#pricing"
+            href="#pricing-plans"
             class="inline-flex items-center gap-2 text-[--secondary] hover:underline"
         >
             <span>Go back to the Plans</span>

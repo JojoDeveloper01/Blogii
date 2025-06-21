@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 */
 import { supabase } from "@/lib/supabase";
+import { checkUserHasBlogs, createBlogFromTemp } from "@/lib/utilsDB";
 import { updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog } from "@/lib/utilsDB";
 import type { Provider } from '@supabase/supabase-js';
 
@@ -57,7 +58,6 @@ export const server = {
             }),
             handler: async ({ blogId, postId }) => {
                 const result = await deletePostFromDB(blogId, postId);
-                console.log(result);
                 if (!result.success) {
                     throw new ActionError(
                         `Falha ao apagar post: ${result.error || 'Erro desconhecido'}`,
@@ -75,7 +75,7 @@ export const server = {
                 blogData: z.object({
                     id: z.string(),
                     title: z.string(),
-                    user_id: z.string(),
+                    user_id: z.string().optional(),
                     created_at: z.string().transform((str) => new Date(str)),
                     posts: z.array(z.object({
                         id: z.string(),
@@ -88,9 +88,7 @@ export const server = {
             }),
             handler: async ({ blogData }) => {
                 try {
-                    console.log(blogData);
                     const result = await createBlog(blogData);
-                    console.log(result);
                     if (!result.success) {
                         throw new ActionError(
                             `Falha ao criar blog: ${result.error || 'Erro desconhecido'}`,
@@ -176,43 +174,23 @@ export const server = {
         signInWithOAuth: defineAction({
             input: z.object({
                 provider: z.enum(['google', 'facebook', 'azure']) as z.ZodType<Provider>,
-                tempBlogs: z.string().nullable().optional()
             }),
-            handler: async ({ provider, tempBlogs }, { cookies }) => {
+            handler: async ({ provider }) => {
                 try {
-                    console.log('[ACTION] Iniciando login OAuth com', provider);
-                    console.log('[ACTION] Blogs temporários recebidos:', tempBlogs ? 'Sim' : 'Não');
-
-                    // Se temos blogs temporários, armazená-los em um cookie
-                    if (tempBlogs) {
-                        console.log('[ACTION] Armazenando blogs temporários em cookie para migração após login');
-
-                        // Armazenar os blogs temporários em um cookie que será enviado com a requisição
-                        // Este cookie será lido pelo callback após a autenticação bem-sucedida
-                        cookies.set('temp-blogs-data', tempBlogs, {
-                            path: '/',
-                            httpOnly: true,  // Apenas o servidor pode acessar
-                            secure: import.meta.env.PROD, // Secure em produção
-                            maxAge: 60 * 5, // 5 minutos
-                            sameSite: 'lax'
-                        });
-                    }
-
                     // Iniciar o fluxo de autenticação OAuth
-                    const { data, error } = await supabase.auth.signInWithOAuth({
+                    const { data: authData, error: authError } = await supabase.auth.signInWithOAuth({
                         provider,
                         options: {
                             redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback`,
                         }
                     });
 
-                    if (error) {
-                        console.error('[ACTION] Erro no login OAuth:', error);
-                        throw error;
+                    if (authError) {
+                        console.error('[ACTION] Erro no login OAuth:', authError);
+                        throw authError;
                     }
 
-                    console.log('[ACTION] URL de redirecionamento OAuth gerada com sucesso');
-                    return { success: true, url: data.url };
+                    return { success: true, url: authData.url };
                 } catch (error: any) {
                     console.error('[ACTION] Falha no login:', error);
                     throw new ActionError(`Falha no login: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);

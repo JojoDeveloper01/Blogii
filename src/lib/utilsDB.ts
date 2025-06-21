@@ -1,6 +1,6 @@
 import { getLangFromUrl } from '@/i18n/utils';
 import { supabase } from './supabase';
-import type { BlogData } from './types';
+import type { BlogData, UserInfo } from './types';
 
 //User:
 export async function getUser() {
@@ -197,9 +197,9 @@ export async function createBlog(blogData: BlogData) {
       return { success: false, error: postsError };
     }
 
-    return { 
-      success: true, 
-      data: { 
+    return {
+      success: true,
+      data: {
         blog: blogResult,
         posts: postsData
       }
@@ -355,5 +355,94 @@ export async function deletePostFromDB(blogId: string, postId: string) {
     return { success: true };
   } catch (error) {
     return { success: false, error };
+  }
+}
+
+//Check:
+
+export async function checkUserHasBlogs(userId: string): Promise<boolean> {
+  try {
+    const { data: blogs } = await supabase
+      .from('blogs')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1);
+
+    return blogs !== null && blogs.length > 0;
+  } catch (error) {
+    console.error('[DB] Erro ao verificar blogs do usuário:', error);
+    return false;
+  }
+}
+
+export async function createBlogFromTemp(userId: string, tempBlogData: string): Promise<void> {
+  try {
+    const tempBlogs = JSON.parse(tempBlogData);
+    if (!Array.isArray(tempBlogs) || !tempBlogs.length) return;
+
+    // Pega o primeiro blog temporário
+    const firstBlog = tempBlogs[0];
+
+    // Cria o blog
+    const { data: blog, error: blogError } = await supabase
+      .from('blogs')
+      .insert({
+        user_id: userId,
+        title: firstBlog.title,
+        description: firstBlog.description || ''
+      })
+      .select('id')
+      .single();
+
+    if (blogError || !blog) {
+      console.error('[DB] Erro ao criar blog:', blogError);
+      return;
+    }
+
+    // Se tem posts, cria-os
+    if (firstBlog.posts?.length) {
+      const posts = firstBlog.posts.map((post: { title: string; content?: string; created_at: string }) => ({
+        blog_id: blog.id,
+        title: post.title,
+        content: post.content || '',
+        created_at: post.created_at
+      }));
+
+      const { error: postsError } = await supabase
+        .from('posts')
+        .insert(posts);
+
+      if (postsError) {
+        console.error('[DB] Erro ao criar posts:', postsError);
+      }
+    }
+  } catch (error) {
+    console.error('[DB] Erro ao processar blog temporário:', error);
+  }
+}
+
+export async function ensureUserInDatabase({ id, email, name }: UserInfo): Promise<void> {
+  try {
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (!existingUser && !fetchError) {
+      const { error: insertError } = await supabase.from("users").insert({
+        id,
+        email,
+        name: name || email.split("@")[0],
+      });
+
+      if (insertError) {
+        console.error("[AUTH] Erro ao inserir utilizador:", insertError);
+      } else {
+        console.log("[AUTH] Novo utilizador criado com sucesso.");
+      }
+    }
+  } catch (err) {
+    console.error("[AUTH] Erro na verificação/criação de utilizador:", err);
   }
 }

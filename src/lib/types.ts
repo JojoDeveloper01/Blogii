@@ -54,3 +54,9 @@ export interface UpdatePostTitleParams {
     errorMessage: Signal<string>;
     originalTitle?: Signal<string>;
 }
+
+export interface UserInfo {
+  id: string;
+  email: string;
+  name?: string | null;
+}

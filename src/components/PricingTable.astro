@@ -8,10 +8,36 @@ interface Plan {
 
 interface Props {
     plans: Plan[];
-    features: string[];
+    planFeatures: {
+        [planName: string]: string[];
+    };
 }
 
-const { plans, features } = Astro.props;
+const { plans, planFeatures } = Astro.props;
+
+// Transforma o objeto original em [{ name: ..., availableIn: [...] }]
+const allFeatureMap = new Map<string, Set<string>>();
+
+for (const planName in planFeatures) {
+    for (const feat of planFeatures[planName]) {
+        if (!allFeatureMap.has(feat)) {
+            allFeatureMap.set(feat, new Set());
+        }
+        allFeatureMap.get(feat)?.add(capitalize(planName)); // capitaliza: "monthly" -> "Monthly"
+    }
+}
+
+// Transforma o Map em array
+const unifiedFeatures = Array.from(allFeatureMap.entries()).map(
+    ([name, plans]) => ({
+        name,
+        availableIn: Array.from(plans),
+    }),
+);
+
+function capitalize(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 ---
 
 <style>
@@ -22,55 +48,93 @@ const { plans, features } = Astro.props;
     }
 </style>
 
-<div class="rounded-xl relative pt-6 bg-gradient-to-br from-[--noir-core] to-[--bg-color2] shadow-xl overflow-x-auto">
-    <div class="relative">
-    <table class="w-full relative">
-        <colgroup>
-            {[...Array(plans.length + 1)].map(() => (
-                <col class={`w-1/${plans.length + 1}`} />
-            ))}
-        </colgroup>
-        <thead>
-            <tr class="text-left">
-                <th class="py-4 pl-6 text-[--blanc-core] sticky-col from-[--noir-core] to-[--bg-color2]">Features</th>
-                {plans.map((plan) => {
-                    const isRecommended = plan.recommended;
-                    return (
-                        <th class={`py-4 px-6 text-center text-[--blanc-core] relative ${isRecommended ? 'bg-primary/70 shadow-primary shadow-opacity-20 border-[1.5px] border-[--primary]' : ''}`}>
-                            {isRecommended && (
-                                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-primary to-secondary text-[--blanc-core] rounded-full shadow-lg z-20 whitespace-nowrap">
-                                    Recommended
-                                </div>
-                            )}
-                            <div>{plan.name}</div>
-                            <div class="text-2xl font-bold">€{plan.price}</div>
-                            {plan.slots && (
-                                <div class="text-sm text-[--blanc-core]">
-                                    {plan.slots} slots remaining
-                                </div>
-                            )}
-                        </th>
-                    );
-                })}
-            </tr>
-        </thead>
-        <tbody>
-            {features.map((feature) => {
-                const recommendedPlan = plans.find(p => p.recommended);
-                return (
-                    <tr class="hover:bg-primary/10 hover:bg-opacity-10">
-                        <td class="py-4 pl-6 text-[--blanc-core] sticky-col]">{feature}</td>
-                        {plans.map((plan) => (
-                            <td class={`py-4 px-6 text-center ${plan === recommendedPlan ? 'bg-primary/10 shadow-primary shadow-opacity-20' : ''}`}>
-                                <span class="p-4 inline-flex items-center justify-center size-6 rounded-full bg-primary/50 text-[--blanc-core]">
-                                    ✓
-                                </span>
-                            </td>
-                        ))}
-                    </tr>
-                );
-            })}
-        </tbody>
-    </table>
+<div class="rounded-xl relative pt-6 shadow-xl overflow-x-auto">
+    <div>
+        <table class="w-full relative">
+            <colgroup>
+                {
+                    [...Array(plans.length + 1)].map(() => (
+                        <col class={`w-1/${plans.length + 1}`} />
+                    ))
+                }
+            </colgroup>
+            <thead>
+                <tr class="text-left">
+                    <th class="pl-8 text-[--blanc-core] bg-[#161520]"
+                        >Features</th
+                    >
+                    {
+                        plans.map((plan) => {
+                            const isRecommended = plan.recommended;
+                            return (
+                                <th
+                                    class={`py-4 px-[5vw] text-center text-[--blanc-core] relative bg-[#161520] ${isRecommended ? "bg-primary/70 shadow-primary shadow-opacity-20 border-[1.5px] border-[--primary]" : ""}`}
+                                >
+                                    {isRecommended && (
+                                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-primary to-secondary text-[--blanc-core] rounded-full shadow-lg z-20 whitespace-nowrap">
+                                            Recommended
+                                        </div>
+                                    )}
+                                    <div>{plan.name}</div>
+                                    <div class="text-2xl font-bold">
+                                        €{plan.price}
+                                    </div>
+                                    {plan.slots && (
+                                        <div class="text-sm text-[--blanc-core]">
+                                            {plan.slots} slots remaining
+                                        </div>
+                                    )}
+                                </th>
+                            );
+                        })
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    unifiedFeatures.map((feature) => {
+                        const recommendedPlan = plans.find(
+                            (p) => p.recommended,
+                        );
+                        return (
+                            <tr class="hover:bg-primary/10 transition-colors">
+                                <td class="pl-8 text-[--blanc-core] bg-[#020617]">
+                                    {feature.name}
+                                </td>
+                                {plans.map((plan) => {
+                                    const isIncluded =
+                                        feature.availableIn.includes(plan.name);
+                                    const baseClasses =
+                                        "p-4 inline-flex items-center justify-center size-6 rounded-full";
+
+                                    return (
+                                        <td
+                                            class={`py-2 px-[5vw] text-center bg-[#10001e] ${plan === recommendedPlan ? "shadow-primary/20 border-x border-primary/20" : ""}`}
+                                            style={
+                                                plan === recommendedPlan
+                                                    ? "background-color: hsl(var(--primary-hsl) / 0.7)"
+                                                    : ""
+                                            }
+                                        >
+                                            {isIncluded ? (
+                                                <span
+                                                    class={`${baseClasses} bg-primary/70 text-[--blanc-core]`}
+                                                >
+                                                    ✓
+                                                </span>
+                                            ) : (
+                                                <span
+                                                    class={`${baseClasses} bg-gray-400/40`}
+                                                />
+                                            )}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        );
+                    })
+                }
+            </tbody>
+        </table>
     </div>
 </div>
