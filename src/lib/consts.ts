@@ -15,6 +15,9 @@ export const POSTS_LIMIT_MONTHLY = 20;
 export const BLOGS_LIMIT_ANNUAL = 30;
 export const POSTS_LIMIT_ANNUAL = 50;
 
+//Create 
+export const createNewBlogMessage = "What's your next great idea? Start a blog and share your passion with the world!";
+
 //Errors
 export const amountCharactersError = "The title must be at least 3 characters long."
 export const invalidCharactersError = "The title contains invalid characters."

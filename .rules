@@ -1,189 +1,107 @@
+# ⚙️ Core Principles
 
-  You are an expert in JavaScript, TypeScript, and Astro framework for scalable web development.
+* Use Astro for static generation and minimal JS.
+* Use Qwik for ultra-fast hydration and interactivity.
+* Prioritize zero-JS on load; hydrate only what's visible.
+* Use descriptive names: `isLoading`, `hasRules`, `fetchWindsurfData`.
+* Organize code for clarity, modularity, and reusability.
 
-  Key Principles
-  - Write concise, technical responses with accurate Astro examples.
-  - Leverage Astro's partial hydration and multi-framework support effectively.
-  - Prioritize static generation and minimal JavaScript for optimal performance.
-  - Use descriptive variable names and follow Astro's naming conventions.
-  - Organize files using Astro's file-based routing system.
+# 🗂️ Project Structure
 
-  Astro Project Structure
-  - Use the recommended Astro project structure:
-    - src/
-      - components/
-      - layouts/
-      - pages/
-      - styles/
-    - public/
-    - astro.config.mjs
+* Follow Astro's standard structure:
 
-  Component Development
-  - Create .astro files for Astro components.
-  - Use framework-specific components (React, Vue, Svelte) when necessary.
-  - Implement proper component composition and reusability.
-  - Use Astro's component props for data passing.
-  - Leverage Astro's built-in components like <Markdown /> when appropriate.
- 
-  Routing and Pages
-  - Utilize Astro's file-based routing system in the src/pages/ directory.
-  - Implement dynamic routes using [...slug].astro syntax.
-  - Use getStaticPaths() for generating static pages with dynamic routes.
-  - Implement proper 404 handling with a 404.astro page.
+  * `src/`
 
-  Content Management
-  - Use Markdown (.md) or MDX (.mdx) files for content-heavy pages.
-  - Leverage Astro's built-in support for frontmatter in Markdown files.
-  - Implement content collections for organized content management.
+    * `components/`
+    * `layouts/`
+    * `pages/`
+    * `styles/`
+  * `public/`
+  * `astro.config.mjs`
 
-  Styling
-  - Use Astro's scoped styling with <style> tags in .astro files.
-  - Leverage global styles when necessary, importing them in layouts.
-  - Utilize CSS preprocessing with Sass or Less if required.
-  - Implement responsive design using CSS custom properties and media queries.
+# 🧩 Component Development
 
-  Performance Optimization
-  - Minimize use of client-side JavaScript; leverage Astro's static generation.
-  - Use the client:* directives judiciously for partial hydration:
-    - client:load for immediately needed interactivity
-    - client:idle for non-critical interactivity
-    - client:visible for components that should hydrate when visible
-  - Implement proper lazy loading for images and other assets.
-  - Utilize Astro's built-in asset optimization features.
+* Use `.astro` files for static components.
+* Use `.tsx` files for interactive Qwik components.
+* Compose components with props for clarity and reuse.
+* Keep components small and focused.
 
-  Data Fetching
-  - Use Astro.props for passing data to components.
-  - Implement getStaticPaths() for fetching data at build time.
-  - Use import.meta.glob for working with local files efficiently.
-  - Implement proper error handling for data fetching operations.
+# 🧭 Routing & Pages
 
-  SEO and Meta Tags
-  - Use Astro's <head> tag for adding meta information.
-  - Implement canonical URLs for proper SEO.
-  - Use the <SEO> component pattern for reusable SEO setups.
+* Use Astro’s file-based routing inside `src/pages/`.
+* For dynamic rules, use `[...slug].astro`.
+* Use `getStaticPaths()` to generate routes at build time.
+* Include a custom `404.astro` for unmatched routes.
+* Include a custom `@/` for call dynamic routes.
 
-  Integrations and Plugins
-  - Utilize Astro integrations for extending functionality (e.g., @astrojs/image).
-  - Implement proper configuration for integrations in astro.config.mjs.
-  - Use Astro's official integrations when available for better compatibility.
+# 📝 Content Management
 
-  Build and Deployment
-  - Optimize the build process using Astro's build command.
-  - Implement proper environment variable handling for different environments.
-  - Use static hosting platforms compatible with Astro (Netlify, Vercel, etc.).
-  - Implement proper CI/CD pipelines for automated builds and deployments.
+* Use `.md` or `.mdx` for rule descriptions and documentation.
+* Structure windsurf rule sets using Astro’s `content collections`.
 
-  Styling with Tailwind CSS
-  - Integrate Tailwind CSS with Astro @astrojs/tailwind
+# 🎨 Styling with Tailwind CSS
 
-  Tailwind CSS Best Practices
-  - Use Tailwind utility classes extensively in your Astro components.
-  - Leverage Tailwind's responsive design utilities (sm:, md:, lg:, etc.).
-  - Utilize Tailwind's color palette and spacing scale for consistency.
-  - Implement custom theme extensions in tailwind.config.cjs when necessary.
-  - Never use the @apply directive
+* Integrate Tailwind via `@astrojs/tailwind`.
+* Use utility classes directly in components.
+* Follow mobile-first responsive patterns (`sm:`, `md:`, `lg:`).
+* Extend theme in `tailwind.config.cjs` as needed.
+* Avoid using `@apply`.
 
-  Testing
-  - Implement unit tests for utility functions and helpers.
-  - Use end-to-end testing tools like Cypress for testing the built site.
-  - Implement visual regression testing if applicable.
+# ⚡ Performance Optimization
 
-  Accessibility
-  - Ensure proper semantic HTML structure in Astro components.
-  - Implement ARIA attributes where necessary.
-  - Ensure keyboard navigation support for interactive elements.
+* Use `client:visible` or Qwik’s `$()` for lazy hydration.
+* Avoid unnecessary interactivity.
+* Enable image lazy loading.
+* Optimize images with Astro’s `<Image />` component.
+* Use `import.meta.glob` for bulk content imports.
 
-  Key Conventions
-  1. Follow Astro's Style Guide for consistent code formatting.
-  2. Use TypeScript for enhanced type safety and developer experience.
-  3. Implement proper error handling and logging.
-  4. Leverage Astro's RSS feed generation for content-heavy sites.
-  5. Use Astro's Image component for optimized image delivery.
+# 🔌 Data Fetching
 
-  Performance Metrics
-  - Prioritize Core Web Vitals (LCP, FID, CLS) in development.
-  - Use Lighthouse and WebPageTest for performance auditing.
-  - Implement performance budgets and monitoring.
+* Fetch windsurf rule data at build time using `getStaticPaths()` or `glob`.
+* Use Astro.props for passing data to components.
+* Always handle fetch errors gracefully.
 
-  Refer to Astro's official documentation for detailed information on components, routing, and integrations for best practices.
+# 🧠 SEO & Metadata
 
-  Use qwik instead of react, prioritize always the perfonmance and fast as possible
+* Define canonical URLs and meta tags in `<head>`.
+* Create a reusable `<SEO />` component.
+* Include OpenGraph and Twitter metadata for social sharing.
 
+# 🔗 Integrations
 
-Sql Data Supabase:
+* Use official Astro integrations where possible.
+* Configure plugins in `astro.config.mjs` carefully.
+* Avoid bloated third-party packages.
 
- -- Tabela de utilizadores
-create table users (
-  id uuid primary key default gen_random_uuid(),
-  email text unique not null,
-  full_name text,
-  created_at timestamp with time zone default now()
-);
+# 🚀 Deployment
 
--- Tabela de blogs
-create table blogs (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references users(id) on delete cascade,
-  title text not null,
-  description text,
-  created_at timestamp with time zone default now()
-);
+* Use `astro build` for optimized production output.
+* Define environment variables securely.
+* Set up CI/CD pipelines for auto-deployment.
 
--- Tabela de posts
-create table posts (
-  id uuid primary key default gen_random_uuid(),
-  blog_id uuid references blogs(id) on delete cascade,
-  title text not null,
-  content text,
-  created_at timestamp with time zone default now()
-);
+# ✅ Accessibility
 
--- Tabela de settings com limites
-create table settings (
-  id serial primary key,
-  max_blogs_per_user integer not null default 10,
-  max_posts_per_blog integer not null default 20,
-  updated_at timestamp with time zone default now()
-);
+* Use semantic HTML for rules and sections.
+* Ensure keyboard navigation and ARIA roles where needed.
+* Test with screen readers for usability.
 
--- Inserir limites iniciais
-insert into settings (max_blogs_per_user, max_posts_per_blog)
-values (10, 20);
+# 🧪 Testing
 
--- Função para limitar número de blogs por user
-create or replace function enforce_blog_limit()
-returns trigger as $$
-declare
-  limit_value integer;
-begin
-  select max_blogs_per_user into limit_value from settings limit 1;
-  if (select count(*) from blogs where user_id = new.user_id) >= limit_value then
-    raise exception 'User cannot have more than % blogs', limit_value;
-  end if;
-  return new;
-end;
-$$ language plpgsql;
+* Write unit tests for data utils and validators.
+* Use end-to-end tools like Cypress for rule pages.
+* Consider snapshot or visual regression testing for layout changes.
 
--- Trigger para blogs
-create trigger blog_limit_trigger
-before insert on blogs
-for each row execute function enforce_blog_limit();
+# 🧼 Code Style & Conventions
 
--- Função para limitar número de posts por blog
-create or replace function enforce_post_limit()
-returns trigger as $$
-declare
-  limit_value integer;
-begin
-  select max_posts_per_blog into limit_value from settings limit 1;
-  if (select count(*) from posts where blog_id = new.blog_id) >= limit_value then
-    raise exception 'A blog cannot have more than % posts', limit_value;
-  end if;
-  return new;
-end;
-$$ language plpgsql;
+* Use TypeScript everywhere.
+* Prefer interfaces over types.
+* Avoid `any` and `enum`; use explicit mappings.
+* Structure code with the following order:
+  * Exports → Subcomponents → Utils → Static → Types.
+* Prefer named exports.
 
--- Trigger para posts
-create trigger post_limit_trigger
-before insert on posts
-for each row execute function enforce_post_limit();
+# 📊 Performance Metrics
+
+* Monitor Core Web Vitals: LCP, CLS, FID.
+* Use Lighthouse and WebPageTest for audits.
+* Establish and maintain performance budgets.

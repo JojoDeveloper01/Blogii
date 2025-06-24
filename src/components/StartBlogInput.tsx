@@ -4,14 +4,14 @@ import { AskAuthentication } from "./AskAuthentication";
 import { TitleInputBase } from './shared/TitleInputBase';
 import { startBlog, processInput } from "@/lib/utils";
 
-interface TitleInputProps {
+interface StartBlogInputProps {
 	hasBlogs: boolean,
 	isAuthorized: boolean,
 	userId: string,
 	lang: string
 }
 
-export const TitleInput = component$(({ hasBlogs, isAuthorized, userId, lang }: TitleInputProps) => {
+export const StartBlogInput = component$(({ hasBlogs, isAuthorized, userId, lang }: StartBlogInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const message = useSignal("");

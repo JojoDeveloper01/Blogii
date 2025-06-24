@@ -4,6 +4,7 @@ export interface PostData {
     id: string;
     title: string;
     blog_id: string;
+    status?: string;
     content?: string;
     created_at?: Date | string;
     updated_at?: Date | string;

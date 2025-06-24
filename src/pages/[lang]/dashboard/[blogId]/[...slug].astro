@@ -1,6 +1,6 @@
 ---
+import PostEditor from "@/layouts/PostEditor.astro";
 import { getLangFromUrl } from "@/i18n/utils";
-import BlogPost from "@/layouts/BlogPost.astro";
 import { Editor } from "@/components/Editing/Editor";
 import type { BlogData } from "@/lib/types";
 import { generateShortNumericId, redirectToBlog } from "@/lib/utils";
@@ -21,78 +21,64 @@ let postData = null;
 let blogPosts = [];
 
 if (user) {
-    blogPosts = await getBlogWithPosts(String(blogId));
+  blogPosts = await getBlogWithPosts(String(blogId));
+  blogData = blogPosts;
+  blogPosts = [blogPosts];
+  postData = blogData?.posts.find((post: { id: string }) => post.id === postId);
 
-    blogData = blogPosts;
-    //console.log("blogData: ", blogData);
+  if (!blogData) {
+    return redirectToBlog(Astro, lang, String(blogId));
+  } else if (!postData && thisPostIsNew) {
+    const newPostId = generateShortNumericId();
 
-    blogPosts = [blogPosts];
-    //console.log("blogPosts: ", blogPosts);
+    blogData.posts = [...blogData.posts, { id: newPostId, title: "New Post" }];
+    try {
+      await createNewPost(String(blogId), String(newPostId), "New Post");
 
-    postData = blogData?.posts.find(
-        (post: { id: string }) => post.id === postId,
-    );
-
-    //console.log("postData: ", postData);
-
-    if (!blogData) {
-        return redirectToBlog(Astro, lang, String(blogId));
-    } else if (!postData && thisPostIsNew) {
-        const newPostId = generateShortNumericId();
-
-        blogData.posts = [
-            ...blogData.posts,
-            { id: newPostId, title: "New Post" },
-        ];
-        try {
-            await createNewPost(String(blogId), String(newPostId), "New Post");
-            
-            return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
-        } catch (err) {
-            console.error("Erro ao criar post:", err);
-            return redirectToBlog(Astro, lang, String(blogId));
-        }
-    } else if (!postData) {
-        return redirectToBlog(Astro, lang, String(blogId));
+      return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
+    } catch (err) {
+      console.error("Erro ao criar post:", err);
+      return redirectToBlog(Astro, lang, String(blogId));
     }
+  } else if (!postData) {
+    return redirectToBlog(Astro, lang, String(blogId));
+  }
 } else {
-    const cookie = Astro.cookies.get("blogiis");
-    blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
+  const cookie = Astro.cookies.get("blogiis");
+  blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
 
-    blogData = blogPosts.find(
-        (blog: { id: string; title: string }) => blog.id === blogId,
-    );
+  blogData = blogPosts.find(
+    (blog: { id: string; title: string }) => blog.id === blogId
+  );
 
-    postData = blogData?.posts.find(
-        (post: { id: string }) => post.id === postId,
-    );
+  postData = blogData?.posts.find((post: { id: string }) => post.id === postId);
 
-    // Validate required parameters
-    if (!blogData) {
-        return redirectToBlog(Astro, lang, String(blogId));
-    } else if (!postData && thisPostIsNew) {
-        const newPostId = generateShortNumericId();
-        blogData.posts = [
-            ...blogData.posts,
-            { id: newPostId, title: "New Post", thisPostIsNew },
-        ];
-        Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30,
-        });
+  // Validate required parameters
+  if (!blogData) {
+    return redirectToBlog(Astro, lang, String(blogId));
+  } else if (!postData && thisPostIsNew) {
+    const newPostId = generateShortNumericId();
+    blogData.posts = [
+      ...blogData.posts,
+      { id: newPostId, title: "New Post", thisPostIsNew },
+    ];
+    Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
 
-        return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
-    } else if (!postData) {
-        return redirectToBlog(Astro, lang, String(blogId));
-    }
+    return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}`);
+  } else if (!postData) {
+    return redirectToBlog(Astro, lang, String(blogId));
+  }
 }
 
 // Set editing mode
 if (editing !== "true" && editing !== "false") {
-    // Default to editing mode
-    const url = new URL(Astro.url);
-    url.searchParams.set("editing", "true");
-    return Astro.redirect(url.toString());
+  // Default to editing mode
+  const url = new URL(Astro.url);
+  url.searchParams.set("editing", "true");
+  return Astro.redirect(url.toString());
 }
 
 // Check if postData exists before accessing its properties
@@ -100,55 +86,59 @@ const isNewPost = postData?.thisPostIsNew || false;
 
 needsClientData = true;
 blog = {
-    id: blogId,
-    title: blogData?.title,
-    posts: [postData],
-    pubDate: new Date(),
+  id: blogId,
+  title: blogData?.title,
+  posts: [postData],
+  pubDate: new Date(),
 } as BlogData;
 ---
 
 {
-    blog ? (
-        <BlogPost {...blog}>
-            {editing ? (
-                <Editor
-                    {isNewPost}
-                    {blog}
-                    {blogPosts}
-                    {editing}
-                    {lang}
-                    isAuthorized={!!user}
-                    client:load
-                />
-            ) : null}
-        </BlogPost>
-    ) : null
+  blog ? (
+    <PostEditor
+      {...blog}
+      {blog}
+      {blogPosts}
+      editing={String(editing)}
+      userId={String(user?.id)}
+      {lang}
+    >
+      <Editor
+        isNewPost={isNewPost}
+        blog={blog}
+        blogPosts={blogPosts}
+        editing={String(editing)}
+        lang={lang}
+        isAuthorized={!!user}
+      />
+    </PostEditor>
+  ) : null
 }
 
 <style>
-    /* Personalizar o bloco do editor */
-    #editorjs {
-        background-color: #f9fafb;
-        color: #111827;
-        border: 2px solid #cbd5e1;
-        border-radius: 0.5rem;
-    }
+  /* Personalizar o bloco do editor */
+  #editorjs {
+    background-color: #f9fafb;
+    color: #111827;
+    border: 2px solid #cbd5e1;
+    border-radius: 0.5rem;
+  }
 
-    /* Blocos de texto */
-    .ce-paragraph {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #1f2937;
-    }
+  /* Blocos de texto */
+  .ce-paragraph {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #1f2937;
+  }
 
-    /* Botões e barra de ferramentas */
-    .ce-toolbar__plus,
-    .ce-toolbar__settings-btn {
-        background-color: #e2e8f0;
-        color: #1e293b;
-    }
+  /* Botões e barra de ferramentas */
+  .ce-toolbar__plus,
+  .ce-toolbar__settings-btn {
+    background-color: #e2e8f0;
+    color: #1e293b;
+  }
 
-    .ce-toolbar__plus:hover {
-        background-color: #cbd5e1;
-    }
+  .ce-toolbar__plus:hover {
+    background-color: #cbd5e1;
+  }
 </style>

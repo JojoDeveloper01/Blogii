@@ -1,0 +1,18 @@
+---
+import { icons } from "./Editing/icons";
+
+interface Props {
+  id?: string;
+}
+
+const { id = "mobile-menu" } = Astro.props;
+---
+
+<div class="md:hidden">
+  <label
+    for={id}
+    class="inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-200"
+  >
+    <span set:html={icons.menuAlt} />
+  </label>
+</div>

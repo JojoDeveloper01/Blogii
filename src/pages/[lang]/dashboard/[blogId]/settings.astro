@@ -13,7 +13,7 @@ const userId = user?.id;
 ---
 
 <Dashboard>
-	<div class="max-w-3xl mx-auto px-4">
+	<div class="mx-auto">
 		<h1 class="text-2xl font-bold mb-8 text-[--blanc-core] border-b border-[--primary] pb-4">Blog Settings</h1>
 		
 		<div class="space-y-8">
@@ -83,7 +83,7 @@ const userId = user?.id;
 						</svg>
 						Delete Blog
 					</button>
-					<DeleteBlog {blogId} lang={String(lang)} userId={String(userId)} isAuthorized={!!userId} client:idle />
+					<DeleteBlog blogId={String(blogId)} lang={String(lang)} userId={String(userId)} isAuthorized={!!userId} client:idle />
 				</div>
 			</section>
 		</div>

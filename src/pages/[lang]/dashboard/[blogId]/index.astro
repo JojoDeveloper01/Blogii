@@ -2,7 +2,9 @@
 import type { PostData } from "@/lib/types";
 import Dashboard from "@/layouts/Dashboard.astro";
 import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
-
+import { icons } from "@/components/Editing/icons";
+import CreatePostButton from "@/components/Posts/CreatePostButton.astro";
+import { PostsGrid } from "@/components/Posts/PostsGrid";
 
 const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
@@ -11,59 +13,198 @@ const { lang, blogId, blogData, user } = ctx;
 ---
 
 <Dashboard>
-	<div class="flex flex-wrap justify-between items-center mb-6">
-		<h2 class="text-2xl font-bold text-gray-800 dark:text-white">
-			Your Posts
-		</h2>
-		<a
-			href={`${blogId}/new`}
-			class="flex items-center gap-2 px-5 py-3 bg-white/10 dark:bg-noir-core/30 backdrop-blur-sm border border-[--blanc-core]/10 text-[--blanc-core] font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.03] hover:border-[--secondary]/50 group"
-		>
-			<svg
-				class="w-5 h-5 text-[--secondary] group-hover:rotate-90 transition-transform duration-300"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M12 4v16m8-8H4"></path>
-			</svg>
-			<span>Create New Post</span>
-		</a>
-	</div>
-	<div class="flex flex-wrap gap-6">
-		{
-			blogData?.posts?.map((post: PostData) => (
-				<a
-					href={`${blogId}/${post.id}`}
-					class="flex relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 aspect-square hover:scale-[1.02] group w-full max-w-[17rem]"
-				>
-					{/* Gradient overlay with animation */}
-					<div class="absolute inset-0 bg-gradient-to-br from-[--primary] via-[--secondary] to-[--helper] opacity-90 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+  <div class="space-y-8">
+    <!-- Blog Description -->
+    <section
+      class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
+    >
+      <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+        Blog Description
+      </h2>
+      <div class="space-y-4">
+        <div>
+          <label
+            for="blogDescription"
+            class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2"
+            >Description</label
+          >
+          <textarea
+            id="blogDescription"
+            class="w-full p-3 bg-white/50 dark:bg-gray-900/50 dark:text-white rounded-lg border border-gray-200/20 dark:border-gray-700/20 focus:ring-2 focus:ring-primary/50"
+            rows="3"
+            placeholder="Write a description for your blog..."
+            >{blogData?.description || ""}</textarea
+          >
+        </div>
+      </div>
+    </section>
 
-					{/* Animated pattern overlay */}
-					<div class="absolute inset-0 bg-[url('/images/noise.png')] opacity-20 mix-blend-overlay z-20" />
+    <!-- Recent Posts Section -->
+    <section class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+          Recent Posts
+        </h2>
+        <div class="flex items-center gap-3">
+          <a
+            href={`${blogId}/posts`}
+            class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
+          >
+            View All Posts
+          </a>
+          <CreatePostButton blogId={String(blogId)} />
+        </div>
+      </div>
 
-					{/* Content with glow effect */}
-					<div class="absolute bottom-0 left-0 right-0 p-5 text-white z-30 transform transition-transform duration-300 group-hover:translate-y-[-5px]">
-						<h2
-							class="text-xl font-bold mb-2 line-clamp-2 drop-shadow-md"
-							title={post.title}
-						>
-							{post.title || "Untitled Post"}
-						</h2>
-						<div class="w-16 h-1 bg-white/70 rounded-full transform origin-left transition-all duration-300 group-hover:w-24 group-hover:bg-white" />
-					</div>
+      <!-- Posts Grid com apenas 3 posts mais recentes -->
+      <PostsGrid
+        posts={(blogData?.posts || []).slice(0, 3)}
+        lang={String(lang)}
+        blogId={String(blogId)}
+        selector={false}
+      />
+    </section>
 
-					{/* Background color with slight animation */}
-					<div class="absolute inset-0 bg-gradient-to-tr from-[--primary]/80 to-[--secondary]/80 z-0 transform transition-transform duration-700 group-hover:scale-110">
-						{/* Background animation container */}
-					</div>
-				</a>
-			))
-		}
-	</div>
+    <!-- Appearance -->
+    <section
+      class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
+    >
+      <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+        Appearance
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div class="relative group">
+          <div class="aspect-video bg-gradient-to-br from-primary to-primary-dark rounded-lg">
+          </div>
+          <button
+            type="button"
+            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-lg text-white text-sm font-medium"
+          >
+            Preview Theme
+          </button>
+        </div>
+
+        <div class="relative group">
+          <div class="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+          </div>
+          <button
+            type="button"
+            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-lg text-white text-sm font-medium"
+          >
+            Preview Theme
+          </button>
+        </div>
+
+        <div class="relative group">
+          <div class="aspect-video bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+          </div>
+          <button
+            type="button"
+            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-lg text-white text-sm font-medium"
+          >
+            Preview Theme
+          </button>
+        </div>
+
+        <div class="relative group">
+          <div class="aspect-video bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
+          </div>
+          <button
+            type="button"
+            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-lg text-white text-sm font-medium"
+          >
+            Preview Theme
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics -->
+    <section
+      class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+          Analytics
+        </h2>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white bg-white/5 hover:bg-white/10 dark:bg-gray-800/5 dark:hover:bg-gray-800/10 rounded-lg border border-gray-200/10 dark:border-gray-700/10 transition-all duration-200"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export Data
+        </button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Page Views
+          </h3>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+        <div class="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Total Posts
+          </h3>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            {blogData?.posts?.length || 0}
+          </p>
+        </div>
+        <div class="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Subscribers
+          </h3>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community -->
+    <section
+      class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
+    >
+      <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+        Community
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- Comments Settings -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+            Comments
+          </h3>
+          <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                class="form-checkbox text-primary"
+                checked
+              />
+              <span class="text-sm text-gray-600 dark:text-gray-400"
+                >Enable comments</span
+              >
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" class="form-checkbox text-primary" />
+              <span class="text-sm text-gray-600 dark:text-gray-400"
+                >Moderate before publishing</span
+              >
+            </label>
+          </div>
+        </div>
+        <!-- Subscribers List -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+            Subscribers
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            No subscribers yet
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
 </Dashboard>

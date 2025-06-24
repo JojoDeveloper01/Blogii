@@ -3,25 +3,12 @@ import Layout from "@/layouts/Layout.astro";
 import Hero from "@/components/Hero.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
 import { getLangFromUrl } from "@/i18n/utils";
-import type { BlogData } from "@/lib/types";
-import { getUserBlogsWithPosts, getUser } from "@/lib/utilsDB";
+import { getUser, loadUserBlogsData } from "@/lib/utilsDB";
 
 const user = await getUser();
 const lang = getLangFromUrl(Astro.url);
 
-let blogsData: BlogData[] = [];
-
-try {
-  if (user) {
-    blogsData = await getUserBlogsWithPosts(user.id) || [];
-  }
-  if (!user) {
-    const cookie = Astro.cookies.get("blogiis");
-    blogsData = cookie ? JSON.parse(cookie.value) : [];
-  }
-} catch (error) {
-  console.error("Erro ao obter dados do blog:", error);
-}
+const blogsData = await loadUserBlogsData(user, Astro);
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>

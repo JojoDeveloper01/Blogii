@@ -1,0 +1,99 @@
+---
+import Dashboard from "@/layouts/Dashboard.astro";
+import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
+import { icons } from "@/components/Editing/icons";
+
+const ctx = await getDashboardContextOfTheBlog(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
+
+const { lang, blogId, blogData, user } = ctx;
+
+// Simular alguns comentários para preview
+const comments = [
+  {
+    id: 1,
+    author: "John Doe",
+    content: "Great post! Really enjoyed reading it.",
+    postTitle: "Getting Started with Astro",
+    date: "2024-06-23",
+    status: "approved"
+  },
+  {
+    id: 2,
+    author: "Jane Smith",
+    content: "This was very helpful, thanks!",
+    postTitle: "Why Choose Qwik?",
+    date: "2024-06-22",
+    status: "pending"
+  }
+];
+---
+
+<Dashboard>
+  <div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Comments</h1>
+      <div class="flex gap-4">
+        <select class="rounded-lg border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
+          <option>All Comments</option>
+          <option>Pending</option>
+          <option>Approved</option>
+          <option>Spam</option>
+        </select>
+        <button class="px-4 py-2 bg-gradient-to-r from-[--primary] to-[--secondary] text-white rounded-lg shadow hover:shadow-lg transition-all duration-300">
+          Bulk Actions
+        </button>
+      </div>
+    </div>
+
+    <!-- Comments List -->
+    <div class="space-y-4">
+      {comments.map(comment => (
+        <div class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 border border-gray-200/10 dark:border-gray-700/10">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[--primary] to-[--secondary] flex items-center justify-center text-white font-bold">
+                {comment.author[0]}
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-gray-900 dark:text-white">{comment.author}</h3>
+                  <span class="text-sm text-gray-500">on {comment.postTitle}</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300">{comment.content}</p>
+                <div class="flex items-center gap-4 text-sm">
+                  <span class="text-gray-500">{comment.date}</span>
+                  <span class={`px-2 py-0.5 rounded-full text-xs ${
+                    comment.status === 'approved' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300'
+                  }`}>
+                    {comment.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="p-2 text-gray-500 hover:text-[--primary] transition-colors duration-200">
+                <span set:html={icons.edit} />
+              </button>
+              <button class="p-2 text-gray-500 hover:text-red-500 transition-colors duration-200">
+                <span set:html={icons.delete} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center gap-2">
+      <button class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200">
+        Previous
+      </button>
+      <button class="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200">
+        Next
+      </button>
+    </div>
+  </div>
+</Dashboard>

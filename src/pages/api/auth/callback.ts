@@ -25,7 +25,6 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 
 		if (!hasBlogsInTheDB) {
 			const blogs = cookies.get("blogiis");
-			console.log(blogs);
 			if (blogs) {
 				cookies.set("user-id", user.id, {
 					path: "/",

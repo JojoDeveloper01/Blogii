@@ -4,6 +4,7 @@ import { TITLE_REGEX, validateTitle } from '@/lib/utils';
 interface TitleInputBaseProps {
     value: Signal<string>;
     placeholder?: string;
+    style?: string;
     onInput$: (value: string) => void;
     onEnter$?: () => void; // Add this prop
 }
@@ -11,6 +12,7 @@ interface TitleInputBaseProps {
 export const TitleInputBase = component$<TitleInputBaseProps>(({
     value,
     placeholder = "Start your idea here...",
+    style,
     onInput$,
     onEnter$
 }) => {
@@ -61,9 +63,10 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
             onPaste$={handlePaste}
             onKeyDown$={handleKeyDown}
             class={
-                'flex-1 px-4 py-2 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors' +
-                ' dark:bg-zinc-700 dark:text-white hover:border-[--sub-primary]'
+                'flex-1 px-4 py-1 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors' +
+                ' dark:bg-zinc-700 dark:text-white hover:border-secondary/50'
             }
+            style={style}
             placeholder={placeholder}
         />
     );

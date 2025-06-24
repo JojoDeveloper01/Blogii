@@ -1,24 +1,14 @@
-import { component$, useSignal, $, useVisibleTask$, type Signal, type QRL } from '@builder.io/qwik';
+import { component$, $, type Signal, type QRL } from '@builder.io/qwik';
 import type EditorJS from '@editorjs/editorjs';
 import { icons } from './icons';
 import { executeEditorCommand } from "@/lib/utils";
-import { PathPost } from './PathPost';
-import type { BlogData } from "@/lib/types";
 
 interface EditorToolbarProps {
     editor: Signal<EditorJS | null>;
-    blogId: string;
-    postId: string;
-    title: Signal<string>;
-    blogTitle: string;
-    lang: string;
     isPreviewMode: Signal<boolean>;
-    togglePreviewMode: QRL<() => void>;
-    fetchBlog: QRL<() => Promise<BlogData>>;
-    isAuthorized: boolean;
 }
 
-export const EditorToolbar = component$<EditorToolbarProps>(({ editor, blogId, postId, title, blogTitle, lang, isPreviewMode, togglePreviewMode, fetchBlog, isAuthorized }) => {
+export const EditorToolbar = component$<EditorToolbarProps>(({ editor, isPreviewMode }) => {
 
     const executeCommand = $((command: string, params?: any) => {
         executeEditorCommand(editor.value, command, params);
@@ -26,21 +16,6 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ editor, blogId, p
 
     return (
         <div class="flex flex-col gap-1 bg-[--bg-color] border-b border-gray-700 rounded-t-lg">
-            {/* Breadcrumb path */}
-            <PathPost
-                blogId={blogId}
-                postId={postId}
-                title={title}
-                blogTitle={blogTitle}
-                lang={lang}
-                isPreviewMode={isPreviewMode}
-                onTogglePreview$={togglePreviewMode}
-                fetchBlog={fetchBlog}
-                isAuthorized={isAuthorized}
-            />
-
-            <hr class="h-[0.9px] w-11/12 m-auto bg-[--noir-core] dark:bg-[--blanc-core] opacity-10 border-0" />
-
             {/* Barra de ferramentas do editor com estilo moderno */}
             <div class={`flex ${isPreviewMode.value ? 'hidden' : 'block'}`}>
                 <div class="editor-toolbar w-full grid gap-2">

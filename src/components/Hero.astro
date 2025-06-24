@@ -1,6 +1,6 @@
 ---
 import LoginRegister from "./LoginRegister.astro";
-import { TitleInput } from "./TitleInput";
+import { StartBlogInput } from "./StartBlogInput";
 import { sanitizeString } from "@/lib/utils";
 import { signInToCreateMoreBlogs } from "@/lib/consts";
 
@@ -32,17 +32,17 @@ const hasBlogs: boolean = blogsData.length > 0;
 
         <!-- Login register component -->
         {
-            !isAuthorized ? (
+            !isAuthorized && (
                 <div class="fade-in-up animation-delay-200">
                     <LoginRegister
                         id="authModalMoreBlogs"
                         message={signInToCreateMoreBlogs}
                     />
                 </div>
-            ) : null
+            )
         }
         <div class="w-80 sm:w-full grid gap-4">
-            <TitleInput {isAuthorized} {hasBlogs} {userId} {lang} client:load />
+            <StartBlogInput {isAuthorized} {hasBlogs} {userId} {lang} client:load />
             <!-- Blogs list with enhanced styling -->
             {
                 hasBlogs && (

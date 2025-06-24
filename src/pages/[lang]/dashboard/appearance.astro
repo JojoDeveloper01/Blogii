@@ -1,0 +1,16 @@
+---
+import type { PostData } from "@/lib/types";
+import Dashboard from "@/layouts/Dashboard.astro";
+import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
+import { icons } from "@/components/Editing/icons";
+import PostsGrid from "@/components/Posts/PostsGrid.astro";
+
+const ctx = await getDashboardContextOfTheBlog(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
+
+const { lang, blogId, blogData, user } = ctx;
+---
+
+<Dashboard>
+  
+</Dashboard>

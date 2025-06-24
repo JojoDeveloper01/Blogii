@@ -6,9 +6,10 @@ interface BlogTitleEditorProps {
     blogId: string;
     initialTitle: string;
     isAuthorized: boolean;
+    style?: string;
 }
 
-export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle, blogId, isAuthorized }) => {
+export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle, blogId, isAuthorized, style }) => {
     const title = useSignal(initialTitle);
     const originalTitle = useSignal(title.value);
     const { hasChanges, isSaving, createAutoSave } = useAutoSave();
@@ -31,7 +32,7 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
     });
 
     return (
-        <div class="flex-1 flex items-center space-x-2 relative">
+        <div class="flex-1 flex space-x-2 relative">
             <TitleInputBase
                 value={title}
                 onInput$={handleInput}
@@ -46,6 +47,7 @@ export const BlogTitleEditor = component$<BlogTitleEditorProps>(({ initialTitle,
                     originalTitle
                 })}
                 placeholder="Blog Title"
+                style={style}
             />
             {isSaving.value && !showSaveSuccess.value && (
                 <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">

@@ -1,0 +1,103 @@
+---
+import type { BlogData } from "@/lib/types";
+import { BlogTitleEditor } from "@/components/Editing/BlogTitleEditor";
+import { icons } from "@/components/Editing/icons";
+import ConfirmDialog from "./shared/ConfirmDialog.astro";
+import { createNewBlogMessage, signInToCreateMoreBlogs } from "@/lib/consts";
+import { StartBlogInput } from "./StartBlogInput";
+import LoginRegister from "./LoginRegister.astro";
+
+interface Props {
+  userBlogs: BlogData[];
+  currentBlog?: BlogData;
+  lang: string;
+  editing: boolean;
+}
+
+const { userBlogs, currentBlog, lang, editing } = Astro.props;
+
+const isAuthorized = Boolean(currentBlog?.user_id);
+const hasBlogs = userBlogs.length > 0;
+---
+
+<div class="relative w-fit min-w-[120px] group">
+  {
+    !editing ? (
+      <>
+        <button class="w-full flex items-center justify-between gap-2 px-4 text-xs bg-white/30 dark:bg-zinc-700/20 backdrop-blur-md rounded-lg shadow-md border border-gray-100/50 dark:border-gray-800/50 transition-all duration-300 ease-in-out hover:bg-white/40 dark:hover:bg-zinc-700/30 hover:border-primary-400/50 dark:hover:border-primary-400/50 hover:shadow-lg">
+          <div class="flex items-center gap-2">
+            <span set:html={icons.dashboard} />
+            <BlogTitleEditor
+              {isAuthorized}
+              blogId={String(currentBlog?.id)}
+              initialTitle={currentBlog?.title || ""}
+              style="background: transparent; z-index: 2;"
+            />
+          </div>
+          <span set:html={icons.breadCrumbArrow} />
+        </button>
+      </>
+    ) : (
+      <>
+        <a
+          href={`/${lang}/dashboard/${currentBlog?.id}`}
+          class="w-full flex items-center justify-between gap-2 px-4 text-xs bg-white/30 dark:bg-zinc-700/20 backdrop-blur-md rounded-lg shadow-md border border-gray-100/50 dark:border-gray-800/50 transition-all duration-300 ease-in-out hover:bg-white/40 dark:hover:bg-zinc-700/30 hover:border-primary-400/50 dark:hover:border-primary-400/50 hover:shadow-lg"
+        >
+          <div class="flex items-center gap-2">
+            <span set:html={icons.dashboard} />
+            <span class="p-3">{currentBlog?.title}</span>
+          </div>
+          <span set:html={icons.breadCrumbArrow} />
+        </a>
+      </>
+    )
+  }
+
+  <div
+    class="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 absolute w-full mt-1 bg-white/40 dark:bg-zinc-700/30 backdrop-blur-md rounded-lg shadow-lg border border-gray-100/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 ease-in-out z-50"
+  >
+    {
+      (isAuthorized ? userBlogs : [currentBlog]).map((blog) => (
+        <a
+          href={`/${lang}/dashboard/${blog?.id}`}
+          class="flex items-center gap-2 p-4 text-xs text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-zinc-600/40"
+        >
+          <span set:html={icons.dashboard} />
+          <span class="truncate">{blog?.title || "Untitled Blog"}</span>
+        </a>
+      ))
+    }
+    <button
+      class="w-full flex items-center gap-2 p-4 text-xs text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-zinc-600/40"
+      onclick={`document.getElementById(${isAuthorized ? "'confirmNewBlog'" : "'loginModalMoreBlogs'"}).showModal()`}
+    >
+      <span set:html={icons.new} />
+      <span>Create New Blog</span>
+    </button>
+    {
+      !isAuthorized ? (
+        <div class="fade-in-up animation-delay-200">
+          <LoginRegister
+            id="loginModalMoreBlogs"
+            message={signInToCreateMoreBlogs}
+          />
+        </div>
+      ) : (
+        <ConfirmDialog
+          id="confirmNewBlog"
+          title="Create New Blog"
+          message={createNewBlogMessage}
+        >
+          <div class="grid w-full">
+            <StartBlogInput
+              {lang}
+              {isAuthorized}
+              {hasBlogs}
+              userId={String(currentBlog?.user_id)}
+            />
+          </div>
+        </ConfirmDialog>
+      )
+    }
+  </div>
+</div>

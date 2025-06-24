@@ -40,22 +40,44 @@ export async function getUser() {
   }
 }
 
+export async function loadUserBlogsData(user: any, Astro: any): Promise<BlogData[]> {
+  try {
+    if (user) {
+      return await getUserBlogsWithPosts(user.id) || [];
+    } else {
+      const cookie = Astro.cookies.get("blogiis");
+      return cookie ? JSON.parse(cookie.value) : [];
+    }
+  } catch (error) {
+    console.error("Error while fetching blog data:", error);
+    return [];
+  }
+}
+
 //Get:
 export async function getUserBlogsWithPosts(userId: string) {
-  if (!userId) throw new Error('User ID é obrigatório');
-
-  const { data, error } = await supabase
-    .from('blogs')
-    .select(`*, posts(*)`)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('[getUserBlogsWithPosts] Erro ao buscar blogs:', error);
-    throw error;
+  if (!userId) {
+    console.warn('[getUserBlogsWithPosts] User ID não fornecido');
+    return [];
   }
 
-  return data;
+  try {
+    const { data, error } = await supabase
+      .from('blogs')
+      .select(`*, posts(*)`)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[getUserBlogsWithPosts] Erro ao buscar blogs:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('[getUserBlogsWithPosts] Erro ao buscar blogs:', error);
+    return [];
+  }
 }
 
 export async function getBlogWithPosts(blogId: string) {
@@ -127,32 +149,71 @@ export async function getAppSettings() {
 /* Context: */
 export async function getDashboardContextOfTheBlog(Astro: any) {
   const lang = getLangFromUrl(Astro.url);
-  const blogId = Astro.url.pathname.split("/").find((id: string) => /^\d+$/.test(id));
-
-  if (!blogId) return { redirect: `/${lang}` };
+  const currentPage = Astro.url.pathname.split('/').filter(Boolean).at(-1);
 
   const user = await getUser();
   const isAuthorized = Boolean(user);
 
+  let blogId: string | null = null;
   let blogData: BlogData | null = null;
-  if (isAuthorized && user) {
-    blogData = await getBlogWithPosts(blogId);
+
+  // Se a página NÃO for dashboard, precisamos ter blogId e blogData
+  if (currentPage !== "dashboard") {
+    blogId = currentPage;
+
+    if (!blogId) return { redirect: `/${lang}` };
+
+    if (isAuthorized && user) {
+      const parts = Astro.url.pathname.split('/').filter(Boolean);
+      const possibleBlogIds = [parts.at(-1), parts.at(-2)];
+
+      for (const id of possibleBlogIds) {
+        const data = await getBlogWithPosts(id!);
+        if (data) {
+          blogData = data;
+          blogId = id; // <-- atualiza o blogId se encontrar
+          break;
+        }
+      }
+    }
+
+    if (!blogData && !isAuthorized) {
+      const parts = Astro.url.pathname.split('/').filter(Boolean);
+      const possibleBlogIds = [parts.at(-1), parts.at(-2)].filter(Boolean) as string[];
+
+      const cookie = Astro.cookies.get("blogiis");
+      const blogs = cookie ? safeParseJSON(cookie.value) : [];
+
+      for (const id of possibleBlogIds) {
+        // Primeiro: tenta achar no cookie
+        const found = blogs.find((blog: any) => blog.id === id);
+        if (found) {
+          blogData = found;
+          blogId = id;
+          break;
+        }
+      }
+    }
+
+    // Se mesmo após tudo ainda não tiver blogData, redireciona
+    if (!blogData) return { redirect: `/${lang}` };
   }
 
-  if (!blogData && !isAuthorized) {
-    let blogs = [];
-    const cookie = Astro.cookies.get("blogiis");
-    try {
-      blogs = cookie ? JSON.parse(cookie.value) : [];
-    } catch { }
-
-    const foundBlog = blogs.find((blog: any) => blog.id === blogId);
-    if (foundBlog) blogData = foundBlog;
+  // Se a página for "dashboard", blogId e blogData não devem existir
+  if (currentPage === "dashboard" && (blogId || blogData)) {
+    return { redirect: `/${lang}` };
   }
-
-  if (!blogData) return { redirect: `/${lang}` };
 
   return { lang, blogId, blogData, user };
+}
+
+// Utilitário seguro para JSON.parse
+function safeParseJSON(str: string): any[] {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
 }
 
 //Create:

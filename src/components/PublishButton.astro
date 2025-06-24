@@ -1,0 +1,29 @@
+---
+import { signInToPublishBlog } from "@/lib/consts";
+import { icons } from "./Editing/icons";
+import LoginRegister from "./LoginRegister.astro";
+
+interface Props {
+  id: string;
+  isAuthorized: boolean;
+}
+
+const { id, isAuthorized } = Astro.props;
+---
+
+<div>
+  {
+    !isAuthorized ? (
+      <LoginRegister id={id} message={signInToPublishBlog} />
+    ) : null
+  }
+  <button
+    onclick={!isAuthorized
+      ? `document.getElementById('${id}').showModal()`
+      : null}
+    class="px-3 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+  >
+    <span set:html={icons.publish} />
+    Publish
+  </button>
+</div>

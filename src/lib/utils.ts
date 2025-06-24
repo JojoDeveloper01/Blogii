@@ -178,7 +178,6 @@ export const startBlog = async (
 
 	try {
 		if (isAuthorized) {
-			console.log(blogData);
 			const { error } = await actions.blog.create({ blogData });
 			if (error) throw error;
 		} else if (typeof window !== 'undefined') {
@@ -280,7 +279,8 @@ export const processInput = async (
 	}
 
 	try {
-		if (hasBlogs && !isAuthorized) {
+		// Só verifica hasBlogs se não estiver autorizado
+		if (!isAuthorized && hasBlogs) {
 			setState({ error: true, msg: blogAlreadyCreated, login: true, disabled: true });
 			return false;
 		}

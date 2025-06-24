@@ -1,11 +1,99 @@
 ---
-import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
-import Layout from "@/layouts/Layout.astro";
-import { getLangFromUrl } from "@/i18n/utils";
+import Dashboard from "@/layouts/Dashboard.astro";
+import { getUserBlogsWithPosts } from "@/lib/utilsDB";
+import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
 
-const lang = getLangFromUrl(Astro.url);
+const ctx = await getDashboardContextOfTheBlog(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
+
+const { lang, blogId, blogData, user } = ctx;
+
+const blogs = await getUserBlogsWithPosts(String(user?.id));
 ---
 
-<Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
+<Dashboard>
+    <div class="container mx-auto px-4">
+        <h1 class="mb-8 text-3xl font-bold text-gray-800 dark:text-white">
+            Your Blogs
+        </h1>
 
-</Layout>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {blogs.map((blog) => {
+                const firstPost = blog.posts?.[0];
+                const firstImage = firstPost?.content?.match(/!\[.*?\]\((.*?)\)/)?.[1];
+                
+                return (
+                    <a
+                        href={`/${lang}/dashboard/${blog.id}`}
+                        class="group relative flex h-64 flex-col overflow-hidden rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 shadow-lg transition-transform"
+                    >
+                        {firstImage ? (
+                            <div class="absolute inset-0">
+                                <img
+                                    src={firstImage}
+                                    alt={blog.title || 'Blog preview'}
+                                    class="h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-30"
+                                />
+                            </div>
+                        ) : null}
+
+                        <div class="relative flex h-full flex-col justify-center p-6 text-white">
+                            <h2 class="mb-2 text-2xl font-bold">
+                                {blog.title || 'Untitled Blog'}
+                            </h2>
+                            {!firstImage && blog.description && (
+                                <p class="text-sm text-white/80">
+                                    {blog.description}
+                                </p>
+                            )}
+                            <div class="mt-4 flex items-center gap-2 text-sm text-white/60">
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                    />
+                                </svg>
+                                <span>{blog.posts?.length || 0} posts</span>
+                            </div>
+                        </div>
+                    </a>
+                );
+            })}
+
+            {/* Create New Blog Card */}
+            <a
+                href={`/${lang}/dashboard/new`}
+                class="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white/5 p-6 text-center transition-colors hover:border-purple-500 hover:bg-purple-500/10 dark:border-gray-700 dark:hover:border-purple-400"
+            >
+                <div class="mb-4 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 p-3">
+                    <svg
+                        class="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                    Create New Blog
+                </h3>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Start a new blog and share your thoughts
+                </p>
+            </a>
+        </div>
+    </div>
+</Dashboard>

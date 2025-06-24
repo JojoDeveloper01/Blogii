@@ -258,22 +258,22 @@ export const createNewPost = $(async (
     }
 });
 
-export const deletePost = $(async (blogId: string, postId: string, lang: string, isAuthorized: boolean = false) => {
+export async function deletePost(blogId: string, postId: string, lang: string, isAuthorized: boolean = false): Promise<boolean> {
     try {
         // If authorized, try to delete from DB first
         if (isAuthorized) {
             try {
-              const { data, error } = await actions.post.delete({ blogId, postId });
-              if (!error && data?.success) {
-                if (typeof window !== 'undefined') {
-                  window.location.href = `/${lang}/dashboard/${blogId}`;
+                const { data, error } = await actions.post.delete({ blogId, postId });
+                if (!error && data?.success) {
+                    if (typeof window !== 'undefined') {
+                        window.location.href = `/${lang}/dashboard/${blogId}`;
+                    }
+                    return true;
                 }
-                return true;
-              }
             } catch (err) {
-              console.warn('Falha ao apagar post do DB:', err);
+                console.warn('Falha ao apagar post do DB:', err);
             }
-          }          
+        }          
 
         // Get blog from IndexedDB
         const blog = await localBlogDB.getBlog(blogId);
@@ -312,4 +312,4 @@ export const deletePost = $(async (blogId: string, postId: string, lang: string,
         console.error('Error deleting post:', error);
         throw error;
     }
-});
+}

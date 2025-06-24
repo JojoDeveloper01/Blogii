@@ -26,9 +26,9 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 
 [X] Add authentication - Supabase (with google, facebook, microsoft)
     [X] Save the User data on the server
-    [] Add Local Blog to the DB 
-        [] Has to save the temporal blog on the server
-        [] Has to delete the temporal blog on the local
+    [x] Add Local Blog to the DB 
+        [x] Has to save the temporal blog on the server
+        [x] Has to delete the temporal blog on the local
         [x] If its logged in, get the blog from the DB
 
 [x] The local logic has to be synchronized with the DB:
@@ -39,31 +39,27 @@ The user can administrate his blog posts on the dashboard and see analytics abou
     [X] Has update the the content of the post on the DB
     [X] Has to Create Blogs on the DB
 
-
-
-[] Add description to the blog on the dashboard
-
-[x] Add dashboard
-    [] Has to show the blogs of the user on the dashboard
+[x] Add dashboard page
+    [x] Has to show the blogs of the user on the dashboard
     [x] Has to show their posts of the their blog to the user
-    [] Has to show the analytics of the blogs of the user (if its logged in)
-        [] Create a table to save the analaitics of the blogs of the user
-        [] Has to connect with google analitics or something like that
+    [x] Has to show the analytics of the blogs of the user (if its logged in)
+        [] Create a table to save the analytics of the blogs of the user
+        [] Has to connect with google analytics or something like that
         [] Has to show the number of posts, views, likes of the blog
     [] Has to show the comments of the blogs of the user
     [] Has to show the settings of the blogs of the user
 
-[] Make the publish button
+[x] Make the publish button
     [] Has to save the blog on the repository, create a .mk on the folder "Content"
+    [] Add publish confirmation dialog with post selection
 
 [x] Ask to chatGPT how i can make a domain name to link to the blog like `blog-name.myblogii.com`
 
 [] Add Comments on the blog
 [] Add the options to enable the comments on the blog
 
-[] Add the Dashboard page 
+[x] Add the pricing page, free, monthly payment (with n% discount), annual payment (with n% discount) and unique payment (with n% discount)
 [] Add the public Blogs page, blogs created on blogii  
-[] Add the pricing page, free, monthly payment (with n% discount), annual payment (with n% discount) and unique payment (with n% discount)
     [] has to show the advanced features of this plan
 
 

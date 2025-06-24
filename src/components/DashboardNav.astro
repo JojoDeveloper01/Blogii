@@ -1,0 +1,114 @@
+---
+import { icons } from "./Editing/icons";
+import SidebarLink from "./SidebarLink.astro";
+
+interface Props {
+  lang: string;
+  blogId: string;
+  isAuthorized: boolean;
+  currentPage: string;
+}
+
+const { lang, blogId, isAuthorized, currentPage } = Astro.props;
+
+const link = (path: string) =>
+  `/${lang}/dashboard${currentPage === "dashboard" ? "" : `/${blogId}`}${path}`;
+
+// Definição das seções de navegação
+const navSections = [
+  {
+    id: "content",
+    title: "Content",
+    showWhen: currentPage !== "dashboard",
+    items: [
+      {
+        href: `/${lang}/dashboard/${blogId}`,
+        icon: icons.posts,
+        label: "Overview",
+      },
+      {
+        href: `/${lang}/dashboard/${blogId}/posts`,
+        icon: icons.posts,
+        label: "Posts",
+      },
+      {
+        href: `/${lang}/dashboard/${blogId}/appearance`,
+        icon: icons.appearance,
+        label: "Appearance",
+      },
+    ],
+  },
+  {
+    id: "engagement",
+    title: "Engagement",
+    showWhen: isAuthorized,
+    items: [
+      {
+        href: link("/analytics"),
+        icon: icons.analytics,
+        label: "Analytics",
+      },
+      {
+        href: link("/comments"),
+        icon: icons.comments,
+        label: "Comments",
+      },
+      {
+        href: link("/subscribers"),
+        icon: icons.subscribers,
+        label: "Subscribers",
+      },
+    ],
+  },
+  {
+    id: "settings",
+    title: "Settings",
+    showWhen: currentPage !== "dashboard",
+    items: [
+      {
+        href: `/${lang}/dashboard/${blogId}/settings`,
+        icon: icons.settings,
+        label: "Settings",
+      },
+    ],
+  },
+];
+---
+
+<nav>
+  <div class="space-y-1 divide-y divide-gray-100 dark:divide-gray-700">
+    {
+      navSections.map(
+        (section) =>
+          section.showWhen && (
+            <div
+              class={
+                section.id === "content"
+                  ? "pb-2"
+                  : section.id === "settings"
+                    ? "pt-2"
+                    : "py-2"
+              }
+            >
+              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                {section.title}
+              </h3>
+              <ul class="space-y-1">
+                {section.items.map((item) => (
+                  <li>
+                    <SidebarLink
+                      href={item.href}
+                      icon={String(item.icon)}
+                      label={item.label}
+                      lang={String(lang)}
+                      blogId={String(blogId)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+      )
+    }
+  </div>
+</nav>

@@ -1,0 +1,67 @@
+---
+import BlogSelector from "./BlogSelector.astro";
+import { PostTitleEditor } from "./Editing/PostTitleEditor";
+import { icons } from "./Editing/icons";
+import { getPostById } from "@/lib/utilsDB";
+
+interface Props {
+  userBlogs: any;
+  currentBlog: any;
+  isAuthorized: boolean;
+  editing: boolean;
+  lang: string;
+}
+
+const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
+
+const { userBlogs, currentBlog, isAuthorized, editing, lang } = Astro.props;
+
+let currentPost;
+if (/^\d{3,4}$/.test(String(currentPage))) {
+  currentPost = await getPostById(String(currentPage));
+}
+---
+
+<div>
+  <ol
+    class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5 dark:text-white"
+  >
+    <li class="inline-flex items-center gap-1.5">
+      <a
+        href={`/${lang}${isAuthorized ? `/dashboard` : ``}`}
+        class="hover:text-foreground transition-colors">Blogii</a
+      >
+    </li>
+    {
+      currentPage !== "dashboard" && (
+        <>
+          <li>
+            <span set:html={icons.breadcrumb} />
+          </li>
+          <li class="inline-flex items-center gap-1.5">
+            <BlogSelector {userBlogs} {currentBlog} {editing} {lang} />
+          </li>
+        </>
+      )
+    }
+
+    <!-- If is in the post editor -->
+    {
+      editing && (
+        <>
+          <li>
+            <span set:html={icons.breadcrumb} />
+          </li>
+          <li>
+            <PostTitleEditor
+              blogId={currentBlog?.id}
+              postId={currentPost?.id}
+              initialTitle={currentPost?.title}
+              {isAuthorized}
+            />
+          </li>
+        </>
+      )
+    }
+  </ol>
+</div>

@@ -156,9 +156,7 @@ export const server = {
                 userId: z.string(),
             }),
             handler: async ({ blogId, userId }) => {
-                console.log(blogId, userId);
                 const result = await deleteBlogByUserId(blogId, userId);
-                console.log(result);
                 if (!result.success) {
                     throw new ActionError(
                         `Falha ao apagar blog: ${result.error || 'Erro desconhecido'}`,

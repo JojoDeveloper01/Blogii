@@ -89,19 +89,12 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
     });
 
     return (
-        <div class="flex flex-col gap-4">
-
+        <div class="flex flex-col gap-2">
+            {/* Breadcrumb path */}
+            
             <EditorToolbar
                 editor={editor}
-                blogId={blog?.id}
-                postId={post?.id ?? ''}
-                title={useSignal(post?.title ?? '')}
-                blogTitle={blog?.title ?? ''}
-                lang={lang}
                 isPreviewMode={isPreviewMode}
-                togglePreviewMode={togglePreviewMode}
-                fetchBlog={fetchBlog}
-                isAuthorized={isAuthorized}
             />
 
             {/* Área de conteúdo principal */}

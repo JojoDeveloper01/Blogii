@@ -169,7 +169,8 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, 
                             title: posts[postIndex]?.title ?? blog.posts?.[0]?.title ?? 'Untitled Post',
                             content: stringifiedContent,
                             created_at: posts[postIndex]?.created_at || new Date(),
-                            updated_at: new Date()
+                            updated_at: new Date(),
+                            blog_id: blog.id
                         };
 
                         const updatedBlog = {

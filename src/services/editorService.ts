@@ -10,16 +10,30 @@ export interface EditorConfig {
 }
 
 export const loadEditorTools = async (): Promise<{ EditorJS: any; tools: { [key: string]: ToolSettings } }> => {
+    // Grupo 1: Core e formatação básica
     const [
         EditorJS,
         Header,
-        List,
         Paragraph,
+        List,
         ImageTool,
         Quote,
-        Warning,
         Marker,
-        InlineCode,
+        InlineCode
+    ] = await Promise.all([
+        import("@editorjs/editorjs").then((m) => m.default),
+        import("@editorjs/header").then((m) => m.default),
+        import("@editorjs/paragraph").then((m) => m.default),
+        import("@editorjs/list").then((m) => m.default),
+        import("@editorjs/image").then((m) => m.default),
+        import("@editorjs/quote").then((m) => m.default),
+        import("@editorjs/marker").then((m) => m.default),
+        import("@editorjs/inline-code").then((m) => m.default)
+    ]);
+
+    // Grupo 2: Plugins adicionais
+    const [
+        Warning,
         Checklist,
         Code,
         Delimiter,
@@ -28,22 +42,14 @@ export const loadEditorTools = async (): Promise<{ EditorJS: any; tools: { [key:
         Raw,
         Table
     ] = await Promise.all([
-        import("@editorjs/editorjs").then((m) => m.default),
-        import("@editorjs/header").then((m) => m.default),
-        import("@editorjs/list").then((m) => m.default),
-        import("@editorjs/paragraph").then((m) => m.default),
-        import("@editorjs/image").then((m) => m.default),
-        import("@editorjs/quote").then((m) => m.default),
         import("@editorjs/warning").then((m) => m.default),
-        import("@editorjs/marker").then((m) => m.default),
-        import("@editorjs/inline-code").then((m) => m.default),
         import("@editorjs/checklist").then((m) => m.default),
         import("@editorjs/code").then((m) => m.default),
         import("@editorjs/delimiter").then((m) => m.default),
         import("@editorjs/embed").then((m) => m.default),
         import("@editorjs/link").then((m) => m.default),
         import("@editorjs/raw").then((m) => m.default),
-        import("@editorjs/table").then((m) => m.default),
+        import("@editorjs/table").then((m) => m.default)
     ]);
 
     return {
@@ -64,34 +70,23 @@ export const loadEditorTools = async (): Promise<{ EditorJS: any; tools: { [key:
                     uploader: {
                         async uploadByFile(file: File) {
                             try {
-                                // Step 1: Convert File to base64
                                 const base64 = await new Promise<string>((resolve, reject) => {
                                     const reader = new FileReader();
-                                    reader.onload = () => {
-                                        const result = reader.result as string;
-                                        resolve(result);
-                                    };
+                                    reader.onload = () => resolve(reader.result as string);
                                     reader.onerror = reject;
                                     reader.readAsDataURL(file);
                                 });
 
-                                // Step 2: Compress the image
                                 const compressed = await compressImage(base64);
-
-                                // Step 3: Store the compressed image data
-                                const imageUrl = compressed;
-
                                 return {
                                     success: 1,
-                                    file: {
-                                        url: imageUrl,
-                                    },
+                                    file: { url: compressed }
                                 };
                             } catch (err) {
                                 console.error("Error uploading image:", err);
                                 return {
                                     success: 0,
-                                    error: "Failed to upload image",
+                                    error: "Failed to upload image"
                                 };
                             }
                         },
@@ -128,7 +123,7 @@ export const loadEditorTools = async (): Promise<{ EditorJS: any; tools: { [key:
                 config: {
                     rows: 2,
                     cols: 3,
-                },  
+                },
             }
         }
     };

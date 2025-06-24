@@ -1,0 +1,53 @@
+---
+import Dashboard from "@/layouts/Dashboard.astro";
+import CreatePostButton from "@/components/Posts/CreatePostButton.astro";
+import { PostsContainer } from "@/components/Posts/PostsContainer";
+import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
+
+const ctx = await getDashboardContextOfTheBlog(Astro);
+if (ctx.redirect) return Astro.redirect(ctx.redirect);
+
+const { blogId, lang, blogData, user } = ctx;
+
+if (!blogData) {
+  return Astro.redirect(`/${lang}`);
+}
+---
+
+<Dashboard>
+  <div class="space-y-6">
+    <!-- Header com título e botão novo post -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+        All Posts
+      </h1>
+
+      <CreatePostButton blogId={blogId} />
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div
+        class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg p-4 border border-gray-200/10 dark:border-gray-700/10"
+      >
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
+          Total Posts
+        </h3>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white m-0">
+          {blogData?.posts?.length || 0}
+        </p>
+      </div>
+      <!-- Adicione mais stats aqui conforme necessário -->
+    </div>
+
+    <!-- Container de Posts com Search, Grid e Action Bar integrados -->
+    <PostsContainer
+      posts={blogData?.posts || []}
+      lang={String(lang)}
+      blogId={String(blogId)}
+      selector={true}
+      isAuthorized={Boolean(user)}
+      client:visible
+    />
+  </div>
+</Dashboard>
