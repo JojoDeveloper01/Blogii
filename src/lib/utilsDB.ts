@@ -114,19 +114,24 @@ export async function getPostsByBlog(blogId: string) {
   return data;
 }
 
-export async function getPostById(postId: string) {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('id', postId)
-    .single();
-
-  if (error) {
-    console.error('[getPostById] Erro ao buscar post:', error);
-    throw error;
+export async function getPostById(postId: string, isAuthorized: boolean, Astro: any) {
+  if (isAuthorized) {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', postId)
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 
-  return data;
+  try {
+    const blogs = JSON.parse(Astro.cookies.get('blogiis')?.value || '[]');
+    return blogs.flatMap((b: any) => b.posts || []).find((p: any) => p.id === postId) || null;
+  } catch {
+    return null;
+  }
 }
 
 /* Settings: */
