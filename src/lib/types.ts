@@ -4,6 +4,7 @@ export interface PostData {
     id: string;
     title: string;
     blog_id: string;
+    description?: string;
     status?: string;
     content?: string;
     created_at?: Date | string;
@@ -14,6 +15,7 @@ export interface BlogData {
     collection?: string;
     id: string;
     user_id?: string;
+    status?: string;
     title: string;
     description?: string;
     body?: string;
@@ -22,15 +24,17 @@ export interface BlogData {
     pubDate?: Date;
     created_at?: Date | string;
     updatedDate?: Date;
+    theme?: string;
 }
 
 export interface BlogCookieItem {
-	id: string;
-	title: string;
-	posts: Array<{
-		id: string;
-		title: string;
-	}>;
+    id: string;
+    title: string;
+    description?: string;
+    posts: Array<{
+        id: string;
+        title: string;
+    }>;
 }
 
 export interface UpdateBlogTitleParams {
@@ -57,7 +61,7 @@ export interface UpdatePostTitleParams {
 }
 
 export interface UserInfo {
-  id: string;
-  email: string;
-  name?: string | null;
+    id: string;
+    email: string;
+    name?: string | null;
 }

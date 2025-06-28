@@ -63,6 +63,10 @@ The user can administrate his blog posts on the dashboard and see analytics abou
     [] has to show the advanced features of this plan
 
 
+[] Make the user can change the theme of the blog
+[] Make the user can change the language of the blog
+[] Make the user can change the bio, website, social_links, location, skills to show in the blog
+
 [] Improve the blog editor 2
     [] Should have various templates from the DB
     [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),

@@ -1,0 +1,107 @@
+---
+import Head from "@/Published/Head.astro";
+import Header from "@/Published/Header.astro";
+import Footer from "@/Published/Footer.astro";
+import type { BlogData } from "@/lib/types";
+
+interface Props {
+  blog: BlogData;
+  title: string;
+  description: string;
+  lang: string;
+}
+
+const { blog, title, description, lang } = Astro.props;
+---
+
+<html {lang} data-theme={blog.theme} class="scroll-smooth">
+  <Head {title} {description} />
+  <body
+    class="max-w-2xl mx-auto min-h-screen flex flex-col relative bg-gradient-to-b from-[--primary] to-[--secondary]"
+  >
+    <Header {blog} {lang} />
+    <main class="flex-1">
+      <div class="mx-auto px-4">
+        <slot />
+      </div>
+    </main>
+    <hr class="my-8 opacity-25" />
+    <Footer />
+  </body>
+</html>
+
+<style is:global>
+  :root,
+  [data-theme="default"] {
+    --primary: #561aa7;
+    --secondary: #ff7c3a;
+    --text-primary: #fafafa;
+    --text-secondary: #2c2c2c;
+    --helper: #ffc107;
+  }
+
+  [data-theme="dark"] {
+    --primary: #252525;
+    --secondary: #ff7c3a;
+    --text-primary: #faf5f6;
+    --text-secondary: #2c2c2c;
+    --helper: #ffc107;
+  }
+
+  [data-theme="light"] {
+    --primary: #fafafa;
+    --secondary: #ff9800;
+    --text-primary: #2c2c2c;
+    --text-secondary: #1a73e8;
+    --helper: #555;
+  }
+
+  [data-theme="Abyss"] {
+    --primary: #8a2be2; /* Roxo MUITO escuro */
+    --secondary: #1a002d; /* Roxo vivo, tipo Electric Purple */
+    --text-primary: #f5f5f5;
+    --text-secondary: #c2c2c2;
+    --helper: #a855f7; /* Roxo detalhe */
+  }
+
+  [data-theme="Aurora"] {
+    --primary: #8b5cf6; /* Azul profundo */
+    --secondary: #1e3a8a; /* Roxo neon */
+    --text-primary: #f5f5f5;
+    --text-secondary: #d1d5db;
+    --helper: #60a5fa; /* Azul claro */
+  }
+
+  [data-theme="Emerald"] {
+    --primary: #10b981; /* Verde MUITO escuro */
+    --secondary: #064e3b; /* Verde esmeralda vibrante */
+    --text-primary: #f0fdf4;
+    --text-secondary: #d1fae5;
+    --helper: #34d399; /* Verde detalhe */
+  }
+
+  [data-theme="hell"] {
+    --primary: #f97316; /* Vermelho escuro queimado */
+    --secondary: #7f1d1d; /* Laranja vivo */
+    --text-primary: #fff7ed;
+    --text-secondary: #ffe4e6;
+    --helper: #fb923c; /* Laranja suave */
+  }
+
+  [data-theme="funky"] {
+    --primary: #eb004e;
+    --secondary: #00bcd4;
+    --text-primary: #fafafa;
+    --text-secondary: #2c2c2c;
+    --helper: #a7ffeb;
+  }
+
+  html,
+  body {
+    transition: background-color 0.2s ease;
+  }
+
+  p {
+    color: var(--text-primary);
+  }
+</style>

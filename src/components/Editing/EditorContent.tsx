@@ -18,91 +18,7 @@ interface EditorContentProps {
 export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, isPreviewMode, onSave, isAuthorized }) => {
     // Add custom styles for EditorJS to improve visibility in dark mode
     useStylesScoped$(`        
-        /* EditorJS toolbar styles */
-        :global(.ce-toolbar__plus),
-        :global(.ce-toolbar__settings-btn) {
-            background-color: #e2e8f0 !important;
-            color: #1e293b !important;
-        }
-        
-        :global(.dark) :global(.ce-toolbar__plus),
-        :global(.dark) :global(.ce-toolbar__settings-btn) {
-            background-color: #475569 !important;
-            color: #f8fafc !important;
-        }
-        
-        /* EditorJS block tunes menu */
-        :global(.ce-popover) {
-            background-color: #f8fafc !important;
-            border-color: #cbd5e1 !important;
-        }
-        
-        :global(.dark) :global(.ce-popover) {
-            background-color: #334155 !important;
-            border-color: #475569 !important;
-        }
-        
-        :global(.ce-popover__item) {
-            color: #1e293b !important;
-        }
-        
-        :global(.dark) :global(.ce-popover__item) {
-            color: #f1f5f9 !important;
-        }
-        
-        :global(.ce-popover__item:hover) {
-            background-color: #e2e8f0 !important;
-        }
-        
-        :global(.dark) :global(.ce-popover__item:hover) {
-            background-color: #475569 !important;
-        }
-        
-        /* EditorJS inline toolbar */
-        :global(.ce-inline-toolbar) {
-            background-color: #f8fafc !important;
-            border-color: #cbd5e1 !important;
-        }
-        
-        :global(.dark) :global(.ce-inline-toolbar) {
-            background-color: #334155 !important;
-            border-color: #475569 !important;
-        }
-        
-        :global(.ce-inline-toolbar__buttons) {
-            color: #1e293b !important;
-        }
-        
-        :global(.dark) :global(.ce-inline-toolbar__buttons) {
-            color: #f1f5f9 !important;
-        }
-        
-        /* EditorJS conversion toolbar */
-        :global(.ce-conversion-toolbar) {
-            background-color: #f8fafc !important;
-            border-color: #cbd5e1 !important;
-        }
-        
-        :global(.dark) :global(.ce-conversion-toolbar) {
-            background-color: #334155 !important;
-            border-color: #475569 !important;
-        }
-        
-        :global(.ce-conversion-tool) {
-            color: #1e293b !important;
-        }
-        
-        :global(.dark) :global(.ce-conversion-tool) {
-            color: #f1f5f9 !important;
-        }
-        
-        :global(.ce-conversion-tool:hover) {
-            background-color: #e2e8f0 !important;
-        }
-        
-        :global(.dark) :global(.ce-conversion-tool:hover) {
-            background-color: #475569 !important;
-        }
+
     `);
     const editor = useSignal<EditorJS | null>(null);
     const isSaving = useSignal(false);
@@ -227,7 +143,7 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, 
             <div
                 ref={editorHolder}
                 id="editor-holder"
-                class="prose dark:prose-invert max-w-none p-6 text-gray-800 dark:text-gray-200"
+                class="prose prose-lg max-w-none dark:prose-invert prose-img:rounded-xl prose-headings:text-[--text-primary] prose-code:bg-[--secondary] prose-code:px-1.5 prose-code:py-1 prose-code:rounded-md"
             />
             {showToast.value && (
                 <Toast

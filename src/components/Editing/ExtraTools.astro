@@ -25,16 +25,6 @@ const nextEditing = currentEditing === "true" ? "false" : "true";
 ---
 
 <div class="flex items-center gap-2">
-  <!-- Preview/Edit Toggle -->
-  <a
-    href={`/${lang}/dashboard/${blogId}/${postId}?editing=${nextEditing}`}
-    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-    title={currentEditing === "true" ? "Preview" : "Edit"}
-  >
-    <span set:html={currentEditing === "true" ? icons.preview : icons.edit} />
-    <span>{currentEditing === "true" ? "Preview" : "Edit"}</span>
-  </a>
-
   {
     canDelete && (
       <>
@@ -63,6 +53,16 @@ const nextEditing = currentEditing === "true" ? "false" : "true";
       </>
     )
   }
+
+  <!-- Preview/Edit Toggle -->
+  <a
+    href={`/${lang}/dashboard/${blogId}/${postId}?editing=${nextEditing}`}
+    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+    title={currentEditing === "true" ? "Preview" : "Edit"}
+  >
+    <span set:html={currentEditing === "true" ? icons.preview : icons.edit} />
+    <span>{currentEditing === "true" ? "Preview" : "Edit"}</span>
+  </a>
 </div>
 
 <script>

@@ -115,7 +115,7 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                 <div class="flex gap-4 flex-col md:flex-row">
                     {/* Editor principal */}
                     <div class="flex-1">
-                        <div class="bg-[--blanc-core] dark:bg-[--noir-core] rounded-xl shadow-md border border-gray-100/50 dark:border-gray-800/50 p-4">
+                        <div class="p-4">
                             <EditorContent
                                 blog={blog}
                                 fetchBlog={fetchBlog}

@@ -33,16 +33,22 @@ export const PostsSearch = component$<PostsSearchProps>(({ posts, onSearch$ }) =
       filtered = filtered.filter(post => post.status === statusFilter.value);
     }
 
+    // Função para pegar a data mais recente entre created_at e updated_at
+    const getMostRecentDate = (post: typeof posts[0]) => {
+      const created = new Date(post.created_at || '').getTime();
+      const updated = new Date(post.updated_at || '').getTime();
+      return Math.max(created, updated);
+    };
+
     // Ordenar
     filtered.sort((a, b) => {
       switch (sortBy.value) {
         case 'oldest':
-          return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime();
-        case 'updated':
-          return new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime();
+          return getMostRecentDate(a) - getMostRecentDate(b);
         case 'newest':
+        case 'updated':
         default:
-          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+          return getMostRecentDate(b) - getMostRecentDate(a);
       }
     });
 
@@ -63,7 +69,7 @@ export const PostsSearch = component$<PostsSearchProps>(({ posts, onSearch$ }) =
           type="search"
           value={searchTerm.value}
           onInput$={(e) => searchTerm.value = (e.target as HTMLInputElement).value}
-          class="block w-full pl-10 pr-3 py-2 text-sm text-gray-900 dark:text-white bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-200/20 dark:border-gray-700/20 focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary]/30 transition-all duration-200"
+          class="block w-full px-3 py-2 text-sm text-gray-900 dark:text-white bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-200/20 dark:border-gray-700/20 focus:ring-2 focus:ring-[--primary]/20 focus:border-[--primary]/30 transition-all duration-200"
           placeholder="Search posts..."
         />
       </div>
@@ -79,7 +85,6 @@ export const PostsSearch = component$<PostsSearchProps>(({ posts, onSearch$ }) =
           <option value="all">All Status</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
         </select>
 
         {/* Data */}

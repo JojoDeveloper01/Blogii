@@ -40,6 +40,21 @@ export async function getUser() {
   }
 }
 
+export async function getUserById(userId: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('[getUserById] Erro ao buscar usuário:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 export async function loadUserBlogsData(user: any, Astro: any): Promise<BlogData[]> {
   try {
     if (user) {
@@ -99,6 +114,21 @@ export async function getBlogWithPosts(blogId: string) {
   return data;
 }
 
+export async function getBlogByTitlePublished(blogTitle: string): Promise<BlogData> {
+  const { data, error } = await supabase
+    .from('blogs')
+    .select('*, posts(*)')
+    .eq('title', blogTitle)
+    .eq('status', 'published')
+    .single();
+
+  if (error || !data) throw new Error("Blog não encontrado.");
+
+  data.posts = (data.posts || []).filter((post: any) => post.status === 'published');
+
+  return data;
+}
+
 export async function getPostsByBlog(blogId: string) {
   const { data, error } = await supabase
     .from('posts')
@@ -121,7 +151,7 @@ export async function getPostById(postId: string, isAuthorized: boolean, Astro: 
       .select('*')
       .eq('id', postId)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -134,17 +164,19 @@ export async function getPostById(postId: string, isAuthorized: boolean, Astro: 
   }
 }
 
-/* Settings: */
-export async function getAppSettings() {
+export async function getPostByTitle(postTitle: string) {
   const { data, error } = await supabase
-    .from('settings')
+    .from('posts')
     .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(1)
+    .eq('title', postTitle)
     .single();
 
   if (error) {
-    console.error('[getAppSettings] Erro ao buscar configurações:', error);
+    // Se o erro for que nenhum post foi encontrado, retorne null em vez de lançar erro
+    if (error.code === 'PGRST116') {
+      return null;
+    }
+    console.error('[getPostByTitle] Erro ao buscar post:', error);
     throw error;
   }
 
@@ -211,8 +243,6 @@ export async function getDashboardContextOfTheBlog(Astro: any) {
 
   return { lang, blogId, blogData, user };
 }
-
-// Utilitário seguro para JSON.parse
 function safeParseJSON(str: string): any[] {
   try {
     return JSON.parse(str);
@@ -296,6 +326,41 @@ export async function createNewPost(blogId: string, postId: string, title: strin
 
 //Update:
 
+export async function updateBlogTitleInDB(blogId: string, title: string) {
+  try {
+    const { data, error } = await supabase
+      .from('blogs')
+      .update({ title })
+      .eq('id', blogId)
+      .select();
+
+    if (error) {
+      console.error('[updateBlogTitleInDB] Erro ao atualizar título do blog:', error);
+      return { success: false, error };
+    }
+
+    if (!data || data.length === 0) {
+      console.error('[updateBlogTitleInDB] Nenhum blog encontrado com esse ID.');
+      return { success: false, error: 'Blog not found' };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('[updateBlogTitleInDB] Erro ao atualizar título do blog:', error);
+    return { success: false, error };
+  }
+}
+
+export async function updateBlogDescription(blogId: string, description: string) {
+  const { error } = await supabase
+    .from('blogs')
+    .update({ description })
+    .eq('id', blogId);
+
+  if (error) throw error;
+  return { success: true };
+}
+
 export async function updatePostContentInDB(blogId: string, postId: string, content: string) {
   try {
     const { data, error } = await supabase
@@ -330,31 +395,6 @@ export async function updatePostTitleInDB(blogId: string, postId: string, title:
 
     return { success: true, data };
   } catch (error) {
-    return { success: false, error };
-  }
-}
-
-export async function updateBlogTitleInDB(blogId: string, title: string) {
-  try {
-    const { data, error } = await supabase
-      .from('blogs')
-      .update({ title })
-      .eq('id', blogId)
-      .select();
-
-    if (error) {
-      console.error('[updateBlogTitleInDB] Erro ao atualizar título do blog:', error);
-      return { success: false, error };
-    }
-
-    if (!data || data.length === 0) {
-      console.error('[updateBlogTitleInDB] Nenhum blog encontrado com esse ID.');
-      return { success: false, error: 'Blog not found' };
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error('[updateBlogTitleInDB] Erro ao atualizar título do blog:', error);
     return { success: false, error };
   }
 }
@@ -511,4 +551,102 @@ export async function ensureUserInDatabase({ id, email, name }: UserInfo): Promi
   } catch (err) {
     console.error("[AUTH] Erro na verificação/criação de utilizador:", err);
   }
+}
+
+// Publish:
+
+const allowedStatuses = ['published', 'draft'] as const;
+
+export async function updatePostsStatus(postIds: string[], status: string) {
+  if (!allowedStatuses.includes(status as any)) {
+    return { success: false, error: 'Invalid status value' };
+  }
+
+  if (postIds.length === 0) {
+    return { success: true }; // Nada para atualizar
+  }
+
+  try {
+    const { error } = await supabase
+      .from('posts')
+      .update({ status })
+      .in('id', postIds);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updatePostsStatus] Erro ao atualizar posts:', error);
+    return { success: false, error };
+  }
+}
+
+
+export async function updateBlogStatus(blogId: string, status: string, postIds: string[]) {
+  if (!allowedStatuses.includes(status as any)) {
+    return { success: false, error: 'Invalid status value' };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('blogs')
+      .update({ status })
+      .eq('id', blogId);
+
+    if (error) throw error;
+
+    // Atualiza os posts do blog
+    const postUpdateResult = await updatePostsStatus(postIds, status);
+    if (!postUpdateResult.success) throw postUpdateResult.error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updateBlogStatus] Erro ao atualizar blog e posts:', error);
+    return { success: false, error };
+  }
+}
+
+export async function updateBlogTheme(blogId: string, theme: string) {
+  const { error } = await supabase
+    .from('blogs')
+    .update({ theme })
+    .eq('id', blogId);
+
+  if (error) {
+    console.error('[updateBlogTheme] Error updating theme:', error);
+    throw error;
+  }
+  return { success: true };
+}
+
+/* Settings: */
+
+export async function getSubscriptionPlans() {
+  const { data, error } = await supabase
+    .from('subscription_plans')
+    .select('*')
+    .order('price', { ascending: true });
+
+  if (error) {
+    console.error('[getSubscriptionPlans] Error:', error.message);
+    return [];
+  }
+
+  return data;
+}
+
+export async function getAppSettings() {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('*')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('[getAppSettings] Erro ao buscar configurações:', error);
+    throw error;
+  }
+
+  return data;
 }

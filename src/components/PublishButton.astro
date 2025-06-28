@@ -2,25 +2,29 @@
 import { signInToPublishBlog } from "@/lib/consts";
 import { icons } from "./Editing/icons";
 import LoginRegister from "./LoginRegister.astro";
+import PublishDialog from "./Blog/PublishDialog.astro";
+import type { BlogData } from "@/lib/types";
 
 interface Props {
   id: string;
+  blogData: BlogData;
   isAuthorized: boolean;
+  lang: string;
 }
 
-const { id, isAuthorized } = Astro.props;
+const { id, blogData, isAuthorized, lang } = Astro.props;
 ---
 
 <div>
   {
-    !isAuthorized ? (
+    isAuthorized ? (
+      <PublishDialog {blogData} {lang} />
+    ) : (
       <LoginRegister id={id} message={signInToPublishBlog} />
-    ) : null
+    )
   }
   <button
-    onclick={!isAuthorized
-      ? `document.getElementById('${id}').showModal()`
-      : null}
+    onclick={`document.getElementById('${isAuthorized ? `publish-${blogData.id}` : id}').showModal()`}
     class="px-3 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
   >
     <span set:html={icons.publish} />

@@ -1,0 +1,104 @@
+---
+/**
+ * ThemePalette Component – displays palette buttons for each available theme.
+ */
+const { blogId, currentTheme, limit } = Astro.props as {
+  blogId?: string;
+  currentTheme?: string;
+  limit?: number;
+};
+
+interface ThemeOption {
+  name: string;
+  from: string;
+  to: string;
+}
+
+const baseThemes: ThemeOption[] = [
+  { name: "default", from: "#561aa7", to: "#ff7c3a" },
+  { name: "dark", from: "#252525", to: "#ff7c3a" },
+  { name: "light", from: "#fafafa", to: "#ff9800" },
+  { name: "Abyss", from: "#8a2be2", to: "#1a002d" },
+  { name: "Aurora", from: "#1e3a8a", to: "#8b5cf6" },
+  { name: "Emerald", from: "#064e3b", to: "#10b981" },
+  { name: "hell", from: "#f97316", to: "#7f1d1d" },
+  { name: "funky", from: "#eb004e", to: "#00bcd4" },
+];
+
+// ensure currentTheme first
+let themes = [...baseThemes];
+if (currentTheme) {
+  const idx = themes.findIndex((t) => t.name === currentTheme);
+  if (idx > 0) {
+    themes = [themes[idx], ...themes.slice(0, idx), ...themes.slice(idx + 1)];
+  }
+}
+
+if (typeof limit === "number") {
+  themes = themes.slice(0, limit);
+}
+---
+
+<div
+  class="grid grid-cols-3 sm:grid-cols-4 gap-3"
+  id="palette-grid"
+  data-blog-id={blogId}
+>
+  {
+    themes.map((theme) => (
+      <button
+        type="button"
+        class={`aspect-video rounded-lg transition-all duration-200 ${theme.name === currentTheme ? "ring-4 ring-[--blanc-core]" : "border-transparent hover:ring-2 hover:ring-[--blanc-core]"}`}
+        style={`background-image:linear-gradient(to bottom, ${theme.from}, ${theme.to});`}
+        data-theme-name={theme.name}
+        aria-label={`Switch to ${theme.name} theme`}
+      />
+    ))
+  }
+</div>
+
+<script>
+  import { actions } from "astro:actions";
+
+  document.addEventListener("astro:page-load", () => {
+    const grid = document.getElementById("palette-grid");
+    if (grid) {
+      const blogId = grid.dataset.blogId;
+      grid.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const chosen = btn.getAttribute("data-theme-name");
+          if (!chosen) return;
+
+          // Update visual selection
+          grid.querySelectorAll("button").forEach((b) => {
+            b.classList.remove("ring-2", "ring-4", "ring-[--blanc-core]");
+            b.classList.add(
+              "border-transparent",
+              "hover:ring-2",
+              "hover:ring-[--blanc-core]"
+            );
+          });
+          btn.classList.remove(
+            "border-transparent",
+            "hover:ring-2",
+            "hover:ring-[--blanc-core]"
+          );
+          btn.classList.add("ring-4", "ring-[--blanc-core]");
+
+          // Apply theme locally
+          document.documentElement.setAttribute("data-theme", chosen);
+          localStorage.setItem("theme", chosen);
+
+          // Persist to DB
+          if (blogId) {
+            try {
+              await actions.theme.update({ blogId, theme: chosen });
+            } catch (err) {
+              console.error("Failed to persist theme:", err);
+            }
+          }
+        });
+      });
+    }
+  });
+</script>

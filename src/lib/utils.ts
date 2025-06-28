@@ -38,20 +38,16 @@ export const sanitizeString = (string: string, option = 0) => {
 export const TITLE_REGEX = /^[a-zA-Z0-9À-ÿ\s]+$/u;
 
 export const validateTitle = (title: string) => {
-	const trimmed = title.trim();
+	const sanitized = title
+		.trim()
+		.replace(/[^a-zA-Z0-9À-ÿ\s]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
 	return {
-		isValid: trimmed.length >= 3 && TITLE_REGEX.test(trimmed),
-		sanitized: trimmed.replace(/[^a-zA-Z0-9À-ÿ\s]/g, '')
+		isValid: sanitized.length >= 3 && TITLE_REGEX.test(sanitized),
+		sanitized
 	};
 };
-
-export function formatDate(date: Date): string {
-	return date.toLocaleDateString("en-US", {
-		year: 'numeric',
-		month: 'short',
-		day: '2-digit',
-	});
-}
 
 export function generateLongNumericId() {
 	const timestamp = Date.now();
@@ -262,7 +258,17 @@ export const cookieUtils = {
 			blogs[blogIndex].title = title;
 			this.setCookie('blogiis', JSON.stringify(blogs), 30);
 		}
+	},
+
+	updateBlogDescription(blogId: string, description: string) {
+		const blogs = this.getStoredBlogs();
+		const index = blogs.findIndex((b) => b.id === blogId);
+		if (index !== -1) {
+			blogs[index].description = description;
+			this.setCookie('blogiis', JSON.stringify(blogs), 30);
+		}
 	}
+
 };
 
 export const processInput = async (

@@ -1,7 +1,5 @@
 ---
 import type { BlogData } from "@/lib/types";
-import Breadcrumb from "@/components/Breadcrumb.astro";
-import { getUserBlogsWithPosts } from "@/lib/utilsDB";
 import ExtraTools from "@/components/Editing/ExtraTools.astro";
 import Dashboard from "./Dashboard.astro";
 
@@ -13,15 +11,13 @@ type Props = BlogData & {
   lang: string;
 };
 
-const hideHeaderFooter = true;
-
 const { title, description, userId, editing, blog, blogPosts, lang } =
   Astro.props;
 ---
 
 <Dashboard>
   <div>
-    <div class="flex items-center justify-end mb-3">
+    <div class="flex gap-4 items-center justify-end mb-3">
       <ExtraTools
         blogId={blog?.id}
         postId={blog?.posts?.[0].id ?? ""}

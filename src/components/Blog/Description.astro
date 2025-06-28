@@ -1,0 +1,106 @@
+---
+interface Props {
+  description: string;
+  blogId: string;
+  isAuthorized: boolean;
+}
+
+const { description, blogId, isAuthorized } = Astro.props;
+---
+
+<section
+  class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
+>
+  <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+    Blog Description
+  </h2>
+  <div class="space-y-4">
+    <div>
+      <label
+        for="blogDescription"
+        class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2"
+        >Description</label
+      >
+      <textarea
+        id="blogDescription"
+        data-blog-id={blogId}
+        data-is-autorized={isAuthorized}
+        class="w-full p-3 bg-white/50 dark:bg-gray-900/50 dark:text-white rounded-lg border border-gray-200/20 dark:border-gray-700/20 focus:ring-2 focus:ring-primary/50"
+        rows="3"
+        placeholder="Write a description for your blog..."
+        >{description || ""}</textarea
+      >
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400 mt-2 opacity-0 transition-opacity duration-200"
+        id="saveStatus"
+        aria-live="polite"
+      >
+        Saving changes...
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { actions } from "astro:actions";
+  import { cookieUtils } from "@/lib/utils";
+
+  let timeout: ReturnType<typeof setTimeout>;
+  let previous = "";
+
+  document.addEventListener("astro:page-load", () => {
+    const textarea =
+      document.querySelector<HTMLTextAreaElement>("#blogDescription");
+    const status = document.querySelector<HTMLElement>("#saveStatus");
+    const blogId = textarea?.dataset.blogId;
+    const isAuthorized = textarea?.dataset.isAutorized === "true";
+
+    if (!textarea || !status || !blogId) return;
+
+    previous = textarea.value;
+
+    const showStatus = (text: string, error = false) => {
+      status.textContent = text;
+      status.classList.remove("opacity-0");
+      status.classList.toggle("text-red-500", error);
+    };
+
+    textarea.addEventListener("input", () => {
+      showStatus("Saving changes...");
+      clearTimeout(timeout);
+
+      timeout = setTimeout(async () => {
+        const current = textarea.value;
+        if (current === previous) {
+          status.classList.add("opacity-0");
+          return;
+        }
+
+        try {
+          if (isAuthorized) {
+            const { data } = await actions.blog.updateDescription({
+              blogId,
+              description: current,
+            });
+            if (!data?.success) throw new Error();
+          } else {
+            const blogs = cookieUtils.getStoredBlogs();
+            const blogExists = blogs.some((b) => b.id === blogId);
+            if (blogExists) {
+              cookieUtils.updateBlogDescription(blogId, current);
+            } else {
+              throw new Error("Blog not found in cookie");
+            }
+          }
+
+          previous = current;
+          showStatus("Changes saved");
+          setTimeout(() => status.classList.add("opacity-0"), 1000);
+        } catch (err) {
+          showStatus("Error saving changes", true);
+          console.error("[Description] Error:", err);
+        }
+      }, 1500);
+    });
+  });
+</script>

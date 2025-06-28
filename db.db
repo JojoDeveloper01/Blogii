@@ -1,0 +1,60 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.blogs (
+  id text NOT NULL,
+  user_id uuid,
+  title text NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  status USER-DEFINED NOT NULL DEFAULT 'draft'::status_enum,
+  theme character varying DEFAULT 'default'::character varying,
+  CONSTRAINT blogs_pkey PRIMARY KEY (id),
+  CONSTRAINT blogs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.posts (
+  id text NOT NULL,
+  blog_id text,
+  title text NOT NULL,
+  content text,
+  created_at timestamp with time zone DEFAULT now(),
+  status USER-DEFINED NOT NULL DEFAULT 'draft'::status_enum,
+  description text,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT posts_pkey PRIMARY KEY (id),
+  CONSTRAINT posts_blog_id_fkey FOREIGN KEY (blog_id) REFERENCES public.blogs(id)
+);
+CREATE TABLE public.settings (
+  id integer NOT NULL DEFAULT nextval('settings_id_seq'::regclass),
+  max_blogs_per_user integer NOT NULL DEFAULT 10,
+  max_posts_per_blog integer NOT NULL DEFAULT 20,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT settings_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.subscription_plans (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  price numeric NOT NULL,
+  billing_cycle text NOT NULL CHECK (billing_cycle = ANY (ARRAY['monthly'::text, 'yearly'::text, 'lifetime'::text, 'free'::text])),
+  blog_limit integer,
+  post_limit integer,
+  features ARRAY,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT subscription_plans_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  email text NOT NULL UNIQUE,
+  name text,
+  created_at timestamp with time zone DEFAULT now(),
+  subscription_plan_id uuid,
+  subscription_expires_at timestamp with time zone,
+  bio text,
+  website character varying,
+  social_links jsonb,
+  location character varying,
+  skills ARRAY,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_subscription_plan_id_fkey FOREIGN KEY (subscription_plan_id) REFERENCES public.subscription_plans(id)
+);

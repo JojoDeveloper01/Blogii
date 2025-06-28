@@ -1,5 +1,5 @@
 ---
-import Layout from "./Layout.astro";
+import LayoutBase from "./BaseDashboard.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
 import { generateShortNumericId } from "@/lib/utils";
 import { getDashboardContextOfTheBlog, loadUserBlogsData } from "@/lib/utilsDB";
@@ -8,6 +8,7 @@ import PublishButton from "@/components/PublishButton.astro";
 import SideBarBlog from "../components/SideBarBlog.astro";
 import MobileMenu from "../components/MobileMenu.astro";
 import MobileMenuButton from "../components/MobileMenuButton.astro";
+import { icons } from "@/components/Editing/icons";
 
 const editing = Astro.url.searchParams.get("editing");
 const idLoginModal = generateShortNumericId();
@@ -22,15 +23,13 @@ const isAuthorized = Boolean(user?.id);
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 ---
 
-<Layout
+<LayoutBase
   title={SITE_TITLE}
   description={SITE_DESCRIPTION}
   lang={String(lang)}
-  hideHeaderFooter={true}
+  theme={blogData?.theme}
 >
-  <section
-    class="flex flex-col mx-auto mb-20 min-h-screen dashboard-container"
-  >
+  <section class="flex flex-col mx-auto mb-20 min-h-screen dashboard-container">
     <div
       class="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50"
     >
@@ -48,22 +47,40 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
           <MobileMenuButton />
 
           {
-            currentPage !== "dashboard" && (
-              <PublishButton id={idLoginModal} {isAuthorized} />
+            currentPage !== "dashboard" && blogData && (
+              <a href={`/${lang}/${blogData.title}`} target="_blank">
+                <button class="px-3 text-white flex items-center gap-2">
+                  <span set:html={icons.visit} />
+                  Visitar
+                </button>
+              </a>
             )
+          }
+          {
+            currentPage !== "dashboard" &&
+              blogData &&
+              blogData.posts &&
+              blogData.posts.length > 0 && (
+                <PublishButton
+                  id={idLoginModal}
+                  blogData={blogData}
+                  {isAuthorized}
+                  {lang}
+                />
+              )
           }
         </div>
       </div>
     </div>
 
     <div class="mt-20 gap-4">
-      <div class="flex flex-col md:flex-row gap-4">
+      <div class="flex flex-col md:flex-row gap-2">
         <SideBarBlog
           lang={String(lang)}
           blogId={String(blogId)}
           isAuthorized={isAuthorized}
         />
-        <section class="flex-1 min-w-0 mr-3">
+        <section class="flex-1 min-w-0 mx-3">
           <slot />
         </section>
       </div>
@@ -76,4 +93,4 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
       isAuthorized={isAuthorized}
     />
   </section>
-</Layout>
+</LayoutBase>

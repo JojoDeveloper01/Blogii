@@ -20,7 +20,7 @@ export const DateDisplay = component$<DateDisplayProps>(({ date, className = '' 
   return (
     <time 
       dateTime={dateObj.toISOString()} 
-      class={`text-sm text-gray-500 dark:text-gray-400 ${className}`}
+      class={`text-sm ${className}`}
     >
       {formattedDate}
     </time>

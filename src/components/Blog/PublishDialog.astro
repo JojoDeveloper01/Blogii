@@ -1,0 +1,210 @@
+---
+import type { BlogData, PostData } from "@/lib/types";
+import { icons } from "@/components/Editing/icons";
+import { DateDisplay } from "@/components/DateDisplay";
+
+interface Props {
+  blogData: BlogData;
+  lang: string;
+}
+
+const { blogData, lang } = Astro.props;
+
+// Filter only draft posts
+const draftPosts = (
+  blogData.posts?.filter((post) => post.status === "draft") || []
+).sort(
+  (a, b) =>
+    new Date(b.updated_at || b.created_at || "").getTime() -
+    new Date(a.updated_at || a.created_at || "").getTime()
+);
+
+// Generate preview URL for a post
+const getPreviewUrl = (postId: string) => {
+  return `/${lang}/dashboard/${blogData.id}/${postId}?editing=false`;
+};
+---
+
+<dialog
+  id={`publish-${blogData.id}`}
+  class="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-xl p-0 max-w-2xl w-full mx-auto shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800"
+>
+  <div
+    class="bg-gradient-to-r from-[--primary] to-[--secondary] p-6 border-b border-[--primary]/10"
+  >
+    <div class="flex items-center gap-4">
+      <div class="p-3 rounded-full bg-white text-[--primary]">
+        <span class="size-3" set:html={icons.publish} />
+      </div>
+      <h3 class="text-xl font-bold text-white">Publish Blog</h3>
+    </div>
+  </div>
+
+  {/* Content */}
+  <div class="p-4 bg-white dark:bg-gray-800">
+    <p class="text-gray-500 mb-4 text-sm">
+      Choose the posts you want to publish:
+    </p>
+
+    <div class="space-y-4">
+      {
+        draftPosts.length === 0 && (
+          <div class="text-center py-6">
+            <div class="text-gray-400 space-y-1">
+              <p>No draft posts available</p>
+              <p class="text-xs">Create a new post to get started</p>
+            </div>
+          </div>
+        )
+      }
+      <div
+        class="max-h-[300px] overflow-y-auto rounded-lg border border-gray-700/50 divide-y divide-gray-700/50"
+      >
+        {
+          draftPosts.map((post: PostData) => (
+            <div class="p-3 flex items-start gap-3 hover:bg-gray-700/20 transition-all duration-200">
+              <div class="flex-shrink-0">
+                <label class="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    value={post.id}
+                    id={post.id}
+                    name="selectedPosts"
+                    class="sr-only"
+                    aria-label={`Select post: ${post.title}`}
+                  />
+                  <div class="w-4 h-4 rounded border-2 border-gray-600 transition-all duration-200 cursor-pointer">
+                    <div class="absolute inset-0 rounded bg-orange-500 transform scale-0 transition-transform duration-200 ease-out origin-center" />
+                  </div>
+                </label>
+              </div>
+              <div class="flex-1">
+                <label for={post.id} class="cursor-pointer">
+                  <h4 class="text-base font-medium text-gray-900 dark:text-white hover:text-[--secondary] transition-colors">
+                    {post.title}
+                  </h4>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <DateDisplay date={post?.created_at || ""} />
+                  </p>
+                </label>
+              </div>
+              <div class="flex-shrink-0">
+                <a
+                  href={getPreviewUrl(post.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-xs text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+                  aria-label="Preview post"
+                >
+                  Preview
+                  <span class="size-3 svg" set:html={icons.arrowdown} />
+                </a>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <p class="text-xs text-red-400 hidden" id="errorMessage">
+        Please select at least one post to publish
+      </p>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button
+          type="button"
+          onclick="this.closest('dialog').close()"
+          class="px-4 py-2 border border-gray-600 rounded-lg text-gray-600 hover:bg-gray-700/50 transition-all duration-300"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onclick="window.publishBlog()"
+          class="px-3 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+        >
+          Publish Selected Posts
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  import { actions } from "astro:actions";
+
+  declare global {
+    interface Window {
+      publishBlog: () => Promise<void>;
+    }
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    // Handle checkbox animations
+    const checkboxes = document.querySelectorAll(
+      'input[type="checkbox"][name="selectedPosts"]'
+    );
+    checkboxes.forEach((checkbox: any) => {
+      const container = checkbox.parentElement.querySelector("div");
+      const checkmark = container.querySelector("svg");
+      const fill = container.querySelector(".bg-orange-500");
+
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          fill.style.transform = "scale(1)";
+          checkmark.style.opacity = "1";
+        } else {
+          fill.style.transform = "scale(0)";
+          checkmark.style.opacity = "0";
+        }
+      });
+    });
+
+    window.publishBlog = async () => {
+      // Get current dialog
+      const dialog = document.querySelector(
+        "dialog[open]"
+      ) as HTMLDialogElement;
+      if (!dialog) {
+        console.error("No open dialog found");
+        return;
+      }
+
+      const errorMessage = dialog.querySelector("#errorMessage") as HTMLElement;
+      const blogId = dialog.id.replace("publish-", "");
+
+      try {
+        // Get selected posts
+        const selectedPosts = Array.from(
+          dialog.querySelectorAll('input[name="selectedPosts"]:checked')
+        ).map((input) => (input as HTMLInputElement).value);
+
+        // Validate selection
+        if (selectedPosts.length === 0) {
+          errorMessage?.classList.remove("hidden");
+          return;
+        }
+        errorMessage?.classList.add("hidden");
+
+        // Call the action
+        const response = await actions.blog.updateStatus({
+          blogId,
+          status: "published",
+          postsIds: selectedPosts,
+        });
+
+        if (response.error) {
+          throw new Error(response.error.message || "Failed to publish");
+        }
+
+        // Redirect on success
+        window.location.href = response.data.redirectTo;
+      } catch (error) {
+        console.error("Failed to publish blog:", error);
+        const message =
+          error instanceof Error ? error.message : "Please try again";
+        errorMessage!.textContent = `Failed to publish blog: ${message}`;
+        errorMessage?.classList.remove("hidden");
+      }
+    };
+  });
+</script>

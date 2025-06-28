@@ -37,8 +37,22 @@ export function extractTextFromEditorJS(jsonContent: string): string {
       })
       .filter(Boolean)
       .join(' ')
-      .slice(0, 150) + '...';
   } catch {
     return 'No content';
+  }
+}
+import editorjsHTML from "editorjs-html";
+
+export function renderEditorJsToHtml(json: string): string {
+  try {
+    const data = JSON.parse(json);
+    const parser = editorjsHTML();
+    const result = parser.parse(data);
+
+    // Se for array, junta. Se for string, retorna direto.
+    return Array.isArray(result) ? result.join('') : result;
+  } catch (error) {
+    console.error('[renderEditorJsToHtml] Erro ao renderizar:', error);
+    return '<p>Erro ao mostrar conteúdo.</p>';
   }
 }

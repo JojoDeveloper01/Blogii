@@ -263,7 +263,7 @@ export async function deletePost(blogId: string, postId: string, lang: string, i
         // If authorized, try to delete from DB first
         if (isAuthorized) {
             try {
-                const { data, error } = await actions.post.delete({ blogId, postId });
+                const { data, error } = await actions.post.delete({ blogId, postIds: [postId] });
                 if (!error && data?.success) {
                     if (typeof window !== 'undefined') {
                         window.location.href = `/${lang}/dashboard/${blogId}`;

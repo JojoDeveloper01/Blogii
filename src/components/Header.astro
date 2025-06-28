@@ -88,7 +88,7 @@ const { lang } = Astro.props;
             ) : (
               <button
                 onclick={`document.getElementById('${idLoginModal}').showModal()`}
-                class="bg-gradient-to-r from-[var(--primary)] to-[#FF7C3A] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[var(--primary)] hover:to-[#cd6430] font-medium whitespace-nowrap"
+                class="bg-gradient-to-r from-[--primary] to-[--secondary] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[--primary] hover:to-[--secondary] font-medium whitespace-nowrap"
               >
                 Get started
               </button>
@@ -124,7 +124,7 @@ const { lang } = Astro.props;
             ) : (
               <button
                 onclick={`document.getElementById('${idLoginModal}').showModal()`}
-                class="w-full bg-gradient-to-r from-[--primary] to-[--secondary] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[var(--primary)] hover:to-[#cd6430] transition-all duration-300 font-medium"
+                class="w-full bg-gradient-to-r from-[--primary] to-[--secondary] text-white text-sm px-4 py-2 rounded-full hover:shadow-md hover:from-[--primary] hover:to-[--secondary] transition-all duration-300 font-medium"
               >
                 Get started
               </button>

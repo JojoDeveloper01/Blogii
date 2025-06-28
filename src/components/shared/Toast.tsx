@@ -29,8 +29,8 @@ export const Toast = component$<ToastProps>(({
             class={[
                 'fixed bottom-2 right-2 px-3 py-1.5 text-sm rounded-md transition-all duration-300 transform z-50',
                 'border border-gray-100/30 dark:border-gray-800/30',
-                'bg-white/40 dark:bg-zinc-800/40 backdrop-blur-sm',
-                'shadow-sm',
+                'bg-white/40 dark:bg-zinc-900/90 backdrop-blur-sm',
+                'shadow-sm font-bold',
                 isVisible.value ? 'translate-y-0 opacity-70' : 'translate-y-2 opacity-0',
                 type === 'success' 
                     ? 'text-green-600/90 dark:text-green-400/90' 

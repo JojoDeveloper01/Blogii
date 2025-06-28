@@ -88,8 +88,9 @@ needsClientData = true;
 blog = {
   id: blogId,
   title: blogData?.title,
-  posts: [postData],
+  ...blogData,
   pubDate: new Date(),
+  posts: [postData],
 } as BlogData;
 ---
 

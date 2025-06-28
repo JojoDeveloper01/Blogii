@@ -1,27 +1,27 @@
 ---
 import Head from "@/components/Head.astro";
-import Header from "@/components/Header.astro";
-import Footer from "@/components/Footer.astro";
 
 interface Props {
   title: string;
   description?: string;
-  hideHeaderFooter?: boolean;
   lang: string;
   theme?: string;
 }
 
-const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
+const { title, description, lang, theme } = Astro.props;
+
+const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
+const styles = "bg-gradient-to-b from-[--primary] to-[--secondary]";
 ---
 
 <html {lang} data-theme={theme} class="scroll-smooth">
   <Head {title} {description} />
-  <body class="min-h-screen flex flex-col relative">
-    {!hideHeaderFooter && <Header {lang} />}
+  <body
+    class={`min-h-screen flex flex-col relative ${currentPage !== "dashboard" ? styles : ""}`}
+  >
     <main>
       <slot />
     </main>
-    {!hideHeaderFooter && <Footer />}
   </body>
 </html>
 
@@ -63,46 +63,6 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
     --helper: #ffc107;
   }
 
-  html {
-    scroll-behavior: smooth;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease;
-
-    &.dark {
-      color-scheme: dark;
-
-      --bg-color: #212121;
-      --bg-color2: #ededed;
-
-      --text-color: #efefec;
-      --text-color2: #010024;
-
-      --orange-blue: var(--orange);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      scroll-behavior: auto;
-    }
-  }
-
-  .item {
-    view-transition-class: animated;
-  }
-  ::view-transition-new(.animated):only-child {
-    animation: fade-in 200ms;
-  }
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for Firefox */
-  html {
-    scrollbar-width: none;
-  }
-
   body {
     font-family: "Atkinson", sans-serif;
     margin: 0;
@@ -114,7 +74,7 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
     color: var(--noir-core);
     font-size: 20px;
     line-height: 1.7;
-    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+    -ms-overflow-style: none;
   }
 
   h1,
@@ -146,16 +106,8 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
   b {
     font-weight: 700;
   }
-  /*    a {
-        color: var(--primary);
-    } */
-  .link {
-    color: #0088ff;
-  }
-  /*   a:hover {
-        color: var(--primary);
-    } */
   p {
+    color: var(--text-primary);
     margin-bottom: 1em;
   }
   .prose p {
