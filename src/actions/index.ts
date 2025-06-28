@@ -3,6 +3,7 @@ import { z } from "astro:schema";
 import { supabase } from "@/lib/supabase";
 import { checkUserHasBlogs, createBlogFromTemp, updateBlogDescription, updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog, updateBlogStatus, updateBlogTheme } from "@/lib/utilsDB";
 import type { Provider } from '@supabase/supabase-js';
+import { sanitizeString } from "@/lib/utils";
 
 /* import { createBlog } from "@/lib/utils";
 import * as path from 'path';
@@ -180,10 +181,9 @@ export const server = {
                 blogId: z.string(),
                 postsIds: z.array(z.string()),
                 status: z.string(),
+                lang: z.string(),
             }),
-            handler: async ({ blogId, postsIds, status }) => {
-
-
+            handler: async ({ blogId, postsIds, status, lang }) => {
 
                 const result = await updateBlogStatus(blogId, status, postsIds);
                 if (!result.success) {
@@ -194,9 +194,9 @@ export const server = {
                 }
 
                 const blog = await getBlogWithPosts(blogId);
-                const lang = window.location.pathname.split('/')[1];
+                const titleSatinazed = sanitizeString(blog.title, 2);
 
-                return { success: true, redirectTo: `/${lang}/${blog.title}` };
+                return { success: true, redirectTo: `/${lang}/${titleSatinazed}` };
             },
         }),
         delete: defineAction({

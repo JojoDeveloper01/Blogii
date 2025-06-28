@@ -4,6 +4,7 @@ import { getLangFromUrl } from "@/i18n/utils";
 import CustomLayout from "@/layouts/CustomLayout.astro";
 import { extractTextFromEditorJS } from "@/lib/editorjs";
 import { DateDisplay } from "@/components/DateDisplay";
+import { sanitizeString } from "@/lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const blogTitle = Astro.params.blogTitle;
@@ -99,7 +100,7 @@ const user = await getUserById(String(blog.user_id));
       <div class="flex flex-col gap-4">
         {
           blog.posts?.map((post) => (
-            <a href={`/${lang}/${blog.title}/${post.title}`} class="group block rounded-lg bg-[--secondary] border-l-8 border-transparent hover:border-[--text-secondary] transition-all duration-300">
+            <a href={`/${lang}/${blog.title}/${sanitizeString(post.title, 1)}`} class="group block rounded-lg bg-[--secondary] border-l-8 border-transparent hover:border-[--text-secondary] transition-all duration-300">
               <div class="p-2">
                 <h2 class="text-xl font-semibold text-[--text-primary] capitalize mb-2">
                   <span >{post.title}</span>

@@ -58,15 +58,5 @@ const { title, description, image } = Astro.props;
   <meta property="twitter:description" content={description} />
   <meta property="twitter:image" content={new URL(image, Astro.url)} /> */
   }
-
-  <script>
-    (function () {
-      const theme = localStorage.getItem("theme");
-      if (theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-      }
-    })();
-  </script>
-
   <ClientRouter />
 </head>

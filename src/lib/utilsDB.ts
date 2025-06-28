@@ -118,15 +118,29 @@ export async function getBlogByTitlePublished(blogTitle: string): Promise<BlogDa
   const { data, error } = await supabase
     .from('blogs')
     .select('*, posts(*)')
-    .eq('title', blogTitle)
+    .ilike('title', blogTitle) // Case-insensitive
     .eq('status', 'published')
-    .single();
+    .limit(2); // Para validar único
 
-  if (error || !data) throw new Error("Blog não encontrado.");
+  if (error) {
+    console.error('[getBlogByTitlePublished] Erro ao buscar blog:', error);
+    throw error;
+  }
 
-  data.posts = (data.posts || []).filter((post: any) => post.status === 'published');
+  if (!data || data.length === 0) {
+    throw new Error('Blog não encontrado.');
+  }
 
-  return data;
+  if (data.length > 1) {
+    throw new Error(`[getBlogByTitlePublished] Título não é único: ${blogTitle}`);
+  }
+
+  const blog = data[0];
+
+  // Filtra apenas posts publicados
+  blog.posts = (blog.posts || []).filter((post: any) => post.status === 'published');
+
+  return blog;
 }
 
 export async function getPostsByBlog(blogId: string) {
@@ -164,23 +178,36 @@ export async function getPostById(postId: string, isAuthorized: boolean, Astro: 
   }
 }
 
-export async function getPostByTitle(postTitle: string) {
+export async function getPostByTitle(postTitle: string, blogTitle: string) {
+  console.log("postTitle:", postTitle);
+
+  // Primeiro, encontra o blog pelo título único
+  const blog = await getBlogByTitlePublished(blogTitle);
+  if (!blog) {
+    throw new Error(`[getPostByTitle] Blog não encontrado: ${blogTitle}`);
+  }
+
   const { data, error } = await supabase
     .from('posts')
     .select('*')
-    .eq('title', postTitle)
-    .single();
+    .eq('blog_id', blog.id) // Usa o ID real do blog
+    .ilike('title', postTitle) // Título do post ignorando case
+    .limit(2); // Para validar se não há duplicados
 
   if (error) {
-    // Se o erro for que nenhum post foi encontrado, retorne null em vez de lançar erro
-    if (error.code === 'PGRST116') {
-      return null;
-    }
     console.error('[getPostByTitle] Erro ao buscar post:', error);
     throw error;
   }
 
-  return data;
+  if (!data || data.length === 0) {
+    return null; // Não existe
+  }
+
+  if (data.length > 1) {
+    throw new Error(`[getPostByTitle] Título duplicado dentro do blog: ${postTitle}`);
+  }
+
+  return data[0];
 }
 
 /* Context: */

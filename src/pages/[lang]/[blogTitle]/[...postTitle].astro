@@ -5,20 +5,22 @@ import CustomLayout from "@/layouts/CustomLayout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
 import { renderEditorJsToHtml } from "@/lib/editorjs";
 import { getBlogByTitlePublished } from "@/lib/utilsDB";
+import { sanitizeString } from "@/lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
-const postTitle = Astro.params.postTitle;
-const post = await getPostByTitle(String(postTitle));
-
-if (!post || post.status !== "published") {
-  return new Response("Post not found", { status: 404 });
-}
 
 const blogTitle = Astro.url.pathname.split("/").filter(Boolean).at(-2);
 
 if (!blogTitle) {
   return new Response("Blog title not found", { status: 404 });
 }
+const postTitle = sanitizeString(Astro.params.postTitle as string, 2);
+const post = await getPostByTitle(String(postTitle), String(blogTitle));
+
+if (!post || post.status !== "published") {
+  return new Response("Post not found", { status: 404 });
+}
+
 
 const blog = await getBlogByTitlePublished(String(blogTitle));
 

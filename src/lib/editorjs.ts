@@ -1,3 +1,5 @@
+import editorjsHTML from "editorjs-html";
+
 interface EditorJSBlock {
   id: string;
   type: string;
@@ -41,7 +43,6 @@ export function extractTextFromEditorJS(jsonContent: string): string {
     return 'No content';
   }
 }
-import editorjsHTML from "editorjs-html";
 
 export function renderEditorJsToHtml(json: string): string {
   try {

@@ -87,7 +87,7 @@ if (typeof limit === "number") {
 
           // Apply theme locally
           document.documentElement.setAttribute("data-theme", chosen);
-          localStorage.setItem("theme", chosen);
+          localStorage.setItem(`theme-${blogId}`, chosen);
 
           // Persist to DB
           if (blogId) {
