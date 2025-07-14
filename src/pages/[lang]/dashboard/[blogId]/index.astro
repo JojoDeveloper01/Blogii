@@ -1,7 +1,11 @@
 ---
 import Dashboard from "@/layouts/Dashboard.astro";
-import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
-import CreatePostButton from "@/components/Posts/CreatePostButton.astro";
+import {
+  getDashboardContextOfTheBlog,
+  getUserPlan,
+  getBlogPostsCount,
+} from "@/lib/utilsDB";
+import { CreatePostButton } from "@/components/Posts/CreatePostButton";
 import { PostsGrid } from "@/components/Posts/PostsGrid";
 import Description from "@/components/Blog/Description.astro";
 import ThemePalette from "@/components/ThemePalette.astro";
@@ -10,10 +14,21 @@ const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
 const { lang, blogId, blogData, user } = ctx;
+
+const userPlan = await getUserPlan(user?.id);
+const postsCount = await getBlogPostsCount(String(blogId));
+
+const checkPostLimit = !user?.id
+  ? "sign_in"
+  : !userPlan || postsCount === null || postsCount === undefined
+    ? "There was an error checking your plan."
+    : postsCount >= userPlan.post_limit
+      ? "post_limit"
+      : "";
 ---
 
 <Dashboard>
-  <div class="space-y-8">
+  <div class="space-y-8 mb-8">
     <!-- Blog Description -->
     <Description
       description={blogData?.description || ""}
@@ -36,7 +51,11 @@ const { lang, blogId, blogData, user } = ctx;
           >
             View All Posts
           </a>
-          <CreatePostButton blogId={String(blogId)} />
+          <CreatePostButton
+            blogId={String(blogId)}
+            lang={String(lang)}
+            {checkPostLimit}
+          />
         </div>
       </div>
 
@@ -53,10 +72,23 @@ const { lang, blogId, blogData, user } = ctx;
     <section
       class="p-6 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg border border-gray-200/10 dark:border-gray-700/10"
     >
-      <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-        Appearance
-      </h2>
-      <ThemePalette blogId={String(blogId)} currentTheme={blogData?.theme} limit={4} />
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+          Appearance
+        </h2>
+        <a
+          href={`${blogId}/appearance`}
+          class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
+        >
+          View all theme options
+        </a>
+      </div>
+      <ThemePalette
+        blogId={String(blogId)}
+        currentTheme={blogData?.theme}
+        limit={4}
+        isAuthorized={Boolean(user?.id)}
+      />
     </section>
 
     <!-- Analytics -->

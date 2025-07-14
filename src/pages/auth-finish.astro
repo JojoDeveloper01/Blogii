@@ -2,8 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
 import { getLangFromUrl } from "@/i18n/utils";
-import { getUser } from "@/lib/utilsDB";
-import { checkUserHasBlogs } from "@/lib/utilsDB";
+import { getUser, checkUserHasBlogs, ensureUserInDatabase } from "@/lib/utilsDB";
 
 const lang = getLangFromUrl(Astro.url);
 
@@ -12,6 +11,10 @@ const user = await getUser();
 if (!user?.id) {
   return Astro.redirect(`/${lang}`);
 }
+
+// Garante que o usuário existe no banco antes de criar o blog
+await ensureUserInDatabase(user);
+
 if (await checkUserHasBlogs(user.id)) {
   return Astro.redirect(`/${lang}/dashboard`);
 }
@@ -54,6 +57,7 @@ if (!blogs || blogs === "[]") {
   import { cookieUtils } from "@/lib/utils";
   import { actions } from "astro:actions";
   import { localBlogDB } from "@/services/indexedDB";
+  import { sanitizeString } from "@/lib/utils";
 
   document.addEventListener("astro:page-load", async () => {
     const blog: BlogData[] = await localBlogDB.getAllBlogs();
@@ -62,9 +66,11 @@ if (!blogs || blogs === "[]") {
     const blogData = {
       id: blog[0].id,
       title: blog[0].title,
+      title_sanitized: sanitizeString(blog[0].title, 1),
       posts: (blog[0].posts || []).map((post) => ({
         id: post.id,
         title: post.title,
+        title_sanitized: sanitizeString(post.title, 1),
         blog_id: blog[0].id,
         content: post.content || "",
         created_at:

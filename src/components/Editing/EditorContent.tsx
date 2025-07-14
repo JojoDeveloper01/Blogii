@@ -10,12 +10,11 @@ import type { BlogData } from '@/lib/types';
 interface EditorContentProps {
     blog: BlogData;
     fetchBlog: QRL<() => Promise<BlogData>>;
-    isPreviewMode: Signal<boolean>;
     onSave?: QRL<() => void> | undefined;
     isAuthorized: boolean;
 }
 
-export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, isPreviewMode, onSave, isAuthorized }) => {
+export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, onSave, isAuthorized }) => {
     // Add custom styles for EditorJS to improve visibility in dark mode
     useStylesScoped$(`        
 
@@ -44,9 +43,9 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, 
 
                 const rawContent = savedPost?.content || currentPost?.content;
 
-                if (typeof rawContent === 'string') {
+                if (typeof rawContent === 'string' && rawContent.trim()) {
                     content = JSON.parse(rawContent);
-                } else if (rawContent) {
+                } else if (rawContent && typeof rawContent === 'object') {
                     content = rawContent;
                 } else {
                     content = { blocks: [] };
@@ -59,7 +58,6 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, 
             const editorInstance = await createEditor({
                 holder: 'editor-holder',
                 data: content,
-                readOnly: isPreviewMode.value,
                 onChange: async () => {
                     if (!editor.value || isSaving.value) return;
 
@@ -83,6 +81,7 @@ export const EditorContent = component$<EditorContentProps>(({ blog, fetchBlog, 
                         posts[postIndex] = {
                             id: postId,
                             title: posts[postIndex]?.title ?? blog.posts?.[0]?.title ?? 'Untitled Post',
+                            title_sanitized: posts[postIndex]?.title_sanitized ?? blog.posts?.[0]?.title_sanitized ?? 'Untitled Post',
                             content: stringifiedContent,
                             created_at: posts[postIndex]?.created_at || new Date(),
                             updated_at: new Date(),

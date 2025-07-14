@@ -69,7 +69,8 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
       background-color 0.2s ease,
       color 0.2s ease;
 
-    &.dark {
+    &.dark,
+    &.light {
       color-scheme: dark;
 
       --bg-color: #212121;
@@ -86,23 +87,6 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
     }
   }
 
-  .item {
-    view-transition-class: animated;
-  }
-  ::view-transition-new(.animated):only-child {
-    animation: fade-in 200ms;
-  }
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for Firefox */
-  html {
-    scrollbar-width: none;
-  }
-
   body {
     font-family: "Atkinson", sans-serif;
     margin: 0;
@@ -114,7 +98,6 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
     color: var(--noir-core);
     font-size: 20px;
     line-height: 1.7;
-    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
   }
 
   h1,

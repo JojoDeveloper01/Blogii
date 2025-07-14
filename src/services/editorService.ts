@@ -4,7 +4,6 @@ import { compressImage } from "@/lib/utils";
 export interface EditorConfig {
     holder: string;
     data: any;
-    readOnly: boolean;
     onChange?: () => void;
     onReady?: () => void;
 }

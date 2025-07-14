@@ -2,10 +2,45 @@
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
 import Layout from "@/layouts/Layout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
+import { getAllBlogs } from "@/lib/utilsDB";
 
 const lang = getLangFromUrl(Astro.url);
+
+const allBlogs = await getAllBlogs();
+const title = "Comunnity";
+const description = "Take a look at all the blogs on our platform.";
 ---
 
-<Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
+<Layout {title} {description} {lang}>
+  <section class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
+    <div class="grid gap-6 justify-center">
+      <h2
+        class="text-3xl text-center font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10"
+      >
+        {title}
+      </h2>
+      <p
+        class="mt-3 max-w-2xl text-xl leading-7 text-gray-500 dark:text-gray-300 sm:mt-4"
+      >
+        {description}
+      </p>
+    </div>
 
+    <div class="mt-10 flex flex-wrap justify-center gap-6">
+      {
+        allBlogs.map((blog) => (
+          <div class="bg-white dark:bg-[--bg-color] rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+            <a href={`/${lang}/${blog.title_sanitized}`} class="block p-4">
+              <h3 class="text-2xl font-bold text-secondary/100">
+                {blog.title}
+              </h3>
+              <p class="mt-1 text-gray-600 dark:text-[--blanc-core]">
+                {blog.description || "(No description)"}
+              </p>
+            </a>
+          </div>
+        ))
+      }
+    </div>
+  </section>
 </Layout>

@@ -15,11 +15,7 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 	cookies.set("sb-refresh-token", refresh_token, { path: "/" });
 
 	if (user?.email && user.id) {
-		await ensureUserInDatabase({
-			id: user.id,
-			email: user.email,
-			name: user.user_metadata?.name,
-		});
+		await ensureUserInDatabase(user);
 
 		const hasBlogsInTheDB = await checkUserHasBlogs(user.id);
 

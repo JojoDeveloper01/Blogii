@@ -7,9 +7,10 @@ import { signInToAccessAllFeatures } from "@/lib/consts";
 import { getUser, loadUserBlogsData } from "@/lib/utilsDB";
 
 const idLoginModal = generateShortNumericId();
+
 const user = await getUser();
 
-const hasBlogs = await loadUserBlogsData(user, Astro);
+const hasBlogs = await loadUserBlogsData(user?.id, Astro);
 
 const { lang } = Astro.props;
 ---

@@ -1,7 +1,7 @@
 import { localBlogDB } from "@/services/indexedDB";
 import { actions } from "astro:actions";
-import type { BlogCookieItem } from "@/lib/types";
-import { amountCharactersError, blogAlreadyCreated, invalidCharactersError } from "@/lib/consts";
+import type { BlogData } from "@/lib/types";
+import { amountCharactersError, blogAlreadyCreated, invalidCharactersError, upgradeToCreateMoreBlogsAndPosts } from "@/lib/consts";
 
 // string para remover os traços e acentos e acrescentar false para deixar os traços e deixar os acentos
 export const sanitizeString = (string: string, option = 0) => {
@@ -108,32 +108,6 @@ export const compressImage = async (base64: string): Promise<string> => {
 	});
 };
 
-/* export function editorJsToMarkdown(data: any): string {
-	let markdown = '';
-
-	for (const block of data.blocks) {
-		switch (block.type) {
-			case 'paragraph':
-				markdown += `${block.data.text}\n\n`;
-				break;
-			case 'header':
-				markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
-				break;
-			case 'list':
-				const tag = block.data.style === 'ordered' ? '1.' : '-';
-				for (const item of block.data.items) {
-					markdown += `${tag} ${item}\n`;
-				}
-				markdown += '\n';
-				break;
-			default:
-				markdown += `<!-- Unsupported block: ${block.type} -->\n\n`;
-		}
-	}
-
-	return markdown.trim();
-} */
-
 export const startBlog = async (
 	title: string,
 	userId: string,
@@ -159,6 +133,7 @@ export const startBlog = async (
 		id: postId,
 		blog_id: blogId,
 		title: postTitle,
+		title_sanitized: sanitizeString(postTitle, 1),
 		content: '',
 		created_at: now.toISOString(),
 	};
@@ -166,6 +141,7 @@ export const startBlog = async (
 	const blogData = {
 		id: blogId,
 		title: sanitized,
+		title_sanitized: sanitizeString(sanitized, 1),
 		posts: [firstPost],
 		pubDate: now,
 		created_at: now.toISOString(),
@@ -174,6 +150,25 @@ export const startBlog = async (
 
 	try {
 		if (isAuthorized) {
+			// Verificar plano atual do usuário
+			const { data: userPlan } = await actions.user.getUserPlan({ userId });
+			if (!userPlan) {
+				showError(true, "There was an error checking your plan.");
+				return;
+			}
+
+			// Verificar número de blogs que o usuário já tem
+			const { data: blogsCount } = await actions.user.getUserBlogsCount({ userId });
+			if (blogsCount === null || blogsCount === undefined) {
+				showError(true, "There was an error checking your plan.");
+				return;
+			}
+
+			if (blogsCount >= userPlan.blog_limit) {
+				showError(true, upgradeToCreateMoreBlogsAndPosts(lang));
+				return;
+			}
+
 			const { error } = await actions.blog.create({ blogData });
 			if (error) throw error;
 		} else if (typeof window !== 'undefined') {
@@ -181,7 +176,8 @@ export const startBlog = async (
 			cookieUtils.addBlogToCookie({
 				id: blogId,
 				title: sanitized,
-				posts: [{ id: postId, title: postTitle }],
+				title_sanitized: sanitizeString(sanitized, 1),
+				posts: [{ id: postId, title: postTitle, title_sanitized: sanitizeString(postTitle, 1), blog_id: blogId }],
 			});
 			window.dispatchEvent(new Event('navigation-update'));
 		}
@@ -216,7 +212,7 @@ export const cookieUtils = {
 		document.cookie = `${name}=${encodedValue};expires=${expires.toUTCString()};path=/`;
 	},
 
-	getStoredBlogs(): BlogCookieItem[] {
+	getStoredBlogs(): BlogData[] {
 		if (typeof document === 'undefined') return [];
 		const cookie = this.getCookie('blogiis');
 		if (!cookie) return [];
@@ -231,7 +227,7 @@ export const cookieUtils = {
 		}
 	},
 
-	addBlogToCookie(blog: BlogCookieItem) {
+	addBlogToCookie(blog: BlogData) {
 		if (typeof document === 'undefined') return;
 		const blogs = this.getStoredBlogs();
 		blogs.push(blog);
@@ -265,6 +261,15 @@ export const cookieUtils = {
 		const index = blogs.findIndex((b) => b.id === blogId);
 		if (index !== -1) {
 			blogs[index].description = description;
+			this.setCookie('blogiis', JSON.stringify(blogs), 30);
+		}
+	},
+
+	updateBlogTheme(blogId: string, theme: string) {
+		const blogs = this.getStoredBlogs();
+		const index = blogs.findIndex((b) => b.id === blogId);
+		if (index !== -1) {
+			blogs[index].theme = theme;
 			this.setCookie('blogiis', JSON.stringify(blogs), 30);
 		}
 	}
@@ -367,28 +372,6 @@ export const deleteBlog = async (
 		return false;
 	}
 };
-
-/* export const createBlog = async (entry: BlogData, path: any, fs: any) => {
-	const data = entry.data;
-	const filePath = path.join(process.cwd(), "src/content/blog", `${data.title}.md`);
-
-	const frontMatter = {
-		title: data.title,
-		description: data.description || "",
-		image: data.image || "",
-		pubDate: formatDate(data.pubDate),
-	};
-
-	const frontMatterString = Object.entries(frontMatter)
-		.map(([key, value]) => `${key}: "${value}"`)
-		.join('\n');
-
-	const markdownContent = `---\n${frontMatterString}\n---`;
-
-	await fs.writeFile(filePath, markdownContent, "utf8");
-	console.log(`📄 File Created successfully: ${filePath}`);
-}
- */
 
 export function redirectToBlog(Astro: any, lang: string, blogId: string) {
 	return Astro.redirect(`/${lang}/dashboard/${blogId}`);

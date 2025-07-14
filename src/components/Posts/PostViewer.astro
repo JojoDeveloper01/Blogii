@@ -1,0 +1,116 @@
+---
+import { renderEditorJsToHtml } from "@/lib/editorjs";
+import { DateDisplay } from "@/components/DateDisplay";
+
+const { post } = Astro.props;
+
+const isNonUserViewer = post.content ? "server" : "client";
+---
+
+<div
+  data-is-non-user-viewer={isNonUserViewer}
+  data-post-title={post.title}
+  class="min-h-screen text-[--text-primary]"
+>
+  <article class="max-w-3xl mx-auto py-16">
+    <!-- Título -->
+    <h1
+      id="post-title"
+      class="text-4xl capitalize font-bold leading-tight tracking-tight mb-4 text-[--text-primary]"
+    >
+      {post?.title}
+    </h1>
+
+    <!-- Meta info -->
+    <div
+      id="post-date"
+      class="mb-10 text-sm text-[--helper] flex items-center gap-4 flex-wrap"
+    >
+      {post?.created_at && <DateDisplay date={post?.created_at} />}
+    </div>
+
+    <!-- Descrição -->
+    {
+      post?.description && (
+        <p id="post-description" class="text-lg text-[--text-primary] mb-8">
+          {post?.description}
+        </p>
+      )
+    }
+
+    <!-- Conteúdo renderizado -->
+    <div
+      id="post-content"
+      class="prose prose-lg max-w-none dark:prose-invert prose-img:rounded-xl prose-headings:text-[--text-primary] prose-code:bg-[--secondary] prose-code:px-1.5 prose-code:py-1 prose-code:rounded-md"
+    >
+      {post?.content && <div set:html={renderEditorJsToHtml(post.content)} />}
+    </div>
+  </article>
+</div>
+
+<script>
+  import { renderEditorJsToHtml } from "@/lib/editorjs";
+  import { localBlogDB } from "@/services/indexedDB";
+
+  const initViewer = async () => {
+    const container = document.querySelector("[data-is-non-user-viewer]");
+    if (!container) return;
+
+    const isNonUserViewer = container.getAttribute("data-is-non-user-viewer");
+    if (isNonUserViewer === "server") {
+      return;
+    }
+
+    const postTitle = container.getAttribute("data-post-title");
+    if (!postTitle) {
+      return;
+    }
+
+    try {
+      const blogs = await localBlogDB.getAllBlogs();
+      const currentBlog = blogs[0];
+
+      if (!currentBlog?.posts) return;
+
+      const post = currentBlog.posts.find((p) => p.title === postTitle);
+      if (!post?.content) return;
+
+      // Atualiza título
+      const titleEl = document.getElementById("post-title");
+      if (titleEl) {
+        titleEl.textContent = post.title;
+      }
+
+      // Atualiza data
+      const dateEl = document.getElementById("post-date");
+      if (dateEl && post.created_at) {
+        const date = new Date(post.created_at);
+        dateEl.innerHTML = `
+          <time datetime="${date.toISOString()}">
+            ${date.toLocaleDateString()}
+          </time>
+        `;
+      }
+
+      // Atualiza descrição
+      const descEl = document.getElementById("post-description");
+      if (descEl && post.description) {
+        descEl.textContent = post.description;
+      }
+
+      // Atualiza conteúdo
+      const contentDiv = document.getElementById("post-content");
+      if (contentDiv) {
+        contentDiv.innerHTML = `<div>${renderEditorJsToHtml(post.content)}</div>`;
+      }
+    } catch (error) {
+      console.error("Error loading post content:", error);
+    }
+  };
+
+  // Tenta inicializar no carregamento inicial
+  document.addEventListener("DOMContentLoaded", initViewer);
+
+  // Tenta inicializar em navegações do Astro
+  document.addEventListener("astro:page-load", initViewer);
+</script>

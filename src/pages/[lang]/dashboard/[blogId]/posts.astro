@@ -1,8 +1,12 @@
 ---
 import Dashboard from "@/layouts/Dashboard.astro";
-import CreatePostButton from "@/components/Posts/CreatePostButton.astro";
+import { CreatePostButton } from "@/components/Posts/CreatePostButton";
 import { PostsContainer } from "@/components/Posts/PostsContainer";
-import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
+import {
+  getDashboardContextOfTheBlog,
+  getUserPlan,
+  getBlogPostsCount,
+} from "@/lib/utilsDB";
 
 const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
@@ -12,6 +16,17 @@ const { blogId, lang, blogData, user } = ctx;
 if (!blogData) {
   return Astro.redirect(`/${lang}`);
 }
+
+const userPlan = await getUserPlan(user?.id);
+const postsCount = await getBlogPostsCount(String(blogId));
+
+const checkPostLimit = !user?.id
+  ? "sign_in"
+  : !userPlan || postsCount === null || postsCount === undefined
+    ? "There was an error checking your plan."
+    : postsCount >= userPlan.post_limit
+      ? "post_limit"
+      : "";
 ---
 
 <Dashboard>
@@ -22,7 +37,11 @@ if (!blogData) {
         All Posts
       </h1>
 
-      <CreatePostButton blogId={blogId} />
+      <CreatePostButton
+        blogId={String(blogId)}
+        lang={String(lang)}
+        {checkPostLimit}
+      />
     </div>
 
     <!-- Stats Overview -->

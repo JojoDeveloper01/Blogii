@@ -1,6 +1,10 @@
 ---
-import LayoutBase from "./BaseDashboard.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
+import BaseDashboard from "./BaseDashboard.astro";
+import {
+  SITE_TITLE,
+  SITE_DESCRIPTION,
+  signInToCreateMoreBlogs,
+} from "@/lib/consts";
 import { generateShortNumericId } from "@/lib/utils";
 import { getDashboardContextOfTheBlog, loadUserBlogsData } from "@/lib/utilsDB";
 import Breadcrumb from "@/components/Breadcrumb.astro";
@@ -9,6 +13,7 @@ import SideBarBlog from "../components/SideBarBlog.astro";
 import MobileMenu from "../components/MobileMenu.astro";
 import MobileMenuButton from "../components/MobileMenuButton.astro";
 import { icons } from "@/components/Editing/icons";
+import LoginRegister from "@/components/LoginRegister.astro";
 
 const editing = Astro.url.searchParams.get("editing");
 const idLoginModal = generateShortNumericId();
@@ -18,18 +23,35 @@ if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
 const { lang, blogId, blogData, user } = ctx;
 
-const userBlogs = await loadUserBlogsData(user, Astro);
+const userBlogs = await loadUserBlogsData(String(user?.id), Astro);
+
 const isAuthorized = Boolean(user?.id);
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
+
+const isSideBarVisible = isAuthorized
+  ? true
+  : currentPage === "dashboard"
+    ? false
+    : true;
 ---
 
-<LayoutBase
+<BaseDashboard
   title={SITE_TITLE}
   description={SITE_DESCRIPTION}
   lang={String(lang)}
   theme={blogData?.theme}
 >
-  <section class="flex flex-col mx-auto mb-20 min-h-screen dashboard-container">
+  {
+    !isAuthorized && (
+      <div class="fade-in-up animation-delay-200">
+        <LoginRegister
+          id="authModalMoreBlogs"
+          message={signInToCreateMoreBlogs}
+        />
+      </div>
+    )
+  }
+  <section class="flex flex-col mx-auto min-h-screen dashboard-container">
     <div
       class="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50"
     >
@@ -47,11 +69,15 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
           <MobileMenuButton />
 
           {
-            currentPage !== "dashboard" && blogData && (
-              <a href={`/${lang}/${blogData.title}`} target="_blank">
+            currentPage !== "dashboard" && blogData?.status === "published" && (
+              <a
+                href={`/${lang}/${blogData.title_sanitized}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <button class="px-3 text-white flex items-center gap-2">
                   <span set:html={icons.visit} />
-                  Visitar
+                  Visit
                 </button>
               </a>
             )
@@ -73,13 +99,17 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
       </div>
     </div>
 
-    <div class="mt-20 gap-4">
+    <div class="mt-20 overflow-hidden">
       <div class="flex flex-col md:flex-row gap-2">
-        <SideBarBlog
-          lang={String(lang)}
-          blogId={String(blogId)}
-          isAuthorized={isAuthorized}
-        />
+        {
+          isSideBarVisible && (
+            <SideBarBlog
+              lang={String(lang)}
+              blogId={String(blogId)}
+              isAuthorized={isAuthorized}
+            />
+          )
+        }
         <section class="flex-1 min-w-0 mx-3">
           <slot />
         </section>
@@ -93,4 +123,4 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
       isAuthorized={isAuthorized}
     />
   </section>
-</LayoutBase>
+</BaseDashboard>

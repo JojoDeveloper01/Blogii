@@ -1,154 +1,129 @@
 ---
 import {
-    SITE_TITLE,
-    SITE_DESCRIPTION,
-    MONTHLY_PRICE,
-    ANNUAL_PRICE,
-    LIFETIME_PRICE,
-    BLOGS_LIMIT_MONTHLY,
-    POSTS_LIMIT_MONTHLY,
-    BLOGS_LIMIT_ANNUAL,
-    POSTS_LIMIT_ANNUAL,
+  SITE_TITLE,
+  SITE_DESCRIPTION,
+  getSubscriptionsPlans,
 } from "@/lib/consts";
 import Layout from "@/layouts/Layout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
 import PricingTable from "@/components/PricingTable.astro";
 import PricingCard from "@/components/PricingCard.astro";
+import { icons } from "@/components/Editing/icons";
+import { getSubscriptionPlans } from "@/lib/utilsDB";
 
 const lang = getLangFromUrl(Astro.url);
 
+const {
+  MONTHLY_PRICE,
+  ANNUAL_PRICE,
+  LIFETIME_PRICE,
+  BLOGS_LIMIT_MONTHLY,
+  POSTS_LIMIT_MONTHLY,
+  BLOGS_LIMIT_ANNUAL,
+  POSTS_LIMIT_ANNUAL,
+  FEATURES_MONTHLY,
+  FEATURES_ANNUAL,
+  FEATURES_LIFETIME,
+} = getSubscriptionsPlans(await getSubscriptionPlans());
+
 const planFeatures = {
-    monthly: [
-        `Create up to ${BLOGS_LIMIT_MONTHLY} blogs and ${POSTS_LIMIT_MONTHLY} posts per blog`,
-        "Basic analytics dashboard",
-        "Community support",
-        "Basic post editor tools",
-    ],
-    annual: [
-        `Create up to ${BLOGS_LIMIT_ANNUAL} blogs and ${POSTS_LIMIT_ANNUAL} posts per blog`,
-        "Advanced analytics dashboard",
-        "Advanced editor with media tools",
-        "SEO optimization tools",
-    ],
-    lifetime: [
-        "All Annual plan features",
-        "Unlimited blogs and posts",
-        "Premium analytics with insights",
-        "Early access to new features",
-    ],
+  monthly: [
+    `Create up to ${BLOGS_LIMIT_MONTHLY} blogs and ${POSTS_LIMIT_MONTHLY} posts per blog`,
+    ...FEATURES_MONTHLY,
+  ],
+  annual: [
+    `Create up to ${BLOGS_LIMIT_ANNUAL} blogs and ${POSTS_LIMIT_ANNUAL} posts per blog`,
+    ...FEATURES_ANNUAL,
+  ],
+  lifetime: [...FEATURES_LIFETIME],
 };
 
-const mergedFeatures = Array.from(
-    new Set([
-        ...planFeatures.monthly,
-        ...planFeatures.annual,
-        ...planFeatures.lifetime,
-    ]),
-);
-
 const plans = [
-    {
-        name: "Monthly",
-        price: MONTHLY_PRICE,
-        period: "month",
-        subtitle: "Recurring monthly charge",
-        features: planFeatures.monthly,
-        buttonText: "Start now",
-    },
-    {
-        name: "Annual",
-        price: ANNUAL_PRICE,
-        period: "year",
-        discount: "-30% discount",
-        recommended: true,
-        subtitle: "Save € 11!",
-        features: planFeatures.annual,
-        buttonText: "Start now",
-    },
-    {
-        name: "Lifetime",
-        price: LIFETIME_PRICE,
-        period: "one-time",
-        discount: "One-time payment",
-        features: planFeatures.lifetime,
-        buttonText: "Get lifetime access",
-    },
+  {
+    name: "Monthly",
+    price: MONTHLY_PRICE,
+    period: "month",
+    subtitle: "Recurring monthly charge",
+    features: planFeatures.monthly,
+    buttonText: "Start now",
+  },
+  {
+    name: "Annual",
+    price: ANNUAL_PRICE,
+    period: "year",
+    discount: "-30% discount",
+    recommended: true,
+    subtitle: "Save € 11!",
+    features: planFeatures.annual,
+    buttonText: "Start now",
+  },
+  {
+    name: "Lifetime",
+    price: LIFETIME_PRICE,
+    period: "one-time",
+    discount: "One-time payment",
+    features: planFeatures.lifetime,
+    buttonText: "Get lifetime access",
+  },
 ];
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>
-    <section
-        id="pricing-plans"
-        class="min-h-screen bg-gradient-to-b py-16 px-4 sm:px-6 lg:px-8"
-    >
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center">
-                <h2
-                    class="text-3xl font-extrabold text-[--blanc-core] sm:text-4xl"
-                >
-                    Plans & Pricing
-                </h2>
-                <p class="mt-4 text-xl text-[--blanc-core]">
-                    Choose the plan that best fits your needs
-                </p>
-            </div>
+  <section
+    id="pricing-plans"
+    class="min-h-screen bg-gradient-to-b py-16 px-4 sm:px-6 lg:px-8"
+  >
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold text-[--blanc-core] sm:text-4xl">
+          Plans & Pricing
+        </h2>
+        <p class="mt-4 text-xl text-[--blanc-core]">
+          Choose the plan that best fits your needs
+        </p>
+      </div>
 
-            <div class="mt-16 relative">
-                <div class="absolute inset-0 h-1/2"></div>
-                <div
-                    class="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8"
-                >
-                    <div
-                        class="max-w-md mx-auto space-y-10 lg:max-w-5xl lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0"
-                    >
-                        {plans.map((plan) => <PricingCard {...plan} />)}
-                    </div>
-                </div>
-            </div>
+      <div class="mt-16 relative">
+        <div class="absolute inset-0 h-1/2"></div>
+        <div class="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            class="max-w-md mx-auto space-y-10 lg:max-w-5xl lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0"
+          >
+            {plans.map((plan) => <PricingCard {...plan} />)}
+          </div>
         </div>
-    </section>
-
-    <!-- Comparison Table Section -->
-    <section id="comparison" class="pt-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2
-                class="text-3xl font-extrabold text-center text-[--blanc-core] mb-2"
-            >
-                Compare Plans
-            </h2>
-            <p class="text-xl text-center text-[--blanc-core] mb-12">
-                Discover the plan that best suits your needs
-            </p>
-
-            <PricingTable
-                plans={[
-                    { name: "Monthly", price: MONTHLY_PRICE },
-                    { name: "Annual", price: ANNUAL_PRICE, recommended: true },
-                    { name: "Lifetime", price: LIFETIME_PRICE },
-                ]}
-                {planFeatures}
-            />
-        </div>
-    </section>
-
-    <div class="mt-10 mb-16 text-center">
-        <a
-            href="#pricing-plans"
-            class="inline-flex items-center gap-2 text-[--secondary] hover:underline"
-        >
-            <span>Go back to the Plans</span>
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg
-            >
-        </a>
+      </div>
     </div>
+  </section>
+
+  <!-- Comparison Table Section -->
+  <section id="comparison" class="pt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-extrabold text-center text-[--blanc-core] mb-2">
+        Compare Plans
+      </h2>
+      <p class="text-xl text-center text-[--blanc-core] mb-12">
+        Discover the plan that best suits your needs
+      </p>
+
+      <PricingTable
+        plans={[
+          { name: "Monthly", price: MONTHLY_PRICE },
+          { name: "Annual", price: ANNUAL_PRICE, recommended: true },
+          { name: "Lifetime", price: LIFETIME_PRICE },
+        ]}
+        {planFeatures}
+      />
+    </div>
+  </section>
+
+  <div class="mt-10 mb-16 text-center">
+    <a
+      href="#pricing-plans"
+      class="inline-flex items-center gap-2 text-[--secondary] hover:underline"
+    >
+      <span>Go back to the Plans</span>
+      <span set:html={icons.arrowup} />
+    </a>
+  </div>
 </Layout>

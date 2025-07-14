@@ -27,8 +27,16 @@ if (/^\d{3,4}$/.test(String(currentPage))) {
     class="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5 dark:text-white"
   >
     <li class="inline-flex items-center gap-1.5">
+      <a href={`/${lang}`} class="hover:text-foreground transition-colors">
+        <span set:html={icons.arrowLeft} />
+      </a>
+    </li>
+    <li>
+      <span set:html={icons.breadcrumb} />
+    </li>
+    <li class="inline-flex items-center gap-1.5">
       <a
-        href={`/${lang}${isAuthorized ? `/dashboard` : ``}`}
+        href={`/${lang}/dashboard`}
         class="hover:text-foreground transition-colors">Blogii</a
       >
     </li>

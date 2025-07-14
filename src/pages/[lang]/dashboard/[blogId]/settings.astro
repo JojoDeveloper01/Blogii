@@ -2,8 +2,10 @@
 import { DeleteBlog } from "@/components/Settings/DeleteBlog";
 import Dashboard from "@/layouts/Dashboard.astro";
 import { sanitizeString } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
 import { icons } from "@/components/Editing/icons";
+import { blogUnpublished } from "@/lib/consts";
 
 const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
@@ -14,73 +16,145 @@ const userId = user?.id;
 ---
 
 <Dashboard>
-	<div class="mx-auto">
-		<h1 class="text-2xl font-bold mb-8 text-[--blanc-core] border-b border-[--primary] pb-4">Blog Settings</h1>
-		
-		<div class="space-y-8">
-			<!-- Configurações gerais -->
-			<section class="bg-[--noir-core] backdrop-blur-sm rounded-xl p-6 border border-[--blanc-core] shadow-lg">
-				<h2 class="text-lg font-semibold text-[--blanc-core] flex items-center gap-2">
-					<span set:html={icons.settings}/>
-					General Settings
-				</h2>
-				<ul class="space-y-4">
-					<li class="flex items-center justify-between p-3 bg-[--noir-core]">
-						<div class="flex items-center gap-2 w-3/4 text-white">
-							<span set:html={icons.domain} />
-							<input 
-								type="text" 
-								placeholder="Custom Domain" 
-								class="bg-[--noir-core] border border-zinc-600 rounded-lg px-3 py-1.5 text-[--blanc-core] placeholder:text-[--blanc-core] focus:outline-none hover:border-[--primary] hover:ring-1 hover:ring-[--primary] w-full max-w-xs transition-all duration-300 cursor-not-allowed"
-								value={`${sanitizeString(blogData?.title || "", 1)}.myblogii.com`}
-								readonly
-							>
-						</div>
-						<div class="flex items-center">
-							<span class="text-[--noir-core] dark:text-[--blanc-core] text-sm bg-gradient-to-r from-[--primary] to-[--secondary] backdrop-blur-sm px-3 py-1 rounded-full border border-[--primary] shadow-sm">Coming Soon</span>
-						</div>
-					</li>
-				</ul>
-			</section>
+  <div class="mx-auto">
+    <h1 class="text-2xl font-bold mb-8 text-[--blanc-core]">Blog Settings</h1>
 
-			<!-- Danger Zone -->
-			<section class="bg-gradient-to-br from-[#300718] to-[#200415] rounded-xl p-6 border border-red-900/30 shadow-lg">
-				<h2 class="text-lg font-semibold mb-4 text-red-400 flex items-center gap-2">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
-						<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-						<line x1="12" y1="9" x2="12" y2="13"/>
-						<line x1="12" y1="17" x2="12.01" y2="17"/>
-					</svg>
-					Danger Zone
-				</h2>
-				<div class="p-4 rounded-lg bg-red-950/20 border border-red-900/20">
-					<h3 class="text-base font-medium text-red-300 mb-2 flex items-center gap-2">
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M3 6h18"/>
-							<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-							<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-							<line x1="10" y1="11" x2="10" y2="17"/>
-							<line x1="14" y1="11" x2="14" y2="17"/>
-						</svg>
-						Delete Blog
-					</h3>
-					<p class="text-sm text-red-200/70 mb-4">
-						Once you delete a blog, there is no going back. Please be certain.
-					</p>
-					<button
-						onclick="document.getElementById('delete-blog-dialog').showModal()"
-						class="bg-gradient-to-r from-red-700 to-red-600 text-white px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-red-700/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-2"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M3 6h18"/>
-							<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-							<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-						</svg>
-						Delete Blog
-					</button>
-					<DeleteBlog blogId={String(blogId)} lang={String(lang)} userId={String(userId)} isAuthorized={!!userId} client:idle />
-				</div>
-			</section>
-		</div>
-	</div>
+    <div class="space-y-8 mb-8">
+      <!-- Configurações gerais -->
+      <section
+        class="bg-[--noir-core] backdrop-blur-sm rounded-xl p-6 border border-[--blanc-core] shadow-lg"
+      >
+        <h2
+          class="text-lg font-semibold text-[--blanc-core] flex items-center gap-2"
+        >
+          <span set:html={icons.settings} />
+          General Settings
+        </h2>
+
+        <ul class="space-y-4">
+          <li class="flex items-center justify-between p-3 bg-[--noir-core]">
+            <div class="flex items-center gap-2 w-3/4 text-white">
+              <span set:html={icons.domain} />
+              <input
+                type="text"
+                placeholder="Custom Domain"
+                class="bg-[--noir-core] border border-zinc-600 rounded-lg px-3 py-1.5 text-[--blanc-core] placeholder:text-[--blanc-core] focus:outline-none hover:border-[--primary] hover:ring-1 hover:ring-[--primary] w-full max-w-xs transition-all duration-300 cursor-not-allowed"
+                value={`${sanitizeString(blogData?.title || "", 1)}.myblogii.com`}
+                readonly
+              />
+            </div>
+            <div class="flex items-center">
+              <span
+                class="text-[--noir-core] dark:text-[--blanc-core] text-sm bg-gradient-to-r from-[--primary] to-[--secondary] backdrop-blur-sm px-3 py-1 rounded-full border border-[--primary] shadow-sm"
+                >Coming Soon</span
+              >
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Danger Zone -->
+      <section
+        class="bg-gradient-to-br from-[#300718] to-[#200415] rounded-xl p-6 border border-red-900/30 shadow-lg"
+      >
+        <h2
+          class="text-lg font-semibold mb-4 text-red-400 flex items-center gap-2"
+        >
+          <span set:html={icons.alert} />
+          Danger Zone
+        </h2>
+        <div class="grid gap-4">
+          <div class="p-4 rounded-lg bg-red-950/20 border border-red-900/20">
+            <h3
+              class="text-base font-medium text-red-300 mb-2 flex items-center gap-2"
+            >
+              <span set:html={icons.delete} />
+              Delete Blog
+            </h3>
+            <p class="text-sm text-red-200/70 mb-4">
+              Once you delete a blog, there is no going back. Please be certain.
+            </p>
+            <div class="flex gap-4">
+              <button
+                onclick="document.getElementById('delete-blog-dialog').showModal()"
+                class="bg-gradient-to-r from-red-700 to-red-600 text-white px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-red-700/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-2"
+              >
+                <span set:html={icons.delete} />
+                Delete
+              </button>
+            </div>
+            <DeleteBlog
+              blogId={String(blogId)}
+              lang={String(lang)}
+              userId={String(userId)}
+              isAuthorized={!!userId}
+              client:idle
+            />
+
+            {
+              blogData?.status === "published" && (
+                <ConfirmDialog
+                  id="unpublish-blog-dialog"
+                  title="Unpublish Blog"
+                  message="Are you sure you want to unpublish this blog? All posts will become private and only you will be able to see them."
+                  avaliableIcon={true}
+                >
+                  <button
+                    onclick={`unpublishBlog('${blogId}')`}
+                    class="px-5 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Yes, unpublish
+                  </button>
+                </ConfirmDialog>
+              )
+            }
+          </div>
+          {
+            blogData?.status === "published" && (
+              <div class="p-4 rounded-lg bg-red-950/20 border border-red-900/20">
+                <h3 class="text-base font-medium text-red-300 mb-2 flex items-center gap-2">
+                  <span set:html={icons.eyeOff} />
+                  Unpublish Blog
+                </h3>
+                <p class="text-sm text-red-200/70 mb-4">{blogUnpublished}</p>
+                <button
+                  onclick="document.getElementById('unpublish-blog-dialog').showModal()"
+                  class="bg-gradient-to-r from-red-700 to-red-600 text-white px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-red-700/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-2"
+                >
+                  <span set:html={icons.eyeOff} />
+                  Unpublish Blog
+                </button>
+              </div>
+            )
+          }
+        </div>
+      </section>
+    </div>
+  </div>
 </Dashboard>
+
+<script>
+  import { actions } from "astro:actions";
+
+  async function unpublishBlog(blogId: string) {
+    try {
+      const result = await actions.blog.updateStatus({
+        blogId,
+        status: "draft",
+        postsIds: ["all"], // Atualiza todos os posts do blog para draft
+      });
+      if (result.data?.success) {
+        // Removido .data já que não é uma Astro action
+        window.location.reload();
+      } else {
+        console.error("Failed to unpublish blog. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error unpublishing blog:", error);
+      console.error("Failed to unpublish blog. Please try again.");
+    }
+  }
+
+  // Adiciona a função ao window para poder ser chamada pelo onclick
+  (window as any).unpublishBlog = unpublishBlog;
+</script>

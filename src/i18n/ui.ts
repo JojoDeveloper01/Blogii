@@ -36,7 +36,7 @@ export const ui = {
 
         'home.how': 'How It Works?',
         'home.choose': 'Choose',
-        'home.choosekSub': 'Browse our stylish collection.',
+        'home.choosekSub': 'Browse our stylish.',
         'home.click': 'Click "Rent"',
         'home.clickSub': 'Select your rental period and proceed.',
         'home.pick': 'Pick a Date',

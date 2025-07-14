@@ -70,12 +70,9 @@ const getPreviewUrl = (postId: string) => {
                     value={post.id}
                     id={post.id}
                     name="selectedPosts"
-                    class="sr-only"
+                    class="w-4 h-4 rounded border-2 border-gray-600 text-orange-500 focus:ring-orange-500 cursor-pointer"
                     aria-label={`Select post: ${post.title}`}
                   />
-                  <div class="w-4 h-4 rounded border-2 border-gray-600 transition-all duration-200 cursor-pointer">
-                    <div class="absolute inset-0 rounded bg-orange-500 transform scale-0 transition-transform duration-200 ease-out origin-center" />
-                  </div>
                 </label>
               </div>
               <div class="flex-1">
@@ -119,7 +116,7 @@ const getPreviewUrl = (postId: string) => {
         </button>
         <button
           type="button"
-          onclick="publishBlog()"
+          id="publish-button"
           class="px-3 bg-gradient-to-r from-[--primary] to-[--secondary] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
         >
           Publish Selected Posts
@@ -132,80 +129,54 @@ const getPreviewUrl = (postId: string) => {
 <script>
   import { actions } from "astro:actions";
 
-  declare global {
-    interface Window {
-      publishBlog: () => Promise<void>;
+  // Função para adicionar o event listener
+  function setupPublishButton() {
+    const button = document.getElementById("publish-button");
+    if (button && !button.dataset.initialized) {
+      button.dataset.initialized = "true";
+      button.addEventListener("click", async () => {
+        // Todo o teu código:
+        const dialog = button.closest("dialog") as HTMLDialogElement;
+        const errorMessage = dialog.querySelector(
+          "#errorMessage"
+        ) as HTMLElement;
+        const blogId = dialog.id.replace("publish-", "");
+
+        try {
+          const selectedPosts = Array.from(
+            dialog.querySelectorAll('input[name="selectedPosts"]:checked')
+          ).map((input) => (input as HTMLInputElement).value);
+
+          if (selectedPosts.length === 0) {
+            errorMessage?.classList.remove("hidden");
+            return;
+          }
+          errorMessage?.classList.add("hidden");
+
+          const response = await actions.blog.updateStatus({
+            blogId,
+            status: "published",
+            postsIds: selectedPosts,
+            lang: window.location.pathname.split("/")[1],
+          });
+
+          if (response.error) {
+            throw new Error(response.error.message || "Failed to publish");
+          }
+
+          window.location.href = response.data.redirectTo || "";
+        } catch (error) {
+          console.error("Failed to publish blog:", error);
+          const message =
+            error instanceof Error ? error.message : "Please try again";
+          errorMessage.textContent = message;
+          errorMessage.style.display = "block";
+        }
+      });
     }
   }
 
-  document.addEventListener("astro:page-load", () => {
-    // Handle checkbox animations
-    const checkboxes = document.querySelectorAll(
-      'input[type="checkbox"][name="selectedPosts"]'
-    );
-    checkboxes.forEach((checkbox: any) => {
-      const container = checkbox.parentElement.querySelector("div");
-      const checkmark = container.querySelector("svg");
-      const fill = container.querySelector(".bg-orange-500");
-
-      checkbox.addEventListener("change", () => {
-        if (checkbox.checked) {
-          fill.style.transform = "scale(1)";
-          checkmark.style.opacity = "1";
-        } else {
-          fill.style.transform = "scale(0)";
-          checkmark.style.opacity = "0";
-        }
-      });
-    });
-
-    window.publishBlog = async () => {
-      // Get current dialog
-      const dialog = document.querySelector(
-        "dialog[open]"
-      ) as HTMLDialogElement;
-      if (!dialog) {
-        console.error("No open dialog found");
-        return;
-      }
-
-      const errorMessage = dialog.querySelector("#errorMessage") as HTMLElement;
-      const blogId = dialog.id.replace("publish-", "");
-
-      try {
-        // Get selected posts
-        const selectedPosts = Array.from(
-          dialog.querySelectorAll('input[name="selectedPosts"]:checked')
-        ).map((input) => (input as HTMLInputElement).value);
-
-        // Validate selection
-        if (selectedPosts.length === 0) {
-          errorMessage?.classList.remove("hidden");
-          return;
-        }
-        errorMessage?.classList.add("hidden");
-
-        // Call the action
-        const response = await actions.blog.updateStatus({
-          blogId,
-          status: "published",
-          postsIds: selectedPosts,
-          lang: window.location.pathname.split('/')[1],
-        });
-
-        if (response.error) {
-          throw new Error(response.error.message || "Failed to publish");
-        }
-
-        // Redirect on success
-        window.location.href = response.data.redirectTo;
-      } catch (error) {
-        console.error("Failed to publish blog:", error);
-        const message =
-          error instanceof Error ? error.message : "Please try again";
-        errorMessage!.textContent = `Failed to publish blog: ${message}`;
-        errorMessage?.classList.remove("hidden");
-      }
-    };
-  });
+  // Adiciona listeners para ambos os eventos
+  document.addEventListener("DOMContentLoaded", setupPublishButton);
+  document.addEventListener("astro:page-load", setupPublishButton);
 </script>

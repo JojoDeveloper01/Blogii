@@ -4,7 +4,14 @@ import { getLangFromUrl } from "@/i18n/utils";
 import { Editor } from "@/components/Editing/Editor";
 import type { BlogData } from "@/lib/types";
 import { generateShortNumericId, redirectToBlog } from "@/lib/utils";
-import { getUser, getBlogWithPosts, createNewPost } from "@/lib/utilsDB";
+import {
+  getUser,
+  getBlogWithPosts,
+  createNewPost,
+  getUserPlan,
+  getBlogPostsCount,
+} from "@/lib/utilsDB";
+import PostViewer from "@/components/Posts/PostViewer.astro";
 
 const blogId = Astro.url.pathname.split("/").find((id) => /^\d+$/.test(id));
 const postId = Astro.url.pathname.split("/").slice(-1)[0];
@@ -15,12 +22,23 @@ const lang = getLangFromUrl(Astro.url);
 const user = await getUser();
 
 let blog = null;
-let needsClientData = false;
 let blogData = null;
 let postData = null;
 let blogPosts = [];
 
+const userPlan = await getUserPlan(user?.id);
+const postsCount = await getBlogPostsCount(String(blogId));
+
+let checkPostLimit = "";
+
 if (user) {
+  checkPostLimit =
+    !userPlan || postsCount === null || postsCount === undefined
+      ? "There was an error checking your plan."
+      : postsCount >= userPlan.post_limit
+        ? "post_limit"
+        : "";
+
   blogPosts = await getBlogWithPosts(String(blogId));
   blogData = blogPosts;
   blogPosts = [blogPosts];
@@ -31,7 +49,10 @@ if (user) {
   } else if (!postData && thisPostIsNew) {
     const newPostId = generateShortNumericId();
 
-    blogData.posts = [...blogData.posts, { id: newPostId, title: "New Post" }];
+    blogData.posts = [
+      ...blogData.posts,
+      { id: newPostId, title: "New Post", title_sanitized: "new-post" },
+    ];
     try {
       await createNewPost(String(blogId), String(newPostId), "New Post");
 
@@ -44,6 +65,8 @@ if (user) {
     return redirectToBlog(Astro, lang, String(blogId));
   }
 } else {
+  checkPostLimit = "sign_in";
+
   const cookie = Astro.cookies.get("blogiis");
   blogPosts = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
 
@@ -84,7 +107,6 @@ if (editing !== "true" && editing !== "false") {
 // Check if postData exists before accessing its properties
 const isNewPost = postData?.thisPostIsNew || false;
 
-needsClientData = true;
 blog = {
   id: blogId,
   title: blogData?.title,
@@ -95,7 +117,7 @@ blog = {
 ---
 
 {
-  blog ? (
+  blog && (
     <PostEditor
       {...blog}
       {blog}
@@ -104,42 +126,19 @@ blog = {
       userId={String(user?.id)}
       {lang}
     >
-      <Editor
-        isNewPost={isNewPost}
-        blog={blog}
-        blogPosts={blogPosts}
-        editing={String(editing)}
-        lang={lang}
-        isAuthorized={!!user}
-      />
+      {editing === "true" ? (
+        <Editor
+          isNewPost={isNewPost}
+          blog={blog}
+          blogPosts={blogPosts}
+          editing={String(editing)}
+          lang={lang}
+          isAuthorized={!!user}
+          {checkPostLimit}
+        />
+      ) : (
+        <PostViewer post={postData} />
+      )}
     </PostEditor>
-  ) : null
+  )
 }
-
-<style>
-  /* Personalizar o bloco do editor */
-  #editorjs {
-    background-color: #f9fafb;
-    color: #111827;
-    border: 2px solid #cbd5e1;
-    border-radius: 0.5rem;
-  }
-
-  /* Blocos de texto */
-  .ce-paragraph {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #1f2937;
-  }
-
-  /* Botões e barra de ferramentas */
-  .ce-toolbar__plus,
-  .ce-toolbar__settings-btn {
-    background-color: #e2e8f0;
-    color: #1e293b;
-  }
-
-  .ce-toolbar__plus:hover {
-    background-color: #cbd5e1;
-  }
-</style>

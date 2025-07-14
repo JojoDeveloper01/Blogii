@@ -1,9 +1,10 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { supabase } from "@/lib/supabase";
-import { checkUserHasBlogs, createBlogFromTemp, updateBlogDescription, updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog, updateBlogStatus, updateBlogTheme } from "@/lib/utilsDB";
+import { checkUserHasBlogs, createBlogFromTemp, updateBlogDescription, updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog, updateBlogStatus, updateBlogTheme, updateUser, checkEmailExists, deleteUser, updatePostStatus, getUserPlan, getUserBlogsCount, getBlogPostsCount } from "@/lib/utilsDB";
 import type { Provider } from '@supabase/supabase-js';
 import { sanitizeString } from "@/lib/utils";
+import type { UserInfo } from "@/lib/types";
 
 /* import { createBlog } from "@/lib/utils";
 import * as path from 'path';
@@ -14,6 +15,17 @@ class ActionError extends Error {
         super(message);
     }
 }
+const userInfoSchema = z.object({
+    id: z.string(),
+    email: z.string().email({ message: "Must be a valid email address" }).optional(),
+    name: z.string().min(3, { message: "Name must be at least 3 characters long" }).max(30, { message: "Name must be no longer than 30 characters" }).optional(),
+    avatar_url: z.string().url({ message: "Must be a valid URL" }).optional(),
+    bio: z.string().max(100, { message: "Bio must be no longer than 100 characters" }).optional(),
+    website: z.string().url({ message: "Must be a valid URL" }).optional(),
+    social_links: z.record(z.string(), z.string().url({ message: "Must be a valid URL" })).optional(),
+    location: z.string().min(3, { message: "Location must be at least 3 characters long" }).max(30, { message: "Location must be no longer than 30 characters" }).optional(),
+    skills: z.array(z.string().min(2, { message: "Skills must be at least 2 characters long" }).max(20, { message: "Skills must be no longer than 20 characters" })).optional(),
+});
 
 export const server = {
     auth: {
@@ -58,6 +70,158 @@ export const server = {
         })
     },
 
+    user: {
+        validateUserField: defineAction({
+            input: z.object({
+                value: z.any().optional(),
+                field: z.enum(["name", "email", "avatar_url", "bio", "website", "social_links", "location", "skills"]),
+            }),
+            handler: async ({ field, value }) => {
+                try {
+                    //console.log("field, value: ", field, value)
+
+                    // Valida o valor com base no campo específico
+                    const validationSchemas: Record<string, z.ZodSchema> = {
+                        name: userInfoSchema.shape.name,
+                        email: userInfoSchema.shape.email,
+                        avatar_url: userInfoSchema.shape.avatar_url,
+                        bio: userInfoSchema.shape.bio,
+                        website: userInfoSchema.shape.website,
+                        social_links: userInfoSchema.shape.social_links,
+                        location: userInfoSchema.shape.location,
+                        skills: userInfoSchema.shape.skills,
+                    };
+
+                    if (!validationSchemas.hasOwnProperty(field)) {
+                        throw new ActionError(
+                            `Field "${field}" is not supported for validation.`,
+                            'BAD_REQUEST'
+                        );
+                    }
+
+                    // Executa a validação
+                    validationSchemas[field].parse(value);
+
+                    return { valid: true };
+                } catch (error) {
+                    if (error instanceof z.ZodError) {
+                        return {
+                            valid: false,
+                            message: error.errors[0].message,
+                        };
+                    }
+                    throw error;
+                }
+            },
+        }),
+        updateUser: defineAction({
+            input: userInfoSchema,
+            handler: async (input) => {
+
+                try {
+                    const updates: UserInfo = input;
+                    if (input.name) updates.name = input.name;
+                    if (input.avatar_url) updates.avatar_url = input.avatar_url;
+                    if (input.bio) updates.bio = input.bio;
+                    if (input.website) updates.website = input.website;
+                    if (input.social_links) updates.social_links = input.social_links;
+                    if (input.location) updates.location = input.location;
+                    if (input.skills) updates.skills = input.skills;
+
+                    // Verificar se o email já existe
+                    if (input.email && input.email !== updates.email) {
+                        const emailExists = await checkEmailExists(input.email);
+                        if (emailExists) {
+                            throw new ActionError('Email already exists');
+                        }
+                    }
+
+                    // Atualizar o usuário
+                    const { error: updateError } = await updateUser({
+                        id: input.id,
+                        email: input.email,
+                        name: input.name,
+                        avatar_url: input.avatar_url,
+                        bio: input.bio,
+                        website: input.website,
+                        social_links: input.social_links,
+                        location: input.location,
+                        skills: input.skills,
+                    });
+
+                    if (updateError) {
+                        throw new ActionError(
+                            "An unexpected error occurred.",
+                            'INTERNAL_SERVER_ERROR'
+                        );
+                    }
+                } catch (error: any) {
+                    throw new ActionError(
+                        "An unexpected error occurred.",
+                        'INTERNAL_SERVER_ERROR'
+                    );
+                }
+            },
+        }),
+        deleteUser: defineAction({
+            input: z.object({
+                id: z.string(),
+            }),
+            handler: async ({ id }) => {
+                try {
+                    const { error } = await deleteUser(id);
+                    if (error) throw error;
+                    return { success: true };
+                } catch (error: any) {
+                    console.error('Failed to delete user:', error);
+                    throw new ActionError('Failed to delete user');
+                }
+            },
+        }),
+        getUserPlan: defineAction({
+            input: z.object({
+                userId: z.string(),
+            }),
+            handler: async ({ userId }) => {
+                try {
+                    const plan = await getUserPlan(userId);
+                    return plan;
+                } catch (error) {
+                    console.error('Failed to get user plan:', error);
+                    throw new ActionError('Failed to get user plan');
+                }
+            },
+        }),
+        getUserBlogsCount: defineAction({
+            input: z.object({
+                userId: z.string(),
+            }),
+            handler: async ({ userId }) => {
+                try {
+                    const count = await getUserBlogsCount(userId);
+                    return count;
+                } catch (error) {
+                    console.error('Failed to get user blogs count:', error);
+                    throw new ActionError('Failed to get user blogs count');
+                }
+            },
+        }),
+        getBlogPostsCount: defineAction({
+            input: z.object({
+                blogId: z.string(),
+            }),
+            handler: async ({ blogId }) => {
+                try {
+                    const count = await getBlogPostsCount(blogId);
+                    return count;
+                } catch (error) {
+                    console.error('Failed to get blog posts count:', error);
+                    throw new ActionError('Failed to get blog posts count');
+                }
+            },
+        }),
+    },
+
     theme: {
         update: defineAction({
             input: z.object({
@@ -84,11 +248,13 @@ export const server = {
                 blogData: z.object({
                     id: z.string(),
                     title: z.string(),
+                    title_sanitized: z.string(),
                     user_id: z.string().optional(),
                     created_at: z.string().transform((str) => new Date(str)),
                     posts: z.array(z.object({
                         id: z.string(),
                         title: z.string(),
+                        title_sanitized: z.string(),
                         blog_id: z.string(),
                         content: z.string(),
                         created_at: z.string().transform((str) => new Date(str))
@@ -138,11 +304,12 @@ export const server = {
             input: z.object({
                 blogId: z.string(),
                 title: z.string(),
+                title_sanitized: z.string(),
             }),
-            handler: async ({ blogId, title }) => {
+            handler: async ({ blogId, title, title_sanitized }) => {
                 try {
                     // Use the utility function to update the blog title in the database
-                    const { success, error } = await updateBlogTitleInDB(blogId, title);
+                    const { success, error } = await updateBlogTitleInDB(blogId, title, title_sanitized);
 
                     if (!success) {
                         console.error('[ACTION] Erro ao atualizar título do blog:', error);
@@ -179,9 +346,9 @@ export const server = {
         updateStatus: defineAction({
             input: z.object({
                 blogId: z.string(),
-                postsIds: z.array(z.string()),
+                postsIds: z.array(z.string()).optional(),
                 status: z.string(),
-                lang: z.string(),
+                lang: z.string().optional(),
             }),
             handler: async ({ blogId, postsIds, status, lang }) => {
 
@@ -194,9 +361,11 @@ export const server = {
                 }
 
                 const blog = await getBlogWithPosts(blogId);
-                const titleSatinazed = sanitizeString(blog.title, 2);
 
-                return { success: true, redirectTo: `/${lang}/${titleSatinazed}` };
+                return lang ?
+                    { success: true, redirectTo: `/${lang}/${blog.title_sanitized}` }
+                    :
+                    { success: true };
             },
         }),
         delete: defineAction({
@@ -223,9 +392,10 @@ export const server = {
                 blogId: z.string(),
                 postId: z.string(),
                 title: z.string(),
+                title_sanitized: z.string(),
             }),
-            handler: async ({ blogId, postId, title }) => {
-                const result = await updatePostTitleInDB(blogId, postId, title);
+            handler: async ({ blogId, postId, title, title_sanitized }) => {
+                const result = await updatePostTitleInDB(blogId, postId, title, title_sanitized);
                 if (!result.success) {
                     throw new ActionError(
                         `Falha ao atualizar título: ${result.error || 'Erro desconhecido'}`,
@@ -252,6 +422,27 @@ export const server = {
                 return result;
             },
         }),
+
+        updateStatus: defineAction({
+            input: z.object({
+                blogId: z.string(),
+                postIds: z.array(z.string()),
+                status: z.string(),
+                lang: z.string(),
+            }),
+            handler: async ({ blogId, postIds, status, lang }) => {
+                const result = await updatePostStatus(blogId, status, postIds);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao publicar blog: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+
+                return { success: true };
+            },
+        }),
+
         delete: defineAction({
             input: z.object({
                 blogId: z.string(),
@@ -275,18 +466,4 @@ export const server = {
             },
         }),
     },
-
-    cleanCache: defineAction({
-        input: z.object({
-            collection: z.literal("blog").optional()
-        }),
-        handler: async ({ collection }) => {
-            try {
-                /* const blogs = await getCollection(collection || "blog");
-                return { success: true, blogs }; */
-            } catch (error: any) {
-                throw new ActionError(error.message, "INTERNAL_SERVER_ERROR");
-            }
-        }
-    })
 }

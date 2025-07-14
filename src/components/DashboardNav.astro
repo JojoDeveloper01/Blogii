@@ -41,7 +41,7 @@ const navSections = [
   {
     id: "engagement",
     title: "Engagement",
-    showWhen: isAuthorized,
+    showWhen: true,
     items: [
       {
         href: link("/analytics"),
@@ -69,6 +69,11 @@ const navSections = [
         href: `/${lang}/dashboard/${blogId}/settings`,
         icon: icons.settings,
         label: "Settings",
+      },
+      {
+        href: `/${lang}/profile`,
+        icon: icons.profile,
+        label: "Profile Settings",
       },
     ],
   },

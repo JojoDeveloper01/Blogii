@@ -10,216 +10,219 @@ const hasBlogs: boolean = blogsData.length > 0;
 ---
 
 <section
-    class="hero min-h-[calc(100dvh-5rem)] flex flex-col justify-center items-center relative overflow-hidden"
+  class="hero min-h-[calc(100dvh-5rem)] flex flex-col justify-center items-center relative overflow-hidden"
 >
-    <!-- Main content container -->
-    <div class={`hero-content relative flex flex-col items-center z-20 w-[26rem] ${!hasBlogs ? "mb-16" : ""}`}>
-        <!-- Hero title with animated gradient -->
-        <h1
-            class="text-7xl sm:text-8xl md:text-8xl lg:text-9xl font-bold mb-6 text-center tracking-tight hero-title text-white text-shadow-dark"
-        >
-            Blog<span class="gradient-text-enhanced">ii</span>
-        </h1>
+  <!-- Main content container -->
+  <div
+    class={`hero-content relative flex flex-col items-center z-20 w-[26rem] ${!hasBlogs ? "mb-16" : ""}`}
+  >
+    <!-- Hero title with animated gradient -->
+    <h1
+      class="text-7xl sm:text-8xl md:text-8xl lg:text-9xl font-bold mb-6 text-center tracking-tight hero-title text-white text-shadow-dark"
+    >
+      Blog<span class="gradient-text-enhanced">ii</span>
+    </h1>
 
-        <!-- Animated subtitle -->
-        <h2
-            class="text-lg sm:text-xl md:text-2xl lg:text-2xl mb-4 text-center fade-in-up text-white text-shadow-sm"
-        >
-            <span class="typing-text-enhanced"
-                >What will be the title of your next idea?</span
-            >
-        </h2>
+    <!-- Animated subtitle -->
+    <h2
+      class="text-lg sm:text-xl md:text-2xl lg:text-2xl mb-4 text-center fade-in-up text-white text-shadow-sm"
+    >
+      <span class="typing-text-enhanced"
+        >What will be the title of your next idea?</span
+      >
+    </h2>
 
-        <!-- Login register component -->
-        {
-            !isAuthorized && (
-                <div class="fade-in-up animation-delay-200">
-                    <LoginRegister
-                        id="authModalMoreBlogs"
-                        message={signInToCreateMoreBlogs}
-                    />
-                </div>
-            )
-        }
-        <div class="w-80 sm:w-full grid gap-4">
-            <StartBlogInput {isAuthorized} {hasBlogs} {userId} {lang} client:load />
-            <!-- Blogs list with enhanced styling -->
-            {
-                hasBlogs && (
-                    <div
-                        id="blogsCreated"
-                        class="w-full p-6 bg-white/10 dark:bg-zinc-800/50 backdrop-blur-md rounded-xl border border-white/20 dark:border-zinc-700/50 overflow-y-auto"
-                    >
-                        <h3 class="text-xl font-bold text-gradient mb-6 flex items-center">
-                            <span class="mr-2 text-2xl">✨</span> Blogs Created
-                        </h3>
-
-                        <ul class="space-y-3">
-                            {blogsData.map(
-                                (blog: {
-                                    id: string;
-                                    title: string;
-                                    posts: { id: string }[];
-                                }) => (
-                                    <li>
-                                        <a
-                                            href={`/${lang}/dashboard/${blog.id}`}
-                                            class="interactive-link flex items-center p-3 rounded-lg group"
-                                        >
-                                            <span class="text-[primary] text-lg mr-3 group-hover:translate-x-1 transition-transform">
-                                                &rarr;
-                                            </span>
-                                            <span class="gradient-underline-text">
-                                                {sanitizeString(blog.title)}
-                                            </span>
-                                            <span class="ml-auto text-xs text-zinc-400">
-                                                {blog.posts.length} posts
-                                            </span>
-                                        </a>
-                                    </li>
-                                )
-                            )}
-                        </ul>
-                    </div>
-                )
-            }
+    <!-- Login register component -->
+    {
+      !isAuthorized && (
+        <div class="fade-in-up animation-delay-200">
+          <LoginRegister
+            id="authModalMoreBlogs"
+            message={signInToCreateMoreBlogs}
+          />
         </div>
+      )
+    }
+    <div class="w-80 sm:w-full grid gap-4">
+      <StartBlogInput {isAuthorized} {hasBlogs} {userId} {lang} showFloating={false} client:load />
+      <!-- Blogs list with enhanced styling -->
+      {
+        hasBlogs && (
+          <div
+            id="blogsCreated"
+            style="max-height: 240px; overflow-y: auto;"
+            class="w-full p-6 bg-white/10 dark:bg-zinc-800/50 backdrop-blur-md rounded-xl border border-white/20 dark:border-zinc-700/50 relative"
+          >
+            <h3 class="text-xl font-bold text-gradient mb-6 flex items-center">
+              <span class="mr-2 text-2xl">✨</span> Blogs Created
+            </h3>
+
+            <ul class="space-y-3">
+              {blogsData.map(
+                (blog: {
+                  id: string;
+                  title: string;
+                  posts: { id: string }[];
+                }) => (
+                  <li>
+                    <a
+                      href={`/${lang}/dashboard/${blog.id}`}
+                      class="interactive-link flex items-center p-3 rounded-lg group"
+                    >
+                      <span class="text-[primary] text-lg mr-3 group-hover:translate-x-1 transition-transform">
+                        &rarr;
+                      </span>
+                      <span class="gradient-underline-text">
+                        {sanitizeString(blog.title)}
+                      </span>
+                      <span class="ml-auto text-xs text-zinc-400">
+                        {blog.posts.length} posts
+                      </span>
+                    </a>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+        )
+      }
     </div>
+  </div>
 </section>
 
 <style>
-    /* Base styles for hero section */
-    .hero {
-        position: relative;
-        overflow: hidden;
-        color: var(--light-text, #ffffff);
-    }
+  /* Base styles for hero section */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    color: var(--light-text, #ffffff);
+  }
 
-    /* Gradient text effect with improved accessibility */
-    .gradient-text-enhanced {
-        -webkit-background-clip: text;
-        color: var(--secondary);
-        animation: shimmer 2s infinite;
-    }
+  /* Gradient text effect with improved accessibility */
+  .gradient-text-enhanced {
+    -webkit-background-clip: text;
+    color: var(--secondary);
+    animation: shimmer 2s infinite;
+  }
 
-    .text-gradient {
-        background: var(--secondary);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-    }
+  .text-gradient {
+    background: var(--secondary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
-    /* Text shadow helpers for better contrast */
-    .text-shadow-dark {
-        text-shadow:
-            0 2px 4px rgba(0, 0, 0, 0.5),
-            0 0 10px rgba(0, 0, 0, 0.3);
-    }
+  /* Text shadow helpers for better contrast */
+  .text-shadow-dark {
+    text-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.5),
+      0 0 10px rgba(0, 0, 0, 0.3);
+  }
 
-    .text-shadow-sm {
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    }
+  .text-shadow-sm {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
 
-    /* Shadow glow effect */
-    .shadow-glow {
-        box-shadow:
-            0 0 20px rgba(var(--secondary), 0.1),
-            0 5px 15px rgba(var(--secondary), 0.1);
-    }
+  /* Shadow glow effect */
+  .shadow-glow {
+    box-shadow:
+      0 0 20px rgba(var(--secondary), 0.1),
+      0 5px 15px rgba(var(--secondary), 0.1);
+  }
 
-    /* Animações removidas pois já estão no Layout */
+  /* Animações removidas pois já estão no Layout */
 
-    @keyframes shimmer {
-        0% {
-            background-position: -200% center;
-        }
-        100% {
-            background-position: 200% center;
-        }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% center;
     }
+    100% {
+      background-position: 200% center;
+    }
+  }
 
-    /* Fade in animations */
-    .fade-in-up {
-        animation: fadeInUp 0.8s ease forwards;
-        opacity: 0;
-    }
+  /* Fade in animations */
+  .fade-in-up {
+    animation: fadeInUp 0.8s ease forwards;
+    opacity: 0;
+  }
 
-    .animation-delay-200 {
-        animation-delay: 0.2s;
-    }
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
 
-    .animation-delay-300 {
-        animation-delay: 0.3s;
-    }
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
 
-    .animation-delay-400 {
-        animation-delay: 0.4s;
-    }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
 
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-    /* Typing text animation with improved visibility */
-    .typing-text-enhanced {
-        border-right: 3px solid var(--primary);
-        white-space: nowrap;
-        overflow: hidden;
-        display: inline-block;
-        animation:
-            typing 1s steps(40, end),
-            blink-caret 0.5s step-end infinite;
-        animation-fill-mode: forwards;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-        font-weight: 500;
-    }
+  /* Typing text animation with improved visibility */
+  .typing-text-enhanced {
+    border-right: 3px solid var(--primary);
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    animation:
+      typing 1s steps(40, end),
+      blink-caret 0.5s step-end infinite;
+    animation-fill-mode: forwards;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+  }
 
-    @keyframes typing {
-        from {
-            width: 0;
-        }
-        to {
-            width: 100%;
-        }
+  @keyframes typing {
+    from {
+      width: 0;
     }
+    to {
+      width: 100%;
+    }
+  }
 
-    @keyframes blink-caret {
-        from,
-        to {
-            border-color: transparent;
-        }
-        50% {
-            border-color: var(--primary);
-        }
+  @keyframes blink-caret {
+    from,
+    to {
+      border-color: transparent;
     }
+    50% {
+      border-color: var(--primary);
+    }
+  }
 
-    /* Hero title animation with better contrast */
-    .hero-title {
-        animation: textShadowPulse 2s infinite;
-    }
+  /* Hero title animation with better contrast */
+  .hero-title {
+    animation: textShadowPulse 2s infinite;
+  }
 
-    @keyframes textShadowPulse {
-        0% {
-            text-shadow:
-                0 2px 4px rgba(0, 0, 0, 0.5),
-                0 0 10px rgba(0, 0, 0, 0.3);
-        }
-        50% {
-            text-shadow:
-                0 2px 4px rgba(0, 0, 0, 0.5),
-                0 0 15px rgba(var(--primary), 0.4);
-        }
-        100% {
-            text-shadow:
-                0 2px 4px rgba(0, 0, 0, 0.5),
-                0 0 10px rgba(0, 0, 0, 0.3);
-        }
+  @keyframes textShadowPulse {
+    0% {
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(0, 0, 0, 0.3);
     }
+    50% {
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(var(--primary), 0.4);
+    }
+    100% {
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(0, 0, 0, 0.3);
+    }
+  }
 </style>

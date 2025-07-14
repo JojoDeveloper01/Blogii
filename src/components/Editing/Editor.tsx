@@ -1,6 +1,5 @@
 import { component$, useSignal, useVisibleTask$, $, useTask$, useOnDocument } from "@builder.io/qwik";
 import EditorJS from "@editorjs/editorjs";
-import { EditorToolbar } from "./EditorToolbar";
 import { EditorContent } from "./EditorContent";
 import { PostNavigator } from "./PostNavigator";
 import { createNewPost } from "./editorConfig";
@@ -15,12 +14,11 @@ interface EditorProps {
     editing: string;
     lang: string;
     isAuthorized: boolean;
+    checkPostLimit: string;
 }
 
-export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, editing, lang, isAuthorized }) => {
+export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, lang, isAuthorized, checkPostLimit }) => {
 
-    const editor = useSignal<EditorJS | null>(null);
-    const isPreviewMode = useSignal<boolean>(editing === 'false');
     const showSaveSuccess = useSignal(false);
     const post = blog.posts?.[0];
 
@@ -37,30 +35,6 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
         const blogData = await localBlogDB.getBlog(blog.id);
         if (!blogData) throw new Error("Blog não encontrado");
         return blogData;
-    });
-
-    useVisibleTask$(() => {
-        if (isPreviewMode.value && editor.value?.isReady) {
-            editor.value.readOnly.toggle();
-        }
-    });
-
-    // Function to sync URL with current preview mode
-    const syncUrlWithMode = $(() => {
-        if (typeof window === 'undefined') return;
-
-        const url = new URL(window.location.href);
-        url.searchParams.set('editing', (!isPreviewMode.value).toString());
-        window.history.pushState({}, '', url);
-    });
-
-    // Function to toggle preview mode
-    const togglePreviewMode = $(() => {
-        isPreviewMode.value = !isPreviewMode.value;
-        if (editor.value?.isReady) {
-            editor.value.readOnly.toggle();
-        }
-        syncUrlWithMode();
     });
 
     useVisibleTask$(async () => {
@@ -91,14 +65,11 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
     return (
         <div class="flex flex-col gap-2">
             {/* Breadcrumb path */}
-            
-            <EditorToolbar
-                editor={editor}
-                isPreviewMode={isPreviewMode}
-            />
+
+            {/* <EditorToolbar editor={editor} /> */}
 
             {/* Área de conteúdo principal */}
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4 bg-[--bg-color] rounded-lg">
                 {/* Mobile layout - PostNavigator acima do editor */}
                 <div class="block md:hidden mb-4">
                     <PostNavigator
@@ -106,8 +77,8 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                         postId={String(post?.id)}
                         lang={lang}
                         blogPosts={blogPosts}
-                        isPreviewMode={isPreviewMode}
                         isMobile={true}
+                        checkPostLimit={checkPostLimit}
                     />
                 </div>
 
@@ -119,7 +90,6 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                             <EditorContent
                                 blog={blog}
                                 fetchBlog={fetchBlog}
-                                isPreviewMode={isPreviewMode}
                                 onSave={handleSave}
                                 isAuthorized={isAuthorized}
                             />
@@ -134,8 +104,8 @@ export const Editor = component$<EditorProps>(({ isNewPost, blog, blogPosts, edi
                                 postId={String(post?.id)}
                                 lang={lang}
                                 blogPosts={blogPosts}
-                                isPreviewMode={isPreviewMode}
                                 isMobile={false}
+                                checkPostLimit={checkPostLimit}
                             />
                         </div>
                     </div>

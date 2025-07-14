@@ -1,20 +1,25 @@
 ---
-import ThemeSwitcher from "@/components/ThemeSwitcher.astro";
+import { getUserById } from "@/lib/utilsDB";
+
 const { blog, lang } = Astro.props;
+
+const user = await getUserById(String(blog.user_id));
 ---
 
 <header class="text-[--text-primary] py-8">
-  <div
-    class="mx-auto px-4 flex items-center justify-between text-center gap-6"
-  >
+  <div class="mx-auto px-4 flex flex-col gap-6">
     <!-- Avatar & Title -->
     <div class="flex flex-col items-center gap-3 md:flex-row md:gap-6">
-      <!--  <img
-        src="/avatar.png"
-        alt="Avatar"
-        class="h-28 w-28 rounded-full object-cover shadow-md"
-      /> -->
-      <a href={`/${lang}/${blog.title}`}>
+      {
+        user && user.user_metadata && user.user_metadata.avatar_url && (
+          <img
+            src={user.user_metadata.avatar_url}
+            alt="Avatar"
+            class="h-28 w-28 rounded-full object-cover shadow-md"
+          />
+        )
+      }
+      <a href={`/${lang}/${blog.title_sanitized}`}>
         <h1
           class="text-3xl font-bold mb-1 border-b-4 border-[--secondary] hover:border-[--text-secondary] inline-block pb-1"
         >
@@ -23,29 +28,69 @@ const { blog, lang } = Astro.props;
       </a>
     </div>
 
-    <!-- Navegação -->
-    <nav
-      class="flex flex-wrap justify-center gap-4 text-sm font-mono tracking-wide"
-    >
-      <a href={`/${lang}/${blog.title}`} class="hover:text-[--secondary]"
-        >home</a
-      >
-      <a
-        href={`/${lang}/${blog.title}/blog`}
-        class="hover:text-[--secondary]">blog</a
-      >
-      <a
-        href={`/${lang}/${blog.title}/about`}
-        class="hover:text-[--secondary]">about</a
-      >
-      <!--       <a
-        href={`/${lang}/${blog.title}/newsletter`}
-        class="hover:text-[--secondary]">newsletter</a
-      >
-      <a
-        href={`/${lang}/${blog.title}/github`}
-        class="hover:text-[--secondary]">github</a
-      > -->
-    </nav>
+    <section class="py-2 mx-auto">
+      <div>
+        {
+          blog.description && (
+            <p class="text-lg leading-relaxed text-[--text-primary] my-4">
+              {blog.description}
+            </p>
+          )
+        }
+      </div>
+      <div class="mx-auto flex flex-wrap gap-4 align-center">
+        {
+          user?.website && (
+            <a
+              href={user.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline hover:text-[--secondary]"
+            >
+              {user.website.replace(/^https?:\/\//, "")}
+            </a>
+          )
+        }
+
+        {
+          user?.social_links && (
+            <div class="flex flex-wrap gap-4 text-sm">
+              {Object.entries(user.social_links).map(([network, url]) => (
+                <a
+                  href={String(url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="hover:text-[--secondary] underline"
+                >
+                  {network}
+                </a>
+              ))}
+            </div>
+          )
+        }
+
+        <div class="flex flex-wrap items-center gap-4 text-sm">
+          {
+            user?.location && (
+              <span class="px-3 py-1 bg-[--primary] rounded-full">
+                📍 {user.location}
+              </span>
+            )
+          }
+        </div>
+
+        {
+          Array.isArray(user?.skills) && user.skills.length > 0 && (
+            <div class="flex flex-wrap gap-2">
+              {user.skills.map((skill: string) => (
+                <span class="px-2 py-1 bg-[--primary] rounded text-xs">
+                  {skill}
+                </span>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </section>
   </div>
 </header>

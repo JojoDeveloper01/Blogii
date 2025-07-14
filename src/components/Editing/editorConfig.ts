@@ -1,7 +1,7 @@
 import { $, useSignal } from "@builder.io/qwik";
 import { localBlogDB } from "@/services/indexedDB";
-import { validateTitle, cookieUtils } from "@/lib/utils";
-import type { UpdateBlogTitleParams, UpdatePostTitleParams } from "@/lib/types";
+import { validateTitle, cookieUtils, sanitizeString } from "@/lib/utils";
+import type { PostData, UpdateBlogTitleParams, UpdatePostTitleParams } from "@/lib/types";
 import { actions } from "astro:actions";
 
 export function useAutoSave() {
@@ -64,7 +64,7 @@ export const updateBlogTitle = $(async (params: UpdateBlogTitleParams) => {
 
     try {
         if (isAuthorized) {
-            const { data, error } = await actions.blog.updateTitle({ blogId, title: sanitized });
+            const { data, error } = await actions.blog.updateTitle({ blogId, title: sanitized, title_sanitized: sanitizeString(sanitized, 1) });
             if (!error && data?.success) {
                 updateUI();
                 return true;
@@ -110,7 +110,12 @@ export const updatePostTitleWithParams = $(async (params: UpdatePostTitleParams)
 
     if (isAuthorized) {
         try {
-            const { data, error } = await actions.post.updateTitle({ blogId, postId, title: titleValue });
+            const { data, error } = await actions.post.updateTitle({ 
+                blogId, 
+                postId, 
+                title: titleValue, 
+                title_sanitized: sanitizeString(titleValue, 1) 
+            });
 
             if (!error && data?.success) {
                 updateUIStates();
@@ -232,6 +237,7 @@ export const createNewPost = $(async (
             id: postId,
             blog_id: blogId,
             title,
+            title_sanitized: sanitizeString(title, 1),
             content: '',
             created_at: new Date(),
         });
@@ -297,9 +303,16 @@ export async function deletePost(blogId: string, postId: string, lang: string, i
         // Update cookie
         const blogs = cookieUtils.getStoredBlogs();
         const blogIndex = blogs.findIndex((b: any) => b.id === blogId);
+        /* 
         if (blogIndex !== -1) {
-            blogs[blogIndex].posts = blogs[blogIndex].posts.filter((p: any) => p.id !== postId);
-            document.cookie = `blogiis=${encodeURIComponent(JSON.stringify(blogs))}; path=/`;
+            blogs[blogIndex].posts = blogs[blogIndex].posts.filter((p: PostData) => p.id !== postId);
+        */
+        if (blogIndex !== -1 && blogs[blogIndex]) {
+            const currentBlog = blogs[blogIndex];
+            if (currentBlog.posts) {
+                currentBlog.posts = currentBlog.posts.filter((p: PostData) => p.id !== postId);
+                document.cookie = `blogiis=${encodeURIComponent(JSON.stringify(blogs))}; path=/`;
+            }
         }
 
         // Redirect to the first remaining post

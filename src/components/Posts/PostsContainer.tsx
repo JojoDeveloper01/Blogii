@@ -10,16 +10,15 @@ interface PostsContainerProps {
   blogId: string;
   selector?: boolean;
   isAuthorized?: boolean;
+  blogStatus?: string;
 }
 
-export const PostsContainer = component$<PostsContainerProps>(({ posts: initialPosts, lang, blogId, selector, isAuthorized = false }) => {
+export const PostsContainer = component$<PostsContainerProps>(({ posts: initialPosts, lang, blogId, selector, isAuthorized = false, blogStatus }) => {
   // Store compartilhado entre PostsSearch e PostsGrid
   const allPosts = useSignal<PostData[]>([...initialPosts]);
   const filteredPosts = useSignal<PostData[]>([...initialPosts]);
   const containerRef = useSignal<Element>();
   const selectedPosts = useSignal<Set<string>>(new Set());
-
-
 
   // Configurar observador para ajustar posição da barra de ações
   useVisibleTask$(() => {
@@ -57,14 +56,14 @@ export const PostsContainer = component$<PostsContainerProps>(({ posts: initialP
         />
 
         <div
-          class={`action-bar sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/20 dark:border-gray-700/20 px-4 py-2 mt-4 transition-all duration-300 ${selectedPosts.value.size === 0 ? 'opacity-0 translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'}`}
+          class={`action-bar sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/20 dark:border-gray-700/20 px-4 py-2 mt-4 rounded-t-lg transition-all duration-300 ${selectedPosts.value.size === 0 ? 'opacity-0 translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'}`}
         >
           <PostsActionBar
             blogId={blogId}
-            posts={filteredPosts.value}
             lang={lang}
-            isAuthorized={isAuthorized}
             selectedPosts={selectedPosts}
+            posts={filteredPosts.value}
+            blogStatus={blogStatus}
           />
         </div>
       </div>

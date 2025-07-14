@@ -1,0 +1,44 @@
+---
+import { signInToCreateMoreBlogs, createNewBlogMessage } from "@/lib/consts";
+import { icons } from "../Editing/icons";
+import LoginRegister from "../LoginRegister.astro";
+import ConfirmDialog from "../shared/ConfirmDialog.astro";
+import { StartBlogInput } from "../StartBlogInput";
+
+interface Props {
+  isAuthorized: boolean;
+  lang: string;
+  hasBlogs: boolean;
+  userId: any;
+}
+
+const { userId, hasBlogs, isAuthorized, lang } = Astro.props;
+---
+
+<button
+  class="flex items-center gap-2 p-4 text-xs text-gray-700 rounded-lg dark:text-gray-200 hover:bg-white/50 dark:hover:bg-zinc-600/40"
+  onclick={`document.getElementById(${isAuthorized ? "'confirmNewBlog'" : "'loginModalMoreBlogs'"}).showModal()`}
+>
+  <span set:html={icons.new} />
+  <span>Create New Blog</span>
+</button>
+{
+  !isAuthorized ? (
+    <div class="fade-in-up animation-delay-200">
+      <LoginRegister
+        id="loginModalMoreBlogs"
+        message={signInToCreateMoreBlogs}
+      />
+    </div>
+  ) : (
+    <ConfirmDialog
+      id="confirmNewBlog"
+      title="Create New Blog"
+      message={createNewBlogMessage}
+    >
+      <div class="grid w-full">
+        <StartBlogInput {hasBlogs} showFloating={true} {isAuthorized} {userId} {lang} />
+      </div>
+    </ConfirmDialog>
+  )
+}

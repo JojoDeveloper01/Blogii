@@ -50,22 +50,26 @@ The user can administrate his blog posts on the dashboard and see analytics abou
     [] Has to show the settings of the blogs of the user
 
 [x] Make the publish button
-    [] Has to save the blog on the repository, create a .mk on the folder "Content"
-    [] Add publish confirmation dialog with post selection
 
 [x] Ask to chatGPT how i can make a domain name to link to the blog like `blog-name.myblogii.com`
 
 [] Add Comments on the blog
-[] Add the options to enable the comments on the blog
+    [] Add the options to enable the comments on the blog
 
 [x] Add the pricing page, free, monthly payment (with n% discount), annual payment (with n% discount) and unique payment (with n% discount)
-[] Add the public Blogs page, blogs created on blogii  
-    [] has to show the advanced features of this plan
+[x] Add the public Blogs page, blogs created on blogii  
 
+[x] Fix the names of the posts and blogs before the user can fix it 
+[x] Change the dashboard section to have the "create new blog" button above the rest of the blogs and work it
+    [x] hide the engagement section to non logged in users
+[x] The preview mode, has to show only the post the user made and exclude every else
+[x] Make the user can publish their blogs in the posts editor
+[x] Make the user can change the status of their blogs and posts to  "draft"
+[x] The user only can add blogs depend of their plan
 
-[] Make the user can change the theme of the blog
+[x] Make the user can change the theme of the blog
+[x] Make the user can change the bio, website, social_links, location, skills to show in the blog
 [] Make the user can change the language of the blog
-[] Make the user can change the bio, website, social_links, location, skills to show in the blog
 
 [] Improve the blog editor 2
     [] Should have various templates from the DB

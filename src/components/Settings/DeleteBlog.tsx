@@ -9,7 +9,7 @@ interface DeleteBlogProps {
     userId: string;
 }
 
-export const DeleteBlog = component$(({blogId, isAuthorized, lang, userId}: DeleteBlogProps) => {
+export const DeleteBlog = component$(({ blogId, isAuthorized, lang, userId }: DeleteBlogProps) => {
     const errorMessage = useSignal("");
     const isDeleting = useSignal(false);
 
@@ -18,7 +18,7 @@ export const DeleteBlog = component$(({blogId, isAuthorized, lang, userId}: Dele
             errorMessage.value = "Could not find blog ID";
             return;
         }
-        
+
         try {
             isDeleting.value = true;
             await deleteBlog(blogId, userId, isAuthorized, lang);
@@ -32,16 +32,25 @@ export const DeleteBlog = component$(({blogId, isAuthorized, lang, userId}: Dele
         <>
             <ConfirmDialog
                 id="delete-blog-dialog"
-                onConfirm$={handleDeleteBlog}
                 title="Delete Blog"
                 message="Are you sure you want to delete this blog? All posts and data will be permanently removed. This action cannot be undone."
-            />
+                avaliableIcon={true}
+                css=""
+            >
+                <button
+                    type="submit"
+                    onClick$={handleDeleteBlog}
+                    class="px-5 py-2.5 border border-[--blanc-core] rounded-lg text-[--blanc-core] hover:bg-[--error] hover:border-[--error] hover:text-[--blanc-core] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    Delete
+                </button>
+            </ConfirmDialog>
             {errorMessage.value && (
                 <div class="mt-4 p-4 rounded-lg bg-gradient-to-r from-red-700/10 to-red-600/10 border border-red-900/20 text-red-300 flex items-center gap-2 animate-fadeIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     {errorMessage.value}
                 </div>

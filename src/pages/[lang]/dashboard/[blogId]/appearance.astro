@@ -1,17 +1,18 @@
 ---
 import Dashboard from "@/layouts/Dashboard.astro";
 import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
-import { icons } from "@/components/Editing/icons";
 import ThemePalette from "@/components/ThemePalette.astro";
 
 const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
 
 const { lang, blogId, blogData, user } = ctx;
+
+const userId = user?.id;
 ---
 
 <Dashboard>
-  <div class="space-y-8">
+  <div class="space-y-8 mb-8">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
         Appearance
@@ -33,7 +34,7 @@ const { lang, blogId, blogData, user } = ctx;
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >Color Scheme</label
           >
-          <ThemePalette blogId={blogId} currentTheme={blogData?.theme} />
+          <ThemePalette blogId={blogId} currentTheme={blogData?.theme} isAuthorized={Boolean(userId)} />
         </div>
 
         <!-- Font Selection -->

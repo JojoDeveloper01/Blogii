@@ -1,13 +1,9 @@
 ---
 interface Props {
   user: {
+    name?: string;
     email?: string;
-    user_metadata?: {
-      full_name?: string;
-      name?: string;
-      email?: string;
-      avatar_url?: string;
-    };
+    avatar_url?: string;
   } | null;
   lang: string;
 }
@@ -17,10 +13,10 @@ const { user, lang } = Astro.props;
 function getDisplayName(user: Props["user"]) {
   if (!user) return "";
 
-  const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
+  const fullName = user.name;
   if (fullName) return fullName;
 
-  const email = user.email || user.user_metadata?.email || "";
+  const email = user.email || "";
   if (email.length > 20) return email;
 
   return email;
@@ -32,9 +28,9 @@ function getDisplayName(user: Props["user"]) {
     class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-800 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all duration-200"
   >
     {
-      user?.user_metadata?.avatar_url ? (
+      user?.avatar_url ? (
         <img
-          src={user.user_metadata.avatar_url}
+          src={user.avatar_url}
           alt="Profile"
           class="size-6 rounded-full object-cover"
         />

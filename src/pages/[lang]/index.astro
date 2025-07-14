@@ -7,8 +7,7 @@ import { getUser, loadUserBlogsData } from "@/lib/utilsDB";
 
 const user = await getUser();
 const lang = getLangFromUrl(Astro.url);
-
-const blogsData = await loadUserBlogsData(user, Astro);
+const blogsData = await loadUserBlogsData(user?.id, Astro);
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION} {lang}>

@@ -1,6 +1,7 @@
 import { getLangFromUrl } from '@/i18n/utils';
 import { supabase } from './supabase';
-import type { BlogData, UserInfo } from './types';
+import type { BlogData, SubscriptionPlan, UserInfo } from './types';
+import { sanitizeString } from './utils';
 
 //User:
 export async function getUser() {
@@ -23,7 +24,9 @@ export async function getUser() {
       throw error;
     }
 
-    return data.user;
+    const user = await getUserById(String(data.user?.id));
+
+    return user;
   } catch (error) {
     // Check if it's an AuthSessionMissingError
     if (error instanceof Error && error.message && error.message.includes('Auth session missing')) {
@@ -49,16 +52,35 @@ export async function getUserById(userId: string) {
 
   if (error) {
     console.error('[getUserById] Erro ao buscar usuário:', error);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    } else {
+      throw error;
+    }
+  }
+
+  return data;
+}
+
+export async function getAllBlogs() {
+  const { data, error } = await supabase
+    .from('blogs')
+    .select('*')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[getAllBlogs] Erro ao buscar blogs:', error);
     throw error;
   }
 
   return data;
 }
 
-export async function loadUserBlogsData(user: any, Astro: any): Promise<BlogData[]> {
+export async function loadUserBlogsData(userId: any, Astro: any): Promise<BlogData[]> {
   try {
-    if (user) {
-      return await getUserBlogsWithPosts(user.id) || [];
+    if (userId) {
+      return await getUserBlogsWithPosts(userId) || [];
     } else {
       const cookie = Astro.cookies.get("blogiis");
       return cookie ? JSON.parse(cookie.value) : [];
@@ -69,7 +91,37 @@ export async function loadUserBlogsData(user: any, Astro: any): Promise<BlogData
   }
 }
 
+export async function getUserPlan(userId: string): Promise<SubscriptionPlan | null> {
+  // Busca o user
+
+  const { data: user } = await supabase
+    .from('users')
+    .select('subscription_plan_id')
+    .eq('id', userId)
+    .single();
+
+  if (!user?.subscription_plan_id) {
+    console.warn('[getUserPlan] User sem plano.');
+    return null;
+  }
+
+  // Busca o plano usando o ID do user
+  const { data: plan } = await supabase
+    .from('subscription_plans')
+    .select('*')
+    .eq('id', user.subscription_plan_id)
+    .single();
+
+  if (!plan) {
+    console.warn('[getUserPlan] User sem plano.');
+    return null;
+  }
+
+  return plan;
+}
+
 //Get:
+
 export async function getUserBlogsWithPosts(userId: string) {
   if (!userId) {
     console.warn('[getUserBlogsWithPosts] User ID não fornecido');
@@ -84,13 +136,11 @@ export async function getUserBlogsWithPosts(userId: string) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[getUserBlogsWithPosts] Erro ao buscar blogs:', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('[getUserBlogsWithPosts] Erro ao buscar blogs:', error);
     return [];
   }
 }
@@ -114,11 +164,11 @@ export async function getBlogWithPosts(blogId: string) {
   return data;
 }
 
-export async function getBlogByTitlePublished(blogTitle: string): Promise<BlogData> {
+export async function getBlogByTitlePublished(blogTitle: string): Promise<BlogData | null> {
   const { data, error } = await supabase
     .from('blogs')
     .select('*, posts(*)')
-    .ilike('title', blogTitle) // Case-insensitive
+    .eq('title_sanitized', blogTitle) // Busca exata (case-sensitive)
     .eq('status', 'published')
     .limit(2); // Para validar único
 
@@ -127,15 +177,16 @@ export async function getBlogByTitlePublished(blogTitle: string): Promise<BlogDa
     throw error;
   }
 
-  if (!data || data.length === 0) {
-    throw new Error('Blog não encontrado.');
-  }
-
   if (data.length > 1) {
     throw new Error(`[getBlogByTitlePublished] Título não é único: ${blogTitle}`);
   }
 
   const blog = data[0];
+
+  // Se não encontrou blog, retorna null
+  if (!blog) {
+    return null;
+  }
 
   // Filtra apenas posts publicados
   blog.posts = (blog.posts || []).filter((post: any) => post.status === 'published');
@@ -178,20 +229,19 @@ export async function getPostById(postId: string, isAuthorized: boolean, Astro: 
   }
 }
 
-export async function getPostByTitle(postTitle: string, blogTitle: string) {
-  console.log("postTitle:", postTitle);
-
+export async function getPostByTitle(postTitle: string, blogTitle: string): Promise<any | null> {
   // Primeiro, encontra o blog pelo título único
   const blog = await getBlogByTitlePublished(blogTitle);
   if (!blog) {
-    throw new Error(`[getPostByTitle] Blog não encontrado: ${blogTitle}`);
+    // Retorna null em vez de lançar erro quando o blog não for encontrado
+    return null;
   }
 
   const { data, error } = await supabase
     .from('posts')
     .select('*')
     .eq('blog_id', blog.id) // Usa o ID real do blog
-    .ilike('title', postTitle) // Título do post ignorando case
+    .eq('title_sanitized', postTitle) // Busca exata pelo título sanitizado
     .limit(2); // Para validar se não há duplicados
 
   if (error) {
@@ -264,8 +314,13 @@ export async function getDashboardContextOfTheBlog(Astro: any) {
   }
 
   // Se a página for "dashboard", blogId e blogData não devem existir
-  if (currentPage === "dashboard" && (blogId || blogData)) {
-    return { redirect: `/${lang}` };
+  if (currentPage === "dashboard") {
+    const userBlogs = await loadUserBlogsData(user?.id, Astro);
+
+    if (!userBlogs.length) return { redirect: `/${lang}` };
+
+    blogId = userBlogs.at(0)?.id || null;
+    blogData = userBlogs.at(0) || null;
   }
 
   return { lang, blogId, blogData, user };
@@ -293,6 +348,7 @@ export async function createBlog(blogData: BlogData) {
         id: blogData.id,
         user_id: blogData.user_id,
         title: blogData.title,
+        title_sanitized: sanitizeString(blogData.title, 1),
         created_at: blogData.created_at,
       })
       .select()
@@ -339,6 +395,7 @@ export async function createNewPost(blogId: string, postId: string, title: strin
     .insert({
       id: postId,
       title,
+      title_sanitized: sanitizeString(title, 1),
       blog_id: blogId,
       created_at: new Date(),
     });
@@ -353,11 +410,31 @@ export async function createNewPost(blogId: string, postId: string, title: strin
 
 //Update:
 
-export async function updateBlogTitleInDB(blogId: string, title: string) {
+export async function updateUser(userInfo: UserInfo) {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .update(userInfo)
+      .eq('id', userInfo.id)
+      .select();
+
+    if (error) {
+      console.error('[updateUser] Erro ao atualizar perfil:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('[updateUser] Erro ao atualizar perfil:', error);
+    return { success: false, error };
+  }
+}
+
+export async function updateBlogTitleInDB(blogId: string, title: string, title_sanitized: string) {
   try {
     const { data, error } = await supabase
       .from('blogs')
-      .update({ title })
+      .update({ title, title_sanitized })
       .eq('id', blogId)
       .select();
 
@@ -407,11 +484,11 @@ export async function updatePostContentInDB(blogId: string, postId: string, cont
   }
 }
 
-export async function updatePostTitleInDB(blogId: string, postId: string, title: string) {
+export async function updatePostTitleInDB(blogId: string, postId: string, title: string, title_sanitized: string) {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .update({ title })
+      .update({ title, title_sanitized })
       .eq('id', postId)
       .eq('blog_id', blogId)
       .select();
@@ -426,7 +503,24 @@ export async function updatePostTitleInDB(blogId: string, postId: string, title:
   }
 }
 
-//Delete Blog:
+//Delete:
+
+export async function deleteUser(userId: string) {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error };
+  }
+}
 
 export async function deleteBlogByUserId(blogId: string, userId: string) {
   try {
@@ -493,6 +587,23 @@ export async function deletePostFromDB(blogId: string, postId: string) {
 
 //Check:
 
+export async function checkEmailExists(email: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('[checkEmailExists] Erro ao verificar se o email existe:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+
 export async function checkUserHasBlogs(userId: string): Promise<boolean> {
   try {
     const { data: blogs } = await supabase
@@ -505,6 +616,34 @@ export async function checkUserHasBlogs(userId: string): Promise<boolean> {
   } catch (error) {
     console.error('[DB] Erro ao verificar blogs do usuário:', error);
     return false;
+  }
+}
+
+export async function getUserBlogsCount(userId: string): Promise<number> {
+  try {
+    const { count } = await supabase
+      .from('blogs')
+      .select('id', { count: 'exact' })
+      .eq('user_id', userId);
+
+    return count || 0;
+  } catch (error) {
+    console.error('[DB] Erro ao contar blogs do usuário:', error);
+    return 0;
+  }
+}
+
+export async function getBlogPostsCount(blogId: string): Promise<number> {
+  try {
+    const { count } = await supabase
+      .from('posts')
+      .select('id', { count: 'exact' })
+      .eq('blog_id', blogId);
+
+    return count || 0;
+  } catch (error) {
+    console.error('[DB] Erro ao contar posts do blog:', error);
+    return 0;
   }
 }
 
@@ -554,25 +693,24 @@ export async function createBlogFromTemp(userId: string, tempBlogData: string): 
   }
 }
 
-export async function ensureUserInDatabase({ id, email, name }: UserInfo): Promise<void> {
+export async function ensureUserInDatabase(user: any): Promise<void> {
   try {
     const { data: existingUser, error: fetchError } = await supabase
       .from("users")
-      .select("id")
-      .eq("email", email)
+      .select()
+      .eq("id", user.id)
       .maybeSingle();
 
     if (!existingUser && !fetchError) {
       const { error: insertError } = await supabase.from("users").insert({
-        id,
-        email,
-        name: name || email.split("@")[0],
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email?.split("@")[0],
+        avatar_url: user.user_metadata?.avatar_url
       });
 
       if (insertError) {
         console.error("[AUTH] Erro ao inserir utilizador:", insertError);
-      } else {
-        console.log("[AUTH] Novo utilizador criado com sucesso.");
       }
     }
   } catch (err) {
@@ -608,8 +746,7 @@ export async function updatePostsStatus(postIds: string[], status: string) {
   }
 }
 
-
-export async function updateBlogStatus(blogId: string, status: string, postIds: string[]) {
+export async function updateBlogStatus(blogId: string, status: string, postIds?: string[] | null | 'all') {
   if (!allowedStatuses.includes(status as any)) {
     return { success: false, error: 'Invalid status value' };
   }
@@ -622,13 +759,51 @@ export async function updateBlogStatus(blogId: string, status: string, postIds: 
 
     if (error) throw error;
 
-    // Atualiza os posts do blog
-    const postUpdateResult = await updatePostsStatus(postIds, status);
-    if (!postUpdateResult.success) throw postUpdateResult.error;
+    // Se postIds for 'all', busca todos os posts do blog e atualiza
+    if (Array.isArray(postIds) && postIds[0] === 'all') {
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('blog_id', blogId);
+
+      if (postsError) throw postsError;
+
+      if (posts && posts.length > 0) {
+        const postIds = posts.map(post => post.id);
+        const postUpdateResult = await updatePostsStatus(postIds, status);
+        if (!postUpdateResult.success) throw postUpdateResult.error;
+      }
+    }
+    // Atualiza os posts específicos se postIds for um array
+    else if (postIds && Array.isArray(postIds) && postIds.length > 0) {
+      const postUpdateResult = await updatePostsStatus(postIds, status);
+      if (!postUpdateResult.success) throw postUpdateResult.error;
+    }
 
     return { success: true };
   } catch (error) {
     console.error('[updateBlogStatus] Erro ao atualizar blog e posts:', error);
+    return { success: false, error };
+  }
+}
+
+export async function updatePostStatus(blogId: string, status: string, postIds: string[]) {
+  if (!allowedStatuses.includes(status as any)) {
+    return { success: false, error: 'Invalid status value' };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('posts')
+      .update({ status })
+      .eq('blog_id', blogId)
+      .in('id', postIds);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updatePostStatus] Erro ao atualizar posts:', error);
     return { success: false, error };
   }
 }
@@ -649,9 +824,10 @@ export async function updateBlogTheme(blogId: string, theme: string) {
 /* Settings: */
 
 export async function getSubscriptionPlans() {
+
   const { data, error } = await supabase
     .from('subscription_plans')
-    .select('*')
+    .select('id, name, price, billing_cycle, blog_limit, post_limit, features, created_at')
     .order('price', { ascending: true });
 
   if (error) {
@@ -659,21 +835,5 @@ export async function getSubscriptionPlans() {
     return [];
   }
 
-  return data;
-}
-
-export async function getAppSettings() {
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error) {
-    console.error('[getAppSettings] Erro ao buscar configurações:', error);
-    throw error;
-  }
-
-  return data;
+  return (data as SubscriptionPlan[]) || [];
 }

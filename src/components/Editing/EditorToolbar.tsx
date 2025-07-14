@@ -5,10 +5,9 @@ import { executeEditorCommand } from "@/lib/utils";
 
 interface EditorToolbarProps {
     editor: Signal<EditorJS | null>;
-    isPreviewMode: Signal<boolean>;
 }
 
-export const EditorToolbar = component$<EditorToolbarProps>(({ editor, isPreviewMode }) => {
+export const EditorToolbar = component$<EditorToolbarProps>(({ editor }) => {
 
     const executeCommand = $((command: string, params?: any) => {
         executeEditorCommand(editor.value, command, params);
@@ -17,7 +16,7 @@ export const EditorToolbar = component$<EditorToolbarProps>(({ editor, isPreview
     return (
         <div class="flex flex-col gap-1 bg-[--bg-color] border-b border-gray-700 rounded-t-lg">
             {/* Barra de ferramentas do editor com estilo moderno */}
-            <div class={`flex ${isPreviewMode.value ? 'hidden' : 'block'}`}>
+            <div class="flex">
                 <div class="editor-toolbar w-full grid gap-2">
                     <div class="flex items-center px-4 py-3">
                         {/* Editor toolbar only shown in edit mode */}

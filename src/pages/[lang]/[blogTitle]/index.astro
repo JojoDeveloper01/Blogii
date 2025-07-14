@@ -1,10 +1,9 @@
 ---
-import { getBlogByTitlePublished, getUserById } from "@/lib/utilsDB";
+import { getBlogByTitlePublished } from "@/lib/utilsDB";
 import { getLangFromUrl } from "@/i18n/utils";
 import CustomLayout from "@/layouts/CustomLayout.astro";
 import { extractTextFromEditorJS } from "@/lib/editorjs";
 import { DateDisplay } from "@/components/DateDisplay";
-import { sanitizeString } from "@/lib/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const blogTitle = Astro.params.blogTitle;
@@ -18,102 +17,46 @@ const blog = await getBlogByTitlePublished(String(blogTitle));
 if (!blog || blog.status !== "published") {
   return new Response("Blog not found", { status: 404 });
 }
-
-const user = await getUserById(String(blog.user_id));
 ---
 
 <CustomLayout
   {blog}
-  title={blog.title}
+  titleSanitized={blog.title_sanitized}
   description={blog.description || ""}
   {lang}
 >
   <div class="min-h-screen text-[--text-primary]">
-    <section class="py-2 mx-auto">
-      <div class="mb-8">
-        {
-          blog.description && (
-            <p class="text-lg leading-relaxed text-[--text-primary]">
-              {blog.description}
-            </p>
-          )
-        }
-      </div>
-      <div class="mx-auto flex flex-wrap gap-4 align-center">
-        {
-          user?.website && (
-            <a
-              href={user.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="underline hover:text-[--secondary]"
-            >
-              {user.website.replace(/^https?:\/\//, "")}
-            </a>
-          )
-        }
-
-        {
-          user?.social_links && (
-            <div class="flex flex-wrap gap-4 text-sm">
-              {Object.entries(user.social_links).map(([network, url]) => (
-                <a
-                  href={String(url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="hover:text-[--secondary] underline"
-                >
-                  {network}
-                </a>
-              ))}
-            </div>
-          )
-        }
-
-        <div class="flex flex-wrap items-center gap-4 text-sm">
-          {
-            user?.location && (
-              <span class="px-3 py-1 bg-[--primary] rounded-full">
-                📍 {user.location}
-              </span>
-            )
-          }
-        </div>
-
-        {
-          Array.isArray(user?.skills) && user.skills.length > 0 && (
-            <div class="flex flex-wrap gap-2">
-              {user.skills.map((skill: string) => (
-                <span class="px-2 py-1 bg-[--primary] rounded text-xs">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <hr class="my-8 opacity-25" />
-
     <section class="max-w-7xl mx-auto pb-8">
       <div class="flex flex-col gap-4">
         {
-          blog.posts?.map((post) => (
-            <a href={`/${lang}/${blog.title}/${sanitizeString(post.title, 1)}`} class="group block rounded-lg bg-[--secondary] border-l-8 border-transparent hover:border-[--text-secondary] transition-all duration-300">
-              <div class="p-2">
-                <h2 class="text-xl font-semibold text-[--text-primary] capitalize mb-2">
-                  <span >{post.title}</span>
-                </h2>
-                <p class="text-[--text-primary] mb-3 line-clamp-2">
-                  {post.description || (post.content ? extractTextFromEditorJS(post.content) : "")}
-                </p>
-                <div class="flex items-center justify-between text-sm bg-[--text-secondary] p-1 rounded w-min">
-                  <DateDisplay date={String(post.created_at)} className="text-[--text-primary]" />
+          blog.posts?.length ? (
+            blog.posts?.map((post) => (
+              <a
+                href={`/${lang}/${blogTitle}/${post.title_sanitized}`}
+                class="group block rounded-lg bg-[--secondary] border-l-8 border-transparent hover:border-[--text-secondary] transition-all duration-300"
+              >
+                <div class="p-2">
+                  <h2 class="text-xl font-semibold text-[--text-primary] capitalize mb-2">
+                    <span>{post.title}</span>
+                  </h2>
+                  <p class="text-[--text-primary] mb-3 line-clamp-2">
+                    {post.description ||
+                      (post.content
+                        ? extractTextFromEditorJS(post.content)
+                        : "")}
+                  </p>
+                  <div class="flex items-center justify-between text-sm bg-[--text-secondary] p-1 rounded w-min">
+                    <DateDisplay
+                      date={String(post.created_at)}
+                      className="text-[--text-primary]"
+                    />
+                  </div>
                 </div>
-              </div>
-            </a>
-          ))
+              </a>
+            ))
+          ) : (
+            <p>No posts available.</p>
+          )
         }
       </div>
     </section>

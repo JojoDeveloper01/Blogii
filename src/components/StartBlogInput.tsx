@@ -3,15 +3,17 @@ import { ErrorMessage } from "./ErrorMessage";
 import { AskAuthentication } from "./AskAuthentication";
 import { TitleInputBase } from './shared/TitleInputBase';
 import { startBlog, processInput } from "@/lib/utils";
+import { icons } from "./Editing/icons";
 
 interface StartBlogInputProps {
 	hasBlogs: boolean,
+	showFloating: boolean
 	isAuthorized: boolean,
 	userId: string,
-	lang: string
+	lang: string,
 }
 
-export const StartBlogInput = component$(({ hasBlogs, isAuthorized, userId, lang }: StartBlogInputProps) => {
+export const StartBlogInput = component$(({ hasBlogs, showFloating, isAuthorized, userId, lang }: StartBlogInputProps) => {
 	const title = useSignal("");
 	const showError = useSignal(false);
 	const message = useSignal("");
@@ -65,12 +67,17 @@ export const StartBlogInput = component$(({ hasBlogs, isAuthorized, userId, lang
 					onClick$={() => handleStartBlog()}
 					disabled={disableButton.value}
 				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l5 5l10 -10" /></svg>
+					<span dangerouslySetInnerHTML={icons.checkStart} />
 				</button>
 			</div>
-			<div>
-				<ErrorMessage {...{ showError, message: message.value }} />
-				{loginRegisterMessage.value && <AskAuthentication />}
+			<div class="flex">
+				<ErrorMessage
+					showError={showError}
+					showFloating={showFloating}
+				>
+					<div dangerouslySetInnerHTML={message.value} />
+					{loginRegisterMessage.value && <AskAuthentication className="text-seocndary/100" />}
+				</ErrorMessage>
 			</div>
 		</div>
 	);

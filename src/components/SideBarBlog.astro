@@ -15,8 +15,13 @@ const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 <!-- Versão Desktop do Menu -->
 <aside class="hidden md:block w-full min-[768px]:w-64 max-w-sm ml-2">
   <div
-    class="p-4 fixed top-[5.5rem] w-64 rounded-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50"
+    class="p-4 fixed top-[5rem] w-64 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-lg bg-white dark:bg-gray-900 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 hover:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:transition-all [&::-webkit-scrollbar-thumb]:duration-200"
   >
-    <DashboardNav lang={String(lang)} blogId={String(blogId)} isAuthorized={isAuthorized} currentPage={String(currentPage)} />
+    <DashboardNav
+      lang={String(lang)}
+      blogId={String(blogId)}
+      isAuthorized={isAuthorized}
+      currentPage={String(currentPage)}
+    />
   </div>
 </aside>

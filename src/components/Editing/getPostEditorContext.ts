@@ -1,6 +1,6 @@
 import { getLangFromUrl } from "@/i18n/utils";
 import { generateShortNumericId, redirectToBlog } from "@/lib/utils";
-import { getUser, getBlogWithPosts, createNewPost } from "@/lib/utilsDB";
+import { getUser, getBlogWithPosts, createNewPost, getUserById } from "@/lib/utilsDB";
 import type { BlogData } from "@/lib/types";
 
 export async function getPostEditorContext(Astro: any) {
@@ -13,7 +13,7 @@ export async function getPostEditorContext(Astro: any) {
 
   const user = await getUser();
 
-  let blogData: BlogData | null = null;
+  let blogData: BlogData;
   let blogPosts = [];
   let postData = null;
 
@@ -21,7 +21,8 @@ export async function getPostEditorContext(Astro: any) {
     const fetched = await getBlogWithPosts(String(blogId));
     blogData = fetched;
     blogPosts = [fetched];
-    postData = blogData?.posts.find((p: any) => p.id === postId);
+    if (!blogData.posts) blogData.posts = [];
+    postData = blogData.posts.find((p: any) => p.id === postId);
 
     if (!blogData || (!postData && !isNewPost)) {
       return redirectToBlog(Astro, lang, String(blogId));
@@ -29,7 +30,11 @@ export async function getPostEditorContext(Astro: any) {
 
     if (!postData && isNewPost) {
       const newPostId = generateShortNumericId();
-      blogData.posts.push({ id: newPostId, title: "New Post" });
+      blogData.posts.push({
+        id: newPostId, title: "New Post",
+        title_sanitized: "new-post",
+        blog_id: String(blogId)
+      });
       await createNewPost(String(blogId), newPostId, "New Post");
       return Astro.redirect(`/${lang}/dashboard/${blogId}/${newPostId}?editing=true`);
     }
@@ -38,7 +43,8 @@ export async function getPostEditorContext(Astro: any) {
     const stored = cookie ? JSON.parse(decodeURIComponent(cookie.value)) : [];
     blogPosts = stored;
     blogData = stored.find((b: any) => b.id === blogId);
-    postData = blogData?.posts.find((p: any) => p.id === postId);
+    if (!blogData.posts) blogData.posts = [];
+    postData = blogData.posts.find((p: any) => p.id === postId);
 
     if (!blogData || (!postData && !isNewPost)) {
       return redirectToBlog(Astro, lang, String(blogId));
@@ -46,7 +52,7 @@ export async function getPostEditorContext(Astro: any) {
 
     if (!postData && isNewPost) {
       const newPostId = generateShortNumericId();
-      blogData.posts.push({ id: newPostId, title: "New Post", thisPostIsNew: true });
+      blogData.posts.push({ id: newPostId, title: "New Post", title_sanitized: "new-post", blog_id: String(blogId), thisPostIsNew: true });
       Astro.cookies.set("blogiis", JSON.stringify(blogPosts), {
         path: "/",
         maxAge: 60 * 60 * 24 * 30,

@@ -6,16 +6,16 @@ import type { BlogData } from "@/lib/types";
 
 interface Props {
   blog: BlogData;
-  title: string;
+  titleSanitized: string;
   description: string;
   lang: string;
 }
 
-const { blog, title, description, lang } = Astro.props;
+const { blog, titleSanitized, description, lang } = Astro.props;
 ---
 
 <html {lang} data-theme={blog.theme} class="scroll-smooth">
-  <Head {title} {description} />
+  <Head {titleSanitized} {description} />
   <body
     class="max-w-2xl mx-auto min-h-screen flex flex-col relative bg-gradient-to-b from-[--primary] to-[--secondary]"
   >

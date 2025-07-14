@@ -2,10 +2,11 @@
 /**
  * ThemePalette Component – displays palette buttons for each available theme.
  */
-const { blogId, currentTheme, limit } = Astro.props as {
+const { blogId, currentTheme, limit, isAuthorized } = Astro.props as {
   blogId?: string;
   currentTheme?: string;
   limit?: number;
+  isAuthorized?: boolean;
 };
 
 interface ThemeOption {
@@ -51,6 +52,7 @@ if (typeof limit === "number") {
         class={`aspect-video rounded-lg transition-all duration-200 ${theme.name === currentTheme ? "ring-4 ring-[--blanc-core]" : "border-transparent hover:ring-2 hover:ring-[--blanc-core]"}`}
         style={`background-image:linear-gradient(to bottom, ${theme.from}, ${theme.to});`}
         data-theme-name={theme.name}
+        data-user-id={isAuthorized}
         aria-label={`Switch to ${theme.name} theme`}
       />
     ))
@@ -59,6 +61,7 @@ if (typeof limit === "number") {
 
 <script>
   import { actions } from "astro:actions";
+  import { cookieUtils } from "@/lib/utils";
 
   document.addEventListener("astro:page-load", () => {
     const grid = document.getElementById("palette-grid");
@@ -67,6 +70,7 @@ if (typeof limit === "number") {
       grid.querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const chosen = btn.getAttribute("data-theme-name");
+          const isAuthorized = btn.getAttribute("data-user-id");
           if (!chosen) return;
 
           // Update visual selection
@@ -87,14 +91,20 @@ if (typeof limit === "number") {
 
           // Apply theme locally
           document.documentElement.setAttribute("data-theme", chosen);
-          localStorage.setItem(`theme-${blogId}`, chosen);
 
-          // Persist to DB
-          if (blogId) {
-            try {
-              await actions.theme.update({ blogId, theme: chosen });
-            } catch (err) {
-              console.error("Failed to persist theme:", err);
+          if (isAuthorized === "true") {
+            // If authorized, persist to DB
+            if (blogId) {
+              try {
+                await actions.theme.update({ blogId, theme: chosen });
+              } catch (err) {
+                console.error("Failed to persist theme:", err);
+              }
+            }
+          } else {
+            // If not authorized, update theme in cookie
+            if (blogId) {
+              cookieUtils.updateBlogTheme(blogId, chosen);
             }
           }
         });

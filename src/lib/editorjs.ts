@@ -54,6 +54,6 @@ export function renderEditorJsToHtml(json: string): string {
     return Array.isArray(result) ? result.join('') : result;
   } catch (error) {
     console.error('[renderEditorJsToHtml] Erro ao renderizar:', error);
-    return '<p>Erro ao mostrar conteúdo.</p>';
+    return '';
   }
 }

@@ -22,7 +22,6 @@ const { title, description, userId, editing, blog, blogPosts, lang } =
         blogId={blog?.id}
         postId={blog?.posts?.[0].id ?? ""}
         {lang}
-        isPreviewMode={Boolean(editing)}
         isAuthorized={Boolean(userId)}
         {blogPosts}
       />

@@ -1,4 +1,6 @@
 ---
+import { icons } from "./Editing/icons";
+
 interface Props {
   name?: string;
   price?: number;
@@ -29,13 +31,7 @@ const {
     recommended && (
       <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gradient-to-r from-[--primary] to-[--secondary] rounded-full shadow-lg z-10">
         <span class="text-sm font-bold text-[--blanc-core] whitespace-nowrap flex items-center gap-1">
-          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0115 2a1 1 0 01.707 1.707L15 4.414l.707.707A1 1 0 0115 7a1 1 0 01-.707-.293L13.586 6l-.707.707A1 1 0 0112 7a1 1 0 01-.707-1.707l.707-.707-.707-.707A1 1 0 0112 2z"
-              clip-rule="evenodd"
-            />
-          </svg>
+          <span set:html={icons.starIA} />
           Recommended
         </span>
       </div>
@@ -69,17 +65,7 @@ const {
           features?.map((feature) => (
             <div class="flex gap-2 items-center">
               <div class="flex-shrink-0">
-                <svg
-                  class="h-5 w-5 text-[--primary]"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <span set:html={icons.checkPricing} />
               </div>
               <p class="m-0 text-base text-[--blanc-core]">{feature}</p>
             </div>
