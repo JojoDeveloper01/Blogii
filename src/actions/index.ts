@@ -1,7 +1,7 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { supabase } from "@/lib/supabase";
-import { checkUserHasBlogs, createBlogFromTemp, updateBlogDescription, updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog, updateBlogStatus, updateBlogTheme, updateUser, checkEmailExists, deleteUser, updatePostStatus, getUserPlan, getUserBlogsCount, getBlogPostsCount } from "@/lib/utilsDB";
+import { checkUserHasBlogs, createBlogFromTemp, updateBlogDescription, updateBlogTitleInDB, updatePostTitleInDB, getBlogWithPosts, deletePostFromDB, deleteBlogByUserId, updatePostContentInDB, createBlog, updateBlogStatus, updateBlogTheme, updateUser, checkEmailExists, deleteUser, updatePostStatus, getUserPlan, getUserBlogsCount, getBlogPostsCount, postComment, getUserById, deleteComment, updateComments } from "@/lib/utilsDB";
 import type { Provider } from '@supabase/supabase-js';
 import { sanitizeString } from "@/lib/utils";
 import type { UserInfo } from "@/lib/types";
@@ -32,14 +32,15 @@ export const server = {
         signInWithOAuth: defineAction({
             input: z.object({
                 provider: z.enum(['google', 'facebook', 'azure']) as z.ZodType<Provider>,
+                redirectUrl: z.string().optional(),
             }),
-            handler: async ({ provider }) => {
+            handler: async ({ provider, redirectUrl }) => {
                 try {
                     // Iniciar o fluxo de autenticação OAuth
                     const { data: authData, error: authError } = await supabase.auth.signInWithOAuth({
                         provider,
                         options: {
-                            redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback`,
+                            redirectTo: `${import.meta.env.SITE_URL}/api/auth/callback${redirectUrl ? `?redirectUrl=${redirectUrl}` : ""}`
                         }
                     });
 
@@ -71,6 +72,23 @@ export const server = {
     },
 
     user: {
+        getUser: defineAction({
+            input: z.object({
+                userId: z.string(),
+            }),
+            handler: async ({ userId }) => {
+                const user = await getUserById(userId);
+
+                if (!user.success) {
+                    throw new ActionError(
+                        `Falha ao buscar utilizador: ${user.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+
+                return { success: true };
+            }
+        }),
         validateUserField: defineAction({
             input: z.object({
                 value: z.any().optional(),
@@ -463,6 +481,61 @@ export const server = {
                 }
 
                 return { success: true, message: 'Posts apagados com sucesso' };
+            },
+        }),
+
+        updateComments: defineAction({
+            input: z.object({
+                blogId: z.string(),
+                postIds: z.array(z.string()),
+                update_comments: z.boolean(),
+            }),
+            handler: async ({ blogId, postIds, update_comments }) => {
+                const result = await updateComments(blogId, postIds, update_comments);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao habilitar comentários: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+                return { success: true };
+            },
+        }),
+    },
+
+    comment: {
+        postComment: defineAction({
+            input: z.object({
+                postId: z.string(),
+                content: z.string(),
+                userId: z.string(),
+            }),
+            handler: async ({ postId, content, userId }) => {
+                const result = await postComment(postId, content, userId);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao publicar blog: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+
+                return { success: true };
+            },
+        }),
+        deleteComment: defineAction({
+            input: z.object({
+                commentId: z.string(),
+            }),
+            handler: async ({ commentId }) => {
+                const result = await deleteComment(commentId);
+                if (!result.success) {
+                    throw new ActionError(
+                        `Falha ao apagar comentário: ${result.error || 'Erro desconhecido'}`,
+                        'DATABASE_ERROR'
+                    );
+                }
+
+                return { success: true };
             },
         }),
     },

@@ -1,9 +1,9 @@
 ---
 import { signInToCreateMoreBlogs, createNewBlogMessage } from "@/lib/consts";
-import { icons } from "../Editing/icons";
-import LoginRegister from "../LoginRegister.astro";
-import ConfirmDialog from "../shared/ConfirmDialog.astro";
-import { StartBlogInput } from "../StartBlogInput";
+import { icons } from "@/components/Editing/icons";
+import LoginRegister from "@/components/LoginRegister.astro";
+import ConfirmDialog from "@/components/shared/ConfirmDialog.astro";
+import { StartBlogInput } from "@/components/StartBlogInput";
 
 interface Props {
   isAuthorized: boolean;
@@ -16,7 +16,7 @@ const { userId, hasBlogs, isAuthorized, lang } = Astro.props;
 ---
 
 <button
-  class="flex items-center gap-2 p-4 text-xs text-gray-700 rounded-lg dark:text-gray-200 hover:bg-white/50 dark:hover:bg-zinc-600/40"
+  class="flex items-center gap-2 p-4 text-xs text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-700/80 transition-colors"
   onclick={`document.getElementById(${isAuthorized ? "'confirmNewBlog'" : "'loginModalMoreBlogs'"}).showModal()`}
 >
   <span set:html={icons.new} />

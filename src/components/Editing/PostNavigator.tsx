@@ -28,7 +28,7 @@ export const PostNavigator = component$<PostNavigatorProps>(({ blogId, postId, l
             {!isMobile && (
                 <label
                     for="sidebar-toggle"
-                    class="absolute -left-3 top-0 w-7 h-7 bg-white/80 dark:bg-zinc-800/80 shadow-md border border-gray-100/50 dark:border-gray-200/30 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-50/90 dark:hover:bg-gray-700/50 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 z-10 text-gray-700 dark:text-gray-300"
+                    class="absolute -left-9 top-2 size-7 bg-white/80 dark:bg-zinc-800/80 shadow-md border border-gray-100/50 dark:border-gray-200/30 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-50/90 dark:hover:bg-gray-700/50 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 z-10 text-gray-700 dark:text-gray-300"
                 >
                     <span class="transition-transform duration-300 peer-checked:rotate-180" dangerouslySetInnerHTML={icons.mobileMenu} />
                 </label>

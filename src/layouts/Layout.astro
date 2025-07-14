@@ -69,19 +69,6 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
       background-color 0.2s ease,
       color 0.2s ease;
 
-    &.dark,
-    &.light {
-      color-scheme: dark;
-
-      --bg-color: #212121;
-      --bg-color2: #ededed;
-
-      --text-color: #efefec;
-      --text-color2: #010024;
-
-      --orange-blue: var(--orange);
-    }
-
     @media (prefers-reduced-motion: reduce) {
       scroll-behavior: auto;
     }

@@ -11,7 +11,7 @@ export async function getPostEditorContext(Astro: any) {
   const editing = Astro.url.searchParams.get("editing") === "true";
   const isNewPost = Astro.url.pathname.endsWith("/new");
 
-  const user = await getUser();
+  const user = await getUser(Astro);
 
   let blogData: BlogData;
   let blogPosts = [];

@@ -29,10 +29,18 @@ const isAuthorized = Boolean(user?.id);
 const currentPage = Astro.url.pathname.split("/").filter(Boolean).at(-1);
 
 const isSideBarVisible = isAuthorized
-  ? true
+  ? currentPage === "dashboard"
+    ? false
+    : true
   : currentPage === "dashboard"
     ? false
     : true;
+
+/*     const isSideBarVisible = isAuthorized
+  ? true
+  : currentPage === "dashboard"
+    ? false
+    : true; */
 ---
 
 <BaseDashboard
@@ -53,10 +61,10 @@ const isSideBarVisible = isAuthorized
   }
   <section class="flex flex-col mx-auto min-h-screen dashboard-container">
     <div
-      class="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50"
+      class="fixed top-0 left-0 right-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100/50 dark:border-gray-800/50"
     >
       <div
-        class="flex items-center justify-between max-w-screen-2xl mx-auto px-4 py-3 h-16"
+        class="flex items-center justify-between max-w-screen-2xl mx-auto px-4 py-3 h-16 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300/30 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600/30 hover:[&::-webkit-scrollbar-thumb]:bg-gray-300/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-600/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors"
       >
         <Breadcrumb
           {userBlogs}
@@ -99,7 +107,7 @@ const isSideBarVisible = isAuthorized
       </div>
     </div>
 
-    <div class="mt-20 overflow-hidden">
+    <div class="mt-20">
       <div class="flex flex-col md:flex-row gap-2">
         {
           isSideBarVisible && (
@@ -110,7 +118,7 @@ const isSideBarVisible = isAuthorized
             />
           )
         }
-        <section class="flex-1 min-w-0 mx-3">
+        <section class="flex-1 min-w-0 mx-3 overflow-x-hidden">
           <slot />
         </section>
       </div>

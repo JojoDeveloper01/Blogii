@@ -1,5 +1,6 @@
 import { component$, type Signal, $ } from '@builder.io/qwik';
 import { TITLE_REGEX, validateTitle } from '@/lib/utils';
+import { generateShortNumericId } from '@/lib/utils';
 
 interface TitleInputBaseProps {
     value: Signal<string>;
@@ -16,6 +17,9 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
     onInput$,
     onEnter$
 }) => {
+
+    const generateId = generateShortNumericId();    
+
     const handleBeforeInput = $((event: InputEvent) => {
         const input = event.data;
         if (input && !TITLE_REGEX.test(input)) {
@@ -55,19 +59,23 @@ export const TitleInputBase = component$<TitleInputBaseProps>(({
     });
 
     return (
-        <input
-            type="text"
-            value={value.value}
-            onBeforeInput$={handleBeforeInput}
-            onInput$={handleInput}
-            onPaste$={handlePaste}
-            onKeyDown$={handleKeyDown}
-            class={
-                'flex-1 px-4 py-1 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors' +
-                ' dark:bg-zinc-700 dark:text-white hover:border-secondary/50'
-            }
-            style={style}
-            placeholder={placeholder}
-        />
+        <>
+            <label for={`blog-title-${generateId}`} class="sr-only">Blog Title</label>
+            <input
+                id={`blog-title-${generateId}`}
+                type="text"
+                value={value.value}
+                onBeforeInput$={handleBeforeInput}
+                onInput$={handleInput}
+                onPaste$={handlePaste}
+                onKeyDown$={handleKeyDown}
+                class={
+                    'flex-1 px-4 py-1 text-lg font-medium border-2 border-transparent focus:outline-none focus:ring-0 rounded-lg transition-colors' +
+                    ' dark:bg-zinc-700 dark:text-white hover:border-secondary/50'
+                }
+                style={style}
+                placeholder={placeholder}
+            />
+        </>
     );
 });

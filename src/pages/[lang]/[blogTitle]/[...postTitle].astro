@@ -4,6 +4,7 @@ import CustomLayout from "@/layouts/CustomLayout.astro";
 import { getLangFromUrl } from "@/i18n/utils";
 import { getBlogByTitlePublished } from "@/lib/utilsDB";
 import PostViewer from "@/components/Posts/PostViewer.astro";
+import Comments from "@/components/Posts/Comments.astro";
 
 const lang = getLangFromUrl(Astro.url);
 
@@ -30,7 +31,9 @@ if (!blog || blog.status !== "published") {
   {blog}
   titleSanitized={post.title_sanitized}
   description={post.description || ""}
-  lang={lang}
+  {lang}
 >
   <PostViewer {post} />
+
+  {post.comments_enabled === true && <Comments postId={post.id} />}
 </CustomLayout>

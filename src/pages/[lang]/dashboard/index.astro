@@ -1,9 +1,9 @@
 ---
-import { icons } from "@/components/Editing/icons";
 import Dashboard from "@/layouts/Dashboard.astro";
 import { loadUserBlogsData } from "@/lib/utilsDB";
 import { getDashboardContextOfTheBlog } from "@/lib/utilsDB";
 import CreateBlogButton from "@/components/Blog/CreateBlogButton.astro";
+import BlogCard from "@/components/BlogCard.astro";
 
 const ctx = await getDashboardContextOfTheBlog(Astro);
 if (ctx.redirect) return Astro.redirect(ctx.redirect);
@@ -16,7 +16,7 @@ const blogs = await loadUserBlogsData(user?.id, Astro);
 <Dashboard>
   <div class="container mx-auto px-4">
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
         Your Blogs
       </h1>
       <div>
@@ -30,43 +30,7 @@ const blogs = await loadUserBlogsData(user?.id, Astro);
     </div>
 
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {
-        blogs.map((blog) => {
-          const firstPost = blog.posts?.[0];
-          const firstImage =
-            firstPost?.content?.match(/!\[.*?\]\((.*?)\)/)?.[1];
-
-          return (
-            <a
-              href={`/${lang}/dashboard/${blog.id}`}
-              class="group relative flex h-64 flex-col overflow-hidden rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 shadow-lg transition-transform"
-            >
-              {firstImage ? (
-                <div class="absolute inset-0">
-                  <img
-                    src={firstImage}
-                    alt={blog.title || "Blog preview"}
-                    class="h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-30"
-                  />
-                </div>
-              ) : null}
-
-              <div class="relative flex h-full flex-col justify-center p-6 text-white">
-                <h2 class="mb-2 text-2xl font-bold">
-                  {blog.title || "Untitled Blog"}
-                </h2>
-                {!firstImage && blog.description && (
-                  <p class="text-sm text-white/80">{blog.description}</p>
-                )}
-                <div class="mt-4 flex items-center gap-2 text-sm text-white/60">
-                  <span set:html={icons.archive} />
-                  <span>{blog.posts?.length || 0} posts</span>
-                </div>
-              </div>
-            </a>
-          );
-        })
-      }
+      {blogs.map((blog) => <BlogCard blogRedirect={`dashboard/${blog.id}`} {blog} lang={String(lang)} />)}
     </div>
   </div>
 </Dashboard>

@@ -54,6 +54,7 @@ export const signInToPublishBlog = "Sign in to publish your blog."
 export const signInToAccessAllFeatures = "Sign in to access all features."
 export const upgradeToCreateMoreBlogsAndPosts = (lang: string) => `Upgrade to create more blogs and posts. <a class="text-[--primary] hover:underline" href='/${lang}/pricing'>Upgrade</a>`
 export const ThereWasAnErrorCheckingYourPlan = "There was an error checking your plan."
+export const signInToComment = "Please log in to comment."
 
 //Messages
 export const blogUnpublished = "If you unpublish a blog, all posts will become private and only you will be able to see them. Please be certain."

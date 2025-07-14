@@ -7,7 +7,7 @@ const { id, message } = Astro.props;
 
 <dialog
   id={id}
-  class="rounded-xl shadow-xl p-6 backdrop:bg-[--noir-core]/70 bg-gradient-to-br from-[--noir-core] to-[--bg-color2] border border-[--primary]/20 backdrop-blur-md max-w-md w-full"
+  class="rounded-xl shadow-xl p-6 backdrop:bg-[--noir-core]/70 bg-gradient-to-br from-[--noir-core] to-[--primary] border border-[--primary]/20 backdrop-blur-md max-w-md w-full"
 >
   <div class="flex justify-between items-start">
     <div
@@ -88,7 +88,7 @@ const { id, message } = Astro.props;
 
   const handleLogin = async (provider: Provider) => {
     try {
-      const { data } = await actions.auth.signInWithOAuth({ provider });
+      const { data } = await actions.auth.signInWithOAuth({ provider, redirectUrl: window.location.href });
       if (data?.success) window.location.href = data.url;
     } catch (error) {
       console.error("[LOGIN] Erro:", error);

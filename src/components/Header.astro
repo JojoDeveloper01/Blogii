@@ -8,7 +8,7 @@ import { getUser, loadUserBlogsData } from "@/lib/utilsDB";
 
 const idLoginModal = generateShortNumericId();
 
-const user = await getUser();
+const user = await getUser(Astro);
 
 const hasBlogs = await loadUserBlogsData(user?.id, Astro);
 
@@ -38,6 +38,7 @@ const { lang } = Astro.props;
     >
       <!-- Mobile menu toggle -->
       <label for="menu-toggle" class="min-[600px]:hidden cursor-pointer z-50">
+        <span class="sr-only">Toggle Menu</span>
         <div class="w-6 h-5 flex flex-col justify-between">
           <span
             class="w-full h-0.5 bg-gray-800 dark:bg-gray-200 transition-transform origin-left"

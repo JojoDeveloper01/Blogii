@@ -28,7 +28,7 @@ export const ConfirmDialog = component$<ConfirmDialogProps>(({
                             <span dangerouslySetInnerHTML={icons.alert} />
                         )}
                     </div>
-                    <h3 class="text-xl font-bold text-red-300">{title}</h3>
+                    <h2 class="text-xl font-bold text-red-300">{title}</h2>
                 </div>
             </div>
 

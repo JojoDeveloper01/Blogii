@@ -4,40 +4,16 @@ import type { BlogData, SubscriptionPlan, UserInfo } from './types';
 import { sanitizeString } from './utils';
 
 //User:
-export async function getUser() {
+export async function getUser(Astro: any) {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const cookieUserId = Astro.cookies.get("blogii_user_id")?.value;
 
-    if (error) {
-      // Check if it's an AuthSessionMissingError
-      if (error.message && error.message.includes('Auth session missing')) {
-        // Silently handle this specific error - it's expected when session expires
-        // Clear any auth cookies or local storage
-        if (typeof window !== 'undefined') {
-          await supabase.auth.signOut();
-        }
-        return null;
-      }
-
-      // Only log other types of errors
-      console.error('[getUser] Erro ao buscar usuário:', error);
-      throw error;
-    }
-
-    const user = await getUserById(String(data.user?.id));
-
-    return user;
-  } catch (error) {
-    // Check if it's an AuthSessionMissingError
-    if (error instanceof Error && error.message && error.message.includes('Auth session missing')) {
-      // Silently handle this specific error
-      if (typeof window !== 'undefined') {
-        await supabase.auth.signOut();
-      }
+    if (!cookieUserId) {
       return null;
     }
 
-    // Only log other types of errors
+    return await getUserById(cookieUserId);
+  } catch (error) {
     console.error('[getUser] Erro ao buscar usuário (catch):', error);
     return null;
   }
@@ -51,7 +27,6 @@ export async function getUserById(userId: string) {
     .single();
 
   if (error) {
-    console.error('[getUserById] Erro ao buscar usuário:', error);
     if (typeof window !== 'undefined') {
       window.location.href = '/';
     } else {
@@ -61,11 +36,10 @@ export async function getUserById(userId: string) {
 
   return data;
 }
-
 export async function getAllBlogs() {
   const { data, error } = await supabase
     .from('blogs')
-    .select('*')
+    .select('*, posts(*)')
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 
@@ -101,7 +75,7 @@ export async function getUserPlan(userId: string): Promise<SubscriptionPlan | nu
     .single();
 
   if (!user?.subscription_plan_id) {
-    console.warn('[getUserPlan] User sem plano.');
+    /* console.warn('[getUserPlan] User sem plano.'); */
     return null;
   }
 
@@ -113,7 +87,7 @@ export async function getUserPlan(userId: string): Promise<SubscriptionPlan | nu
     .single();
 
   if (!plan) {
-    console.warn('[getUserPlan] User sem plano.');
+    /* console.warn('[getUserPlan] User sem plano.'); */
     return null;
   }
 
@@ -260,12 +234,45 @@ export async function getPostByTitle(postTitle: string, blogTitle: string): Prom
   return data[0];
 }
 
+export async function getPostComments(postId: string) {
+  try {
+    const { data: comments, error } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Para cada comentário, buscar o utilizador
+    const commentsWithUser = await Promise.all(
+      (comments || []).map(async (comment) => {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name, avatar_url')
+          .eq('id', comment.user_id)
+          .single();
+
+        return {
+          ...comment,
+          user: userData || { name: 'Deleted User', avatar_url: null }
+        };
+      })
+    );
+
+    return commentsWithUser;
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    return [];
+  }
+}
+
 /* Context: */
 export async function getDashboardContextOfTheBlog(Astro: any) {
   const lang = getLangFromUrl(Astro.url);
   const currentPage = Astro.url.pathname.split('/').filter(Boolean).at(-1);
 
-  const user = await getUser();
+  const user = await getUser(Astro);
   const isAuthorized = Boolean(user);
 
   let blogId: string | null = null;
@@ -408,6 +415,29 @@ export async function createNewPost(blogId: string, postId: string, title: strin
   return { data, error };
 }
 
+export async function postComment(postId: string, content: string, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: postId,
+        content,
+        user_id: userId,
+        created_at: new Date(),
+      });
+
+    if (error) {
+      console.error('[postComment] Erro ao criar comentário:', error);
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('[postComment] Erro inesperado:', error);
+    return { success: false, error };
+  }
+}
+
 //Update:
 
 export async function updateUser(userInfo: UserInfo) {
@@ -503,6 +533,25 @@ export async function updatePostTitleInDB(blogId: string, postId: string, title:
   }
 }
 
+export async function updateComments(blogId: string, postIds: string[], update_comments: boolean) {
+  try {
+    const { error } = await supabase
+      .from('posts')
+      .update({ comments_enabled: update_comments })
+      .eq('blog_id', blogId)
+      .in('id', postIds);
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('[enableComments] Error enabling comments:', error);
+    return { success: false, error };
+  }
+}
+
 //Delete:
 
 export async function deleteUser(userId: string) {
@@ -574,6 +623,23 @@ export async function deletePostFromDB(blogId: string, postId: string) {
       .delete()
       .eq('id', postId)
       .eq('blog_id', blogId);
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error };
+  }
+}
+
+export async function deleteComment(commentId: string) {
+  try {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId);
 
     if (error) {
       return { success: false, error };

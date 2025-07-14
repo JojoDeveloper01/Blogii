@@ -7,7 +7,7 @@ import { EditableField } from "@/components/EditableProfile";
 import ConfirmDialog from "@/components/shared/ConfirmDialog.astro";
 
 const lang = getLangFromUrl(Astro.url);
-const user = await getUser();
+const user = await getUser(Astro);
 
 if (!user) return Astro.redirect(`/${lang}/`);
 
@@ -188,13 +188,16 @@ const userId = user.id;
           console.error("Failed to delete user:", response.error);
         }
 
-        const signOutResponse = await actions.auth.signOut();
+        document.cookie = "blogii_user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+        window.location.href = "/";
+
+        /* const signOutResponse = await actions.auth.signOut();
 
         if (!signOutResponse.data?.success) {
           console.error("Failed to sign out:", signOutResponse.error);
         } else {
           window.location.href = signOutResponse?.data?.redirectTo;
-        }
+        } */
       } catch (error) {
         console.error("Failed to delete user:", error);
       }

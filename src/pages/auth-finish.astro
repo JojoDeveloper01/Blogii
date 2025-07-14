@@ -2,11 +2,15 @@
 import Layout from "@/layouts/Layout.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/consts";
 import { getLangFromUrl } from "@/i18n/utils";
-import { getUser, checkUserHasBlogs, ensureUserInDatabase } from "@/lib/utilsDB";
+import {
+  getUser,
+  checkUserHasBlogs,
+  ensureUserInDatabase,
+} from "@/lib/utilsDB";
 
 const lang = getLangFromUrl(Astro.url);
 
-const user = await getUser();
+const user = await getUser(Astro);
 
 if (!user?.id) {
   return Astro.redirect(`/${lang}`);
@@ -61,7 +65,7 @@ if (!blogs || blogs === "[]") {
 
   document.addEventListener("astro:page-load", async () => {
     const blog: BlogData[] = await localBlogDB.getAllBlogs();
-    const userId = cookieUtils.getCookie("user-id");
+    const userId = cookieUtils.getCookie("blogii_user_id");
 
     const blogData = {
       id: blog[0].id,
@@ -91,7 +95,6 @@ if (!blogs || blogs === "[]") {
       if (!error) {
         localBlogDB.deleteBlog(blog[0].id);
         cookieUtils.removeCookie("blogiis");
-        cookieUtils.removeCookie("user-id");
         window.location.href = "/";
       }
     }

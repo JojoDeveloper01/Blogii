@@ -3,6 +3,7 @@ import Head from "@/Published/Head.astro";
 import Header from "@/Published/Header.astro";
 import Footer from "@/Published/Footer.astro";
 import type { BlogData } from "@/lib/types";
+import { getUser } from "@/lib/utilsDB";
 
 interface Props {
   blog: BlogData;
@@ -17,11 +18,11 @@ const { blog, titleSanitized, description, lang } = Astro.props;
 <html {lang} data-theme={blog.theme} class="scroll-smooth">
   <Head {titleSanitized} {description} />
   <body
-    class="max-w-2xl mx-auto min-h-screen flex flex-col relative bg-gradient-to-b from-[--primary] to-[--secondary]"
+    class="max-w-2xl mx-auto px-4 min-h-screen flex flex-col relative bg-gradient-to-b from-[--primary] to-[--secondary]"
   >
     <Header {blog} {lang} />
     <main class="flex-1">
-      <div class="mx-auto px-4">
+      <div class="mx-auto">
         <slot />
       </div>
     </main>
@@ -31,6 +32,11 @@ const { blog, titleSanitized, description, lang } = Astro.props;
 </html>
 
 <style is:global>
+  :root {
+    --noir-core: #262626;
+    --blanc-core: #ededed;
+  }
+
   :root,
   [data-theme="default"] {
     --primary: #561aa7;

@@ -1,34 +1,58 @@
 ---
+import UserMenu from "@/components/UserMenu.astro";
 import { getUserById } from "@/lib/utilsDB";
 
 const { blog, lang } = Astro.props;
 
-const user = await getUserById(String(blog.user_id));
+const userId = Astro.cookies.get("blogii_user_id")?.value;
+
+let user;
+if (userId) {
+  user = await getUserById(String(userId));
+}
+
+const userIdBlogOwner = blog.user_id;
+
+let userBlogOwner;
+if (userIdBlogOwner) {
+  userBlogOwner = await getUserById(userIdBlogOwner);
+}
 ---
 
-<header class="text-[--text-primary] py-8">
-  <div class="mx-auto px-4 flex flex-col gap-6">
+<header class="text-[--text-primary] py-6">
+  <div class="mx-auto flex flex-col gap-3">
     <!-- Avatar & Title -->
-    <div class="flex flex-col items-center gap-3 md:flex-row md:gap-6">
+    <div class="flex flex-wrap items-center gap-4 justify-between">
+      <div class="flex flex-col items-start gap-3 md:flex-row md:gap-6">
+        <!--  {
+          userBlogOwner && userBlogOwner.avatar_url && (
+            <img
+              src={userBlogOwner.avatar_url}
+              alt="Avatar"
+              class="h-28 w-28 rounded-full object-cover shadow-md"
+            />
+          )
+        } -->
+        <a href={`/${lang}/${blog.title_sanitized}`}>
+          <h1
+            class="text-3xl font-bold mb-1 border-b-4 border-[--secondary] hover:border-[--text-secondary] inline-block pb-1"
+          >
+            {blog.title}
+          </h1>
+        </a>
+      </div>
+
+      <!-- current user -->
       {
-        user && user.user_metadata && user.user_metadata.avatar_url && (
-          <img
-            src={user.user_metadata.avatar_url}
-            alt="Avatar"
-            class="h-28 w-28 rounded-full object-cover shadow-md"
-          />
+        user && (
+          <div>
+            <UserMenu {user} {lang} />
+          </div>
         )
       }
-      <a href={`/${lang}/${blog.title_sanitized}`}>
-        <h1
-          class="text-3xl font-bold mb-1 border-b-4 border-[--secondary] hover:border-[--text-secondary] inline-block pb-1"
-        >
-          {blog.title}
-        </h1>
-      </a>
     </div>
 
-    <section class="py-2 mx-auto">
+    <section class="py-2">
       <div>
         {
           blog.description && (
@@ -38,57 +62,65 @@ const user = await getUserById(String(blog.user_id));
           )
         }
       </div>
-      <div class="mx-auto flex flex-wrap gap-4 align-center">
-        {
-          user?.website && (
-            <a
-              href={user.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="underline hover:text-[--secondary]"
-            >
-              {user.website.replace(/^https?:\/\//, "")}
-            </a>
-          )
-        }
-
-        {
-          user?.social_links && (
-            <div class="flex flex-wrap gap-4 text-sm">
-              {Object.entries(user.social_links).map(([network, url]) => (
+      <div class="mx-auto flex flex-col gap-4 align-center">
+        <div class="flex items-center gap-4">
+          {
+            userBlogOwner && userBlogOwner?.website && (
+              <div>
                 <a
-                  href={String(url)}
+                  href={userBlogOwner.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="hover:text-[--secondary] underline"
+                  class="underline hover:text-[--secondary]"
                 >
-                  {network}
+                  {userBlogOwner.website.replace(/^https?:\/\//, "")}
                 </a>
-              ))}
-            </div>
-          )
-        }
+              </div>
+            )
+          }
 
-        <div class="flex flex-wrap items-center gap-4 text-sm">
           {
-            user?.location && (
-              <span class="px-3 py-1 bg-[--primary] rounded-full">
-                📍 {user.location}
-              </span>
+            userBlogOwner && userBlogOwner?.social_links && (
+              <div class="flex flex-wrap gap-4 text-sm">
+                {Object.entries(userBlogOwner.social_links).map(
+                  ([network, url]) => (
+                    <a
+                      href={String(url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="hover:text-[--secondary] underline"
+                    >
+                      {network}
+                    </a>
+                  )
+                )}
+              </div>
             )
           }
         </div>
 
         {
-          Array.isArray(user?.skills) && user.skills.length > 0 && (
-            <div class="flex flex-wrap gap-2">
-              {user.skills.map((skill: string) => (
-                <span class="px-2 py-1 bg-[--primary] rounded text-xs">
-                  {skill}
-                </span>
-              ))}
+          userBlogOwner && userBlogOwner?.location && (
+            <div class="flex flex-wrap items-center gap-4 text-sm">
+              <span class="px-3 py-1 bg-[--primary] rounded-full">
+                📍 {userBlogOwner.location}
+              </span>
             </div>
           )
+        }
+
+        {
+          userBlogOwner &&
+            Array.isArray(userBlogOwner?.skills) &&
+            userBlogOwner.skills.length > 0 && (
+              <div class="flex flex-wrap gap-2">
+                {userBlogOwner.skills.map((skill: string) => (
+                  <span class="px-2 py-1 bg-[--primary] rounded text-xs">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )
         }
       </div>
     </section>

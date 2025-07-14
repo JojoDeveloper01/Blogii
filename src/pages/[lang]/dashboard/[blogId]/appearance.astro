@@ -31,92 +31,101 @@ const userId = user?.id;
         <!-- Color Scheme -->
         <div class="space-y-4">
           <label
+            for="theme-button"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >Color Scheme</label
           >
-          <ThemePalette blogId={blogId} currentTheme={blogData?.theme} isAuthorized={Boolean(userId)} />
+          <ThemePalette
+            blogId={blogId}
+            currentTheme={blogData?.theme}
+            isAuthorized={Boolean(userId)}
+          />
         </div>
 
         <!-- Font Selection -->
-        <div class="space-y-4">
+        <!-- <div class="space-y-4">
           <label
+            for="font-family"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >Font Family</label
           >
           <select
+            id="font-family"
             class="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50"
           >
             <option>Inter</option>
             <option>Roboto</option>
             <option>Open Sans</option>
           </select>
-        </div>
+        </div> -->
       </div>
 
       <!-- Layout Settings -->
-      <div
+      <!-- <div
         class="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 border border-gray-200/10 dark:border-gray-700/10 space-y-6"
       >
         <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
           Layout
         </h2>
 
-        <!-- Layout Style -->
-        <div class="space-y-4">
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Blog Layout</label
+      <div class="space-y-4">
+        <label
+          for="blog-layout"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >Blog Layout</label
+        >
+        <div class="grid grid-cols-2 gap-4">
+          <button
+            id="blog-layout"
+            class="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200 aspect-[4/3] flex items-center justify-center"
           >
-          <div class="grid grid-cols-2 gap-4">
-            <button
-              class="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200 aspect-[4/3] flex items-center justify-center"
-            >
-              <div class="w-full space-y-2">
+            <div class="w-full space-y-2">
+              <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded">
+              </div>
+              <div class="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </button>
+          <button
+            class="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200 aspect-[4/3] flex items-center justify-center"
+          >
+            <div class="w-full grid grid-cols-2 gap-2">
+              <div class="space-y-2">
                 <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded">
                 </div>
                 <div class="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded">
                 </div>
               </div>
-            </button>
-            <button
-              class="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200 aspect-[4/3] flex items-center justify-center"
-            >
-              <div class="w-full grid grid-cols-2 gap-2">
-                <div class="space-y-2">
-                  <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded">
-                  </div>
-                  <div class="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded">
-                  </div>
+              <div class="space-y-2">
+                <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded">
                 </div>
-                <div class="space-y-2">
-                  <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded">
-                  </div>
-                  <div class="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded">
-                  </div>
+                <div class="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded">
                 </div>
               </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Sidebar Position -->
-        <div class="space-y-4">
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Sidebar Position</label
-          >
-          <div class="flex gap-4">
-            <button
-              class="flex-1 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200"
-              >Left</button
-            >
-            <button
-              class="flex-1 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200"
-              >Right</button
-            >
-          </div>
+            </div>
+          </button>
         </div>
       </div>
+
+      <div class="space-y-4">
+        <label
+          for="sidebar-position"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >Sidebar Position</label
+        >
+        <div class="flex gap-4">
+          <button
+            id="sidebar-position"
+            class="flex-1 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200"
+            >Left</button
+          >
+          <button
+            id="sidebar-position"
+            class="flex-1 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[--primary] transition-all duration-200"
+            >Right</button
+          >
+        </div>
+      </div>
+    </div> -->
     </div>
   </div>
 </Dashboard>

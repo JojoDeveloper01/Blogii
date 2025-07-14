@@ -35,6 +35,23 @@ export const PostsActionBar = component$<PostsActionBarProps>(({ blogId, lang, s
     };
   });
 
+  const statusComments = useComputed$(() => {
+    const selectedPostsData = posts.filter(post => selectedPosts.value.has(post.id));
+    const enabledCount = selectedPostsData.filter(post => post.comments_enabled === true).length;
+    const disabledCount = selectedPostsData.length - enabledCount;
+
+    // Se a maioria dos posts selecionados não tem comentários habilitados,
+    // então a próxima ação será habilitar
+    const nextAction = disabledCount >= enabledCount;
+
+    return {
+      enabledCount,
+      disabledCount,
+      nextAction,
+      actionLabel: nextAction ? 'Enable' : 'Disable'
+    };
+  });
+
   const handleDelete$ = $(async (blogId: string) => {
     try {
       const result = await actions.post.delete({
@@ -137,6 +154,28 @@ export const PostsActionBar = component$<PostsActionBarProps>(({ blogId, lang, s
     (document.getElementById('publish-confirm-dialog') as HTMLDialogElement)?.close();
   });
 
+  const handleUpdateComments$ = $(async () => {
+    try {
+      const result = await actions.post.updateComments({
+        blogId,
+        postIds: Array.from(selectedPosts.value),
+        update_comments: statusComments.value.nextAction
+      });
+
+      if (result?.data?.success) {
+        selectedPosts.value.clear();
+        window.location.reload();
+        return true;
+      }
+
+      throw new Error('Erro ao mudar status dos comentários');
+    } catch (error) {
+      console.error('Falha ao mudar status dos comentários:', error);
+      alert('Erro ao mudar status dos comentários. Por favor, tente novamente.');
+      return false;
+    }
+  });
+
   return (
     <div class="flex justify-between items-center p-2 rounded-lg shadow-md">
       <div class="flex items-center gap-4">
@@ -149,8 +188,17 @@ export const PostsActionBar = component$<PostsActionBarProps>(({ blogId, lang, s
       </div>
       <div class="flex gap-2">
         <button
+          onClick$={handleUpdateComments$}
+          class="px-3 py-2 text-sm font-medium text-white bg-[--secondary] hover:bg-secondary/80 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+          title="Enable comments">
+          <span class="flex items-center gap-2">
+            <span dangerouslySetInnerHTML={icons.updateComments} />
+            <span>{statusComments.value.nextAction ? 'Enable' : 'Disable'} Comments</span>
+          </span>
+        </button>
+        <button
           onClick$={handlePostStatusToggle$}
-          class="px-3 py-2 text-sm font-medium text-white bg-[--primary] hover:bg-[--primary]/80 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+          class="px-3 py-2 text-sm font-medium text-white bg-[--primary] hover:bg-primary/80 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
           title={`${statusInfo.value.draftCount} drafts, ${statusInfo.value.publicCount} published`}>
           <span class="flex items-center gap-2">
             <span dangerouslySetInnerHTML={icons.refresh} />

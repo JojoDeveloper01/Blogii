@@ -44,6 +44,7 @@ const navSections = [
     showWhen: true,
     items: [
       {
+        showWhen: false,
         href: link("/analytics"),
         icon: icons.analytics,
         label: "Analytics",
@@ -54,6 +55,7 @@ const navSections = [
         label: "Comments",
       },
       {
+        showWhen: false,
         href: link("/subscribers"),
         icon: icons.subscribers,
         label: "Subscribers",
@@ -71,6 +73,7 @@ const navSections = [
         label: "Settings",
       },
       {
+        showWhen: isAuthorized,
         href: `/${lang}/profile`,
         icon: icons.profile,
         label: "Profile Settings",
@@ -107,6 +110,7 @@ const navSections = [
                       label={item.label}
                       lang={String(lang)}
                       blogId={String(blogId)}
+                      showWhen={item.showWhen}
                     />
                   </li>
                 ))}

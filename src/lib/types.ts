@@ -24,6 +24,7 @@ export interface PostData {
     created_at?: Date | string;
     updated_at?: Date | string;
     thisPostIsNew?: boolean;
+    comments_enabled?: boolean;
 }
 
 export interface BlogData {
@@ -89,4 +90,15 @@ export interface UserInfo {
     created_at?: string;
     subscription_plan_id?: string;
     subscription_expires_at?: string | null;
+}
+
+export interface CommentWithUser {
+    id: string;
+    content: string;
+    created_at: string;
+    user_id: string;
+    user: {
+        name: string;
+        avatar_url: string | null;
+    };
 }

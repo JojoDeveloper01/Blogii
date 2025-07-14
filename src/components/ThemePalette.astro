@@ -48,6 +48,7 @@ if (typeof limit === "number") {
   {
     themes.map((theme) => (
       <button
+        id="theme-button"
         type="button"
         class={`aspect-video rounded-lg transition-all duration-200 ${theme.name === currentTheme ? "ring-4 ring-[--blanc-core]" : "border-transparent hover:ring-2 hover:ring-[--blanc-core]"}`}
         style={`background-image:linear-gradient(to bottom, ${theme.from}, ${theme.to});`}

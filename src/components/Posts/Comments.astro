@@ -1,0 +1,104 @@
+---
+import type { CommentWithUser } from "@/lib/types";
+import { getUser, getPostComments } from "@/lib/utilsDB";
+import LoginRegister from "@/components/LoginRegister.astro";
+import { signInToComment } from "@/lib/consts";
+import CommentItem from "./CommentItem.astro";
+
+interface Props {
+  postId: string;
+}
+
+const { postId } = Astro.props;
+
+const user = await getUser(Astro);
+const comments = (await getPostComments(postId)) as CommentWithUser[];
+---
+
+<div class="mt-8 space-y-6">
+  {
+    !user && (
+      <p class="text-[--text-secondary]">
+        <span>Please</span>
+        <button 
+          onclick="document.getElementById('loginModal').showModal()" 
+          class="text-[--primary] hover:underline"
+        >
+          log in
+        </button>
+        <span>to comment.</span>
+      </p>
+      <LoginRegister id="loginModal" message={signInToComment} />
+    )
+  }
+
+  <h2 class="text-2xl font-bold text-[--text-primary]">Comments</h2>
+
+  <form
+    class="space-y-4"
+    data-post-id={postId}
+    data-user-id={user?.id}
+    id="comment-form"
+  >
+    <textarea
+      name="content"
+      rows="3"
+      class="w-full rounded-lg border border-[--text-secondary] bg-[--primary] p-2 text-[--text-primary] focus:border-[--secondary] focus:ring-[--secondary]"
+      placeholder="Write a comment..."></textarea>
+    <button
+      type="submit"
+      onclick={`${user ? "" : "document.getElementById('loginModal').showModal()"}`}
+      class="rounded-lg bg-[--primary] px-4 py-2 text-[--text-primary] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--secondary] focus:ring-offset-2"
+    >
+      Post Comment
+    </button>
+  </form>
+
+  {/* Comments List */}
+
+  <CommentItem {comments} currentUserId={user?.id} />
+</div>
+
+<script>
+  import { actions } from "astro:actions";
+
+  async function postComment(postId: string, content: string, userId: string) {
+    try {
+      const response = await actions.comment.postComment({
+        postId,
+        content,
+        userId,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to add comment");
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  }
+
+  document.addEventListener("astro:page-load", async () => {
+    document
+      .getElementById("comment-form")
+      ?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const postId =
+          document
+            .getElementById("comment-form")
+            ?.getAttribute("data-post-id") || "";
+        const userId =
+          document
+            .getElementById("comment-form")
+            ?.getAttribute("data-user-id") || "";
+        const content =
+          document.getElementById("comment-form")?.querySelector("textarea")
+            ?.value || "";
+
+        await postComment(postId, content, userId);
+      });
+  });
+</script>

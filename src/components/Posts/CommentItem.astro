@@ -1,0 +1,104 @@
+---
+import type { CommentWithUser } from "@/lib/types";
+import ConfirmDialog from "../shared/ConfirmDialog.astro";
+import { icons } from "../Editing/icons";
+
+interface Props {
+  comments: CommentWithUser[];
+  currentUserId?: string;
+  size?: 'sm' | 'lg';
+}
+
+const { comments, currentUserId, size = 'lg' } = Astro.props;
+
+const styles = {
+  sm: {
+    container: 'p-2',
+    avatar: 'size-6',
+    text: 'text-sm',
+    content: 'text-sm',
+    width: 'w-[90%] sm:w-[75%] lg:w-[60%]',
+    date: 'text-xs',
+    button: 'size-5'
+  },
+  lg: {
+    container: 'p-4',
+    avatar: 'size-8',
+    text: 'text-base',
+    content: 'text-base',
+    width: 'w-full',
+    date: 'text-sm',
+    button: 'size-5'
+  }
+}[size];
+---
+
+<div class="space-y-4" id="comments-list">
+    {comments?.map((comment) => (
+      <div class={`comment-item flex flex-col gap-4 rounded-lg border border-[--text-secondary] bg-[--primary] ${styles.container} ${styles.width}`}>
+        <div class="flex items-start justify-between">
+          <div class="flex items-center space-x-2">
+            <img
+              src={comment.user?.avatar_url || "/default-avatar.png"}
+              alt={`${comment.user?.name}'s avatar`}
+              class={`${styles.avatar} rounded-full ring-1 ring-[--text-secondary]`}
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer"
+            />
+            <span class={`font-medium text-[--text-primary] ${styles.text}`}>
+              {comment.user?.name}
+            </span>
+          </div>
+          {currentUserId === comment.user_id && (
+            <button
+              class={`${styles.text} [--text-secondary] font-semibold hover:opacity-80`}
+              onclick={`document.getElementById('deleteCommentModal-${comment.id}').showModal()`}
+              data-comment-id={comment.id}
+            >
+              Delete
+            </button>
+            <ConfirmDialog 
+              id={`deleteCommentModal-${comment.id}`} 
+              title="Delete Comment" 
+              message="Are you sure you want to delete this comment?"
+            >
+              <button
+                onclick={`deleteComment('${comment.id}')`}
+                class="flex items-center gap-2 rounded-lg bg-gradient-to-r from-red-700 to-red-600 px-5 py-2.5 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-700/30 active:scale-[0.98]"
+              >
+                <span set:html={icons.delete} />
+                Delete
+              </button>
+            </ConfirmDialog>
+          )}
+        </div>
+        <p class={`text-[--text-primary] m-0 ${styles.content}`}>{comment.content}</p>
+        <span class={`text-[--text-secondary] ${styles.date}`}>
+          {new Date(comment.created_at).toLocaleDateString()}
+        </span>
+      </div>
+    ))}
+</div>
+
+<script>
+    import { actions } from "astro:actions";
+
+    document.addEventListener("astro:page-load", async () => {
+        async function deleteComment(commentId: string) {
+      try {
+        const response = await actions.comment.deleteComment({ commentId });
+
+        if (response.error) {
+          throw new Error(response.error.message || "Failed to delete comment");
+        }
+
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+      }
+    }
+
+    (window as any).deleteComment = deleteComment;
+    });
+</script>
+

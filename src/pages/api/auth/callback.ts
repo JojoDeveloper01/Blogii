@@ -6,6 +6,9 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 	const code = url.searchParams.get("code");
 	if (!code) return new Response("No code provided", { status: 400 });
 
+	// Verificar se há uma URL de redirecionamento
+	const redirectPath = url.searchParams.get("redirectUrl") || "/"
+
 	const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 	if (error) return new Response(error.message, { status: 500 });
 
@@ -17,21 +20,22 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 	if (user?.email && user.id) {
 		await ensureUserInDatabase(user);
 
+		cookies.set("blogii_user_id", user.id, {
+			path: "/",
+			secure: import.meta.env.PROD,
+			maxAge: 60 * 60 * 24 * 21, //duração de 3 semanas
+			sameSite: "lax"
+		});
+
 		const hasBlogsInTheDB = await checkUserHasBlogs(user.id);
 
 		if (!hasBlogsInTheDB) {
 			const blogs = cookies.get("blogiis");
 			if (blogs) {
-				cookies.set("user-id", user.id, {
-					path: "/",
-					secure: import.meta.env.PROD,
-					maxAge: 60 * 3,
-					sameSite: "lax"
-				});
 				return redirect(`/auth-finish`);
 			}
 		}
 	}
 
-	return redirect("/");
+	return redirect(redirectPath);
 };

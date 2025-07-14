@@ -46,15 +46,14 @@ The user can administrate his blog posts on the dashboard and see analytics abou
         [] Create a table to save the analytics of the blogs of the user
         [] Has to connect with google analytics or something like that
         [] Has to show the number of posts, views, likes of the blog
-    [] Has to show the comments of the blogs of the user
-    [] Has to show the settings of the blogs of the user
+    [x] Has to show the comments of the blogs of the user
+
+[x] Add Comments on the blog
+    [x] Add the options to enable the comments on the blog
 
 [x] Make the publish button
 
 [x] Ask to chatGPT how i can make a domain name to link to the blog like `blog-name.myblogii.com`
-
-[] Add Comments on the blog
-    [] Add the options to enable the comments on the blog
 
 [x] Add the pricing page, free, monthly payment (with n% discount), annual payment (with n% discount) and unique payment (with n% discount)
 [x] Add the public Blogs page, blogs created on blogii  
@@ -72,5 +71,5 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 [] Make the user can change the language of the blog
 
 [] Improve the blog editor 2
-    [] Should have various templates from the DB
     [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
+

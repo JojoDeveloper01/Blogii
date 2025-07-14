@@ -136,25 +136,27 @@ const userId = user?.id;
 <script>
   import { actions } from "astro:actions";
 
-  async function unpublishBlog(blogId: string) {
-    try {
-      const result = await actions.blog.updateStatus({
-        blogId,
-        status: "draft",
-        postsIds: ["all"], // Atualiza todos os posts do blog para draft
-      });
-      if (result.data?.success) {
-        // Removido .data já que não é uma Astro action
-        window.location.reload();
-      } else {
+  document.addEventListener("astro:page-load", async () => {
+    async function unpublishBlog(blogId: string) {
+      try {
+        const result = await actions.blog.updateStatus({
+          blogId,
+          status: "draft",
+          postsIds: ["all"], // Atualiza todos os posts do blog para draft
+        });
+        if (result.data?.success) {
+          // Removido .data já que não é uma Astro action
+          window.location.reload();
+        } else {
+          console.error("Failed to unpublish blog. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error unpublishing blog:", error);
         console.error("Failed to unpublish blog. Please try again.");
       }
-    } catch (error) {
-      console.error("Error unpublishing blog:", error);
-      console.error("Failed to unpublish blog. Please try again.");
     }
-  }
 
-  // Adiciona a função ao window para poder ser chamada pelo onclick
-  (window as any).unpublishBlog = unpublishBlog;
+    // Adiciona a função ao window para poder ser chamada pelo onclick
+    (window as any).unpublishBlog = unpublishBlog;
+  });
 </script>

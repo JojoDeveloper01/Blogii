@@ -1,0 +1,52 @@
+---
+import type { BlogData } from "@/lib/types";
+import { icons } from "@/components/Editing/icons";
+
+interface Props {
+  blogRedirect: string;
+  blog: BlogData;
+  lang: string;
+}
+
+const { blogRedirect, blog, lang } = Astro.props;
+---
+
+<article
+  class="w-full max-w-[19rem] group bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50 hover:border-secondary/50 dark:hover:border-[--secondary]/50 shadow-sm hover:shadow-lg transition-all duration-300"
+>
+  <a
+    href={`/${lang}/${blogRedirect}`}
+    class="block p-6 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-primary/50 rounded-xl"
+    aria-labelledby={`blog-title-${blogRedirect}`}
+  >
+    <h2
+      id={`blog-title-${blogRedirect}`}
+      class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-secondary dark:group-hover:text-secondary transition-colors"
+    >
+      {blog.title}
+    </h2>
+    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+      {blog.description || "(No description available)"}
+    </p>
+    <div class="mt-4 flex flex-col gap-4">
+      <div
+        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+      >
+        <span set:html={icons.archive} />
+        <span>{blog.posts?.length || 0} posts</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-gray-600 dark:text-gray-400">
+          View Blog
+        </span>
+        <span
+          class="text-xs text-gray-500 dark:text-gray-400"
+          aria-hidden="true"
+        >
+          →
+        </span>
+      </div>
+    </div>
+    <span class="sr-only">View {blog.title}'s blog</span>
+  </a>
+</article>
