@@ -15,8 +15,19 @@ const { title, description, hideHeaderFooter, lang, theme } = Astro.props;
 ---
 
 <html {lang} data-theme={theme} class="scroll-smooth">
-  <Head {title} {description} />
+  <Head {title} description={description || ""} />
   <body class="min-h-screen flex flex-col relative">
+    
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-PBFZSLL6"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"></iframe></noscript
+    >
+    <!-- End Google Tag Manager (noscript) -->
+
     {!hideHeaderFooter && <Header {lang} />}
     <main>
       <slot />

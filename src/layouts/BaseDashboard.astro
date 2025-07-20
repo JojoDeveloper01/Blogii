@@ -15,7 +15,7 @@ const styles = "bg-gradient-to-b from-[--primary] to-[--secondary]";
 ---
 
 <html {lang} data-theme={theme} class="scroll-smooth">
-  <Head {title} {description} />
+  <Head {title} description={description || ""} />
   <body
     class={`min-h-screen flex flex-col relative ${currentPage !== "dashboard" ? styles : ""}`}
   >

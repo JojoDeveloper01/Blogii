@@ -43,7 +43,6 @@ The user can administrate his blog posts on the dashboard and see analytics abou
     [x] Has to show the blogs of the user on the dashboard
     [x] Has to show their posts of the their blog to the user
     [x] Has to show the analytics of the blogs of the user (if its logged in)
-        [] Create a table to save the analytics of the blogs of the user
         [] Has to connect with google analytics or something like that
         [] Has to show the number of posts, views, likes of the blog
     [x] Has to show the comments of the blogs of the user
@@ -70,6 +69,11 @@ The user can administrate his blog posts on the dashboard and see analytics abou
 [x] Make the user can change the bio, website, social_links, location, skills to show in the blog
 [] Make the user can change the language of the blog
 
+Posts
+    [] Add the description of the post
+    [] Add the tags to the post
+    [] Add the cover image to the post
+ 
 [] Improve the blog editor 2
     [] Has to have more options and facilities to edit text easier and edit images like cut them or something like that (has to be something like notion but the top edit bar/panel has to be like "Word"),
-
+    [] When I add/edit/remove some plugin, like convert the heading to paragraph and I go back with control + z, it should go back to where it was before I made the conversion, currently I can only go back to the text, like it saves the text before I delete it, and I can go back to what I had but can't do the same with the plugins

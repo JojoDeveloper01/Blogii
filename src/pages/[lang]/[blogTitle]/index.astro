@@ -21,7 +21,7 @@ if (!blog || blog.status !== "published") {
 
 <CustomLayout
   {blog}
-  titleSanitized={blog.title_sanitized}
+  title={blog.title}
   description={blog.description || ""}
   {lang}
 >

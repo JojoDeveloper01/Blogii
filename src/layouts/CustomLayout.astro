@@ -1,25 +1,34 @@
 ---
-import Head from "@/Published/Head.astro";
+import Head from "@/components/Head.astro";
 import Header from "@/Published/Header.astro";
 import Footer from "@/Published/Footer.astro";
 import type { BlogData } from "@/lib/types";
-import { getUser } from "@/lib/utilsDB";
 
 interface Props {
   blog: BlogData;
-  titleSanitized: string;
+  title: string;
   description: string;
   lang: string;
 }
 
-const { blog, titleSanitized, description, lang } = Astro.props;
+const { blog, title, description, lang } = Astro.props;
 ---
 
 <html {lang} data-theme={blog.theme} class="scroll-smooth">
-  <Head {titleSanitized} {description} />
+  <Head {title} {description} rssTitle={title} enableSocialMeta={false} />
   <body
     class="max-w-2xl mx-auto px-4 min-h-screen flex flex-col relative bg-gradient-to-b from-[--primary] to-[--secondary]"
   >
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-PBFZSLL6"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"></iframe></noscript
+    >
+    <!-- End Google Tag Manager (noscript) -->
+
     <Header {blog} {lang} />
     <main class="flex-1">
       <div class="mx-auto">
